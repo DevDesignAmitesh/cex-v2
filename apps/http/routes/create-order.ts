@@ -11,6 +11,8 @@ export async function createOrder(
     userId: req.userId,
   });
 
+  console.log(req.body);
+  
   if (!success) {
     res
       .status(411)
@@ -18,7 +20,8 @@ export async function createOrder(
     return;
   }
 
-  const response = await redisManager.waitForData({ type: "CREATE_ORDER", data });
+  const clientId = crypto.randomUUID();
+  const response = await redisManager.waitForData({ type: "create_order", data, clientId });
 
   return res.json(response);
 }

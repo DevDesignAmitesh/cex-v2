@@ -23,17 +23,17 @@ export const createOrderSchema = z.object({
   qty: z.number().optional(),
   userId: z.string(),
   ioc: z.boolean().default(false),
-})
+});
 
-type CreateOrder = z.infer<typeof createOrderSchema>
+type CreateOrder = z.infer<typeof createOrderSchema>;
 
-export const generateToken = (userId: string , secret: string) => {
+export const generateToken = (userId: string, secret: string) => {
   return sign({ userId }, secret);
 };
 
-export const verifyToken = (token: string , secret: string) => {
+export const verifyToken = (token: string, secret: string) => {
   try {
-    return verify(token, secret) as JwtPayload
+    return verify(token, secret) as JwtPayload;
   } catch (e) {
     console.log("verify token error ", e);
     return null;
@@ -41,17 +41,21 @@ export const verifyToken = (token: string , secret: string) => {
 };
 
 export type RedisQueueData = {
-  type : "CREATE_ORDER",
-  data: CreateOrder
-}
+  type: "create_order";
+  data: CreateOrder;
+  clientId: string;
+};
 
-export type OrderEngineData = {
-  type : "CREATE_ORDER",
-  data: {
-    status: "filled" | "open" | "cancelled",
-    filledQty: number,
-    averagePrice: number,
-    orderId: number,
-  }
-}
+export type EngineCommandType =
+  | "create_order"
+  | "get_depth"
+  | "get_user_balance"
+  | "get_order"
+  | "cancel_order";
 
+export interface EngineResponse {
+  clientId: string;
+  ok: boolean;
+  data?: unknown;
+  error?: string;
+}

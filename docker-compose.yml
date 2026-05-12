@@ -7,3 +7,8 @@ services:
       - POSTGRES_PASSWORD=password
       - POSTGRES_USER=postgres
       - POSTGRES_DB=cex-v2
+
+  redis:
+    image: redis:alpine3.23
+    ports:
+      - 6379:6379

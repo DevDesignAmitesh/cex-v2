@@ -31,21 +31,21 @@ app.post("/order", auth, createOrder);
     returns the status of an order (partially filled, success, cancellled)
     ALSO RETURNS THE INDIVIDUAL FILLS OF THIS ORDER 
 */
-app.get("/order/:orderId", auth, getSingleOrder);
+// app.get("/order/:orderId", auth, getSingleOrder);
 
-app.delete("/order/:orderId", auth, deleteSingleOrder);
+// app.delete("/order/:orderId", auth, deleteSingleOrder);
 
-app.get("/depth/:symbol", getSymbolDepth);
+// app.get("/depth/:symbol", getSymbolDepth);
 
-app.get("/orders", auth, getOrders);
+// app.get("/orders", auth, getOrders);
 
-app.get("/orders/open", auth, getOpenOrders);
+// app.get("/orders/open", auth, getOpenOrders);
 
-app.get("/fills", auth, getFills);
+// app.get("/fills", auth, getFills);
 
-app.get("/balance/usd", auth, getUsdBalance);
+// app.get("/balance/usd", auth, getUsdBalance);
 
-/*  
-    Returns the balance of all stocks
-*/
-app.get("/balance", auth, getBalance);
+// /*  
+//     Returns the balance of all stocks
+// */
+// app.get("/balance", auth, getBalance);

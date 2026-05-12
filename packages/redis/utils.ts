@@ -1,1 +1,1 @@
-export const REDIS_QUEUE = `http-orderbook-queue-${crypto.randomUUID()}`
+export const REDIS_QUEUE = `http-to-orderbook-queue`
