@@ -16,7 +16,7 @@ export async function createOrder(
   if (!success) {
     res
       .status(411)
-      .json({ message: "invalid inputs", data: zodErrorMessage({ error }) });
+      .json({ message: "invalid inputs", error: zodErrorMessage({ error }) });
     return;
   }
 

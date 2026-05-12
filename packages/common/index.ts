@@ -15,6 +15,24 @@ export const signinSchema = z.object({
   password: z.string().min(3, "password should be atleast 4 words"),
 });
 
+export const deleteSingleOrderSchema = z.object({
+  orderId: z.uuid(),
+});
+
+export const getSymbolDepthSchema = z.object({
+  symbol: z.string().includes("/"),
+});
+
+export const getSingleOrderSchema = z.object({
+  orderId: z.uuid(),
+  userId: z.uuid(),
+});
+
+export const getOrdersSchema = z.object({
+  open: z.boolean().default(false),
+  userId: z.uuid(),
+});
+
 export const createOrderSchema = z.object({
   side: z.enum(["BUY", "SELL"]),
   type: z.enum(["LIMIT", "MARKET"]),
@@ -44,13 +62,44 @@ export type RedisQueueData = {
   type: "create_order";
   data: CreateOrder;
   clientId: string;
-};
+} | {
+  type: "cancel_order";
+  data: { orderId: string, userId: string };
+  clientId: string;
+}
+ | {
+  type: "get_order";
+  data: { orderId: string, userId: string };
+  clientId: string;
+}
+ | {
+  type: "get_depth";
+  data: { symbol: string };
+  clientId: string;
+}
+ | {
+  type: "get_orders";
+  data: { userId: string, open?: boolean };
+  clientId: string;
+}
+ | {
+  type: "get_fills";
+  data: { userId: string };
+  clientId: string;
+}
+ | {
+  type: "get_user_balance";
+  data: { userId: string };
+  clientId: string;
+}
 
 export type EngineCommandType =
   | "create_order"
   | "get_depth"
   | "get_user_balance"
   | "get_order"
+  | "get_orders"
+  | "get_fills"
   | "cancel_order";
 
 export interface EngineResponse {
@@ -59,3 +108,4 @@ export interface EngineResponse {
   data?: unknown;
   error?: string;
 }
+
