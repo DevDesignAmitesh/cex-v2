@@ -23,5 +23,5 @@ export async function createOrder(
   const clientId = crypto.randomUUID();
   const response = await redisManager.waitForData({ type: "create_order", data, clientId });
 
-  return res.json(response);
+  return res.status(response.ok ? 201 : 400).json(response);
 }

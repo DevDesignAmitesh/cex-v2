@@ -77,15 +77,14 @@ class EngineStore {
 
   getUserBalance = (userId: string) => {
     if (!this.BALANCES[userId]){
-      this.BALANCES = {
-        userId: {
+      this.BALANCES[userId] = {
           AXIS: { locked: 0, total: 1000 },
           HDFC: { locked: 0, total: 1000 },
           INR: { locked: 0, total: 10000 },
           TATA: { locked: 0, total: 1000 },
-        },
       };
     }
+
     return this.BALANCES[userId];
   }
 
@@ -140,7 +139,7 @@ class EngineStore {
 
     if (side === "BUY") {
       userBalance.INR.total -= finalPrice;
-    } else {
+    } else if (side === "SELL") {
       userBalance.AXIS.total -= qty;
     }
   }
@@ -176,8 +175,10 @@ class EngineStore {
     const keys = Object.keys(data);
     
     if (type === "asks") {
-      if (keys.find((key) => key < stringifiedPrice)) {
-        key = Number(keys.find((key) => key < stringifiedPrice));
+      // we can keys[0]
+      if (keys[0]! < stringifiedPrice) {
+        // key = Number(keys.find((key) => key < stringifiedPrice));
+        key = Number(keys[0])
 
         return { keyPrice: key, qty: data[key]!.totalQuantity };
       }
@@ -186,13 +187,14 @@ class EngineStore {
     if (type === "bids") {
       if (
         keys
-          .sort((a, b) => Number(b) - Number(a))
-          .find((key) => key > stringifiedPrice)
+        // we can add this after sort [0]
+          .sort((a, b) => Number(b) - Number(a))[0]
+          // .find((key) => key > stringifiedPrice)
       ) {
         key = Number(
           keys
-            .sort((a, b) => Number(b) - Number(a))
-            .find((key) => key > stringifiedPrice),
+            .sort((a, b) => Number(b) - Number(a))[0]
+            // .find((key) => key > stringifiedPrice),
           );
           
           return { keyPrice: key, qty: data[key]!.totalQuantity };
@@ -234,7 +236,7 @@ class EngineStore {
       id: fillId,
       orderId,
       userId,
-      price: userPrice,
+      price: finalPrice,
       qty: userQty,
       side,
       asset: "AXIS",
@@ -259,7 +261,7 @@ class EngineStore {
     
     return {
       orderId,
-      fills
+      fills,
     };
   }
 }

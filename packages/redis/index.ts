@@ -37,7 +37,7 @@ class RedisManager {
         this.subscriber.unsubscribe(data.clientId);
         res(JSON.parse(message));
       });
-      this.publisher.lPush(REDIS_QUEUE, JSON.stringify({ data }));
+      this.publisher.lPush(REDIS_QUEUE, JSON.stringify({ ...data }));
     });
   };
 
