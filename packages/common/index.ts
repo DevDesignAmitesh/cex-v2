@@ -40,7 +40,6 @@ export const createOrderSchema = z.object({
   price: z.number().optional(),
   qty: z.number().optional(),
   userId: z.string(),
-  ioc: z.boolean().default(false),
 });
 
 type CreateOrder = z.infer<typeof createOrderSchema>;
@@ -134,11 +133,13 @@ export type Order = {
   price: number;
   qty: number;
   type: "LIMIT" | "MARKET";
-  side: "BUY" | "SELL";
+  side: orderSide
   filledQty: number;
   status: "FILLED" | "CANCELLED" | "PARTIAL_FILLED" | "OPEN";
   createdAt: Date;
 };
+
+export type orderSide = "BUY" | "SELL";
 
 export type OrderBookKey = "AXIS" | "HDFC" | "TATA";
 
@@ -167,7 +168,7 @@ export type Fill = {
   id: string;
   qty: number;
   type: "MAKER" | "TAKER";
-  side: "BUY" | "SELL";
+  side: orderSide;
   userId: string;
   price: number;
   asset: BalanceKey;
