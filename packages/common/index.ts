@@ -58,40 +58,42 @@ export const verifyToken = (token: string, secret: string) => {
   }
 };
 
-export type RedisQueueData = {
-  type: "create_order";
-  data: CreateOrder;
-  clientId: string;
-} | {
-  type: "cancel_order";
-  data: { orderId: string, userId: string };
-  clientId: string;
-}
- | {
-  type: "get_order";
-  data: { orderId: string, userId: string };
-  clientId: string;
-}
- | {
-  type: "get_depth";
-  data: { symbol: string };
-  clientId: string;
-}
- | {
-  type: "get_orders";
-  data: { userId: string, open?: boolean };
-  clientId: string;
-}
- | {
-  type: "get_fills";
-  data: { userId: string };
-  clientId: string;
-}
- | {
-  type: "get_user_balance";
-  data: { userId: string };
-  clientId: string;
-}
+export type RedisQueueData =
+  | {
+      type: "create_order";
+      data: CreateOrder;
+      clientId: string;
+    }
+  | {
+      type: "cancel_order";
+      data: { orderId: string; userId: string };
+      clientId: string;
+    }
+  | {
+      type: "get_order";
+      data: { orderId: string; userId: string };
+      clientId: string;
+    }
+  | {
+      type: "get_depth";
+      data: { symbol: string };
+      clientId: string;
+    }
+  | {
+      type: "get_orders";
+      data: { userId: string; open?: boolean };
+      clientId: string;
+    }
+  | {
+      type: "get_fills";
+      data: { userId: string };
+      clientId: string;
+    }
+  | {
+      type: "get_user_balance";
+      data: { userId: string };
+      clientId: string;
+    };
 
 export type EngineCommandType =
   | "create_order"
@@ -105,7 +107,70 @@ export type EngineCommandType =
 export interface EngineResponse {
   clientId: string;
   ok: boolean;
-  data?: unknown;
+  data?: {
+    message: string,
+    data: unknown
+  }
   error?: string;
 }
 
+export type BalanceKey = "INR" | "AXIS" | "HDFC" | "TATA";
+
+export type Balance = Record<
+  string,
+  Record<
+    BalanceKey,
+    {
+      total: number;
+      locked: number;
+    }
+  >
+>;
+
+export type Order = {
+  id: string;
+  userId: string;
+  market: BalanceKey;
+  price: number;
+  qty: number;
+  type: "LIMIT" | "MARKET";
+  side: "BUY" | "SELL";
+  filledQty: number;
+  status: "FILLED" | "CANCELLED" | "PARTIAL-FILLED" | "OPEN";
+  createdAt: Date;
+};
+
+export type OrderBookKey = "AXIS" | "HDFC" | "TATA";
+
+export type OrderBook = Record<
+  OrderBookKey,
+  {
+    bids: Record<
+      number,
+      {
+        totalQuantity: number;
+        // orders: Order[];
+      }
+    >;
+    asks: Record<
+      number,
+      {
+        totalQuantity: number;
+        // orders: Order[];
+      }
+    >;
+    lastTradedPrice: number;
+  }
+>;
+
+export type Fill = {
+  id: string;
+  qty: number;
+  type: "MAKER" | "TAKER";
+  side: "BUY" | "SELL";
+  userId: string;
+  price: number;
+  asset: BalanceKey;
+  orderId: string;
+  createdAt: Date;
+};
