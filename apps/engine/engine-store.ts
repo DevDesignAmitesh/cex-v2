@@ -161,6 +161,10 @@ class EngineStore {
     this.ORDERBOOK[orderBookKey][type][price] = {
       totalQuantity: orderQty + leftQty,
     };
+
+    console.log("orderbook", this.ORDERBOOK);
+    console.log("balances", this.BALANCES);
+    
   }
 
   checkAvailablePriceInOrderBook =(
