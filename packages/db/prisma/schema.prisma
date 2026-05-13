@@ -55,6 +55,7 @@ enum orderStatus {
   OPEN
   FILLED
   CANCELLED
+  PARTIAL_FILLED
 }
 
 enum orderType {

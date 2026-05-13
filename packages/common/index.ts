@@ -136,7 +136,7 @@ export type Order = {
   type: "LIMIT" | "MARKET";
   side: "BUY" | "SELL";
   filledQty: number;
-  status: "FILLED" | "CANCELLED" | "PARTIAL-FILLED" | "OPEN";
+  status: "FILLED" | "CANCELLED" | "PARTIAL_FILLED" | "OPEN";
   createdAt: Date;
 };
 

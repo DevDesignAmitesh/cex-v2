@@ -20,7 +20,8 @@ export type fillType = (typeof fillType)[keyof typeof fillType]
 export const orderStatus = {
   OPEN: 'OPEN',
   FILLED: 'FILLED',
-  CANCELLED: 'CANCELLED'
+  CANCELLED: 'CANCELLED',
+  PARTIAL_FILLED: 'PARTIAL_FILLED'
 } as const
 
 export type orderStatus = (typeof orderStatus)[keyof typeof orderStatus]
