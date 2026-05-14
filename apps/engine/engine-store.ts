@@ -69,14 +69,46 @@ class EngineStore {
     }
     
     Object.entries(this.ORDERBOOK[stock]).map((data) => {
-      const bids = data[0];
+      const key = data[0];
+      const value = data[1];
+
+      if (key !== "lastTradedPrice") return;
       
-      console.log("---------------")
-      console.log("data in the orderbook", data);
-      console.log("---------------")
+      finalOrderBookWithUserBasedDepth.AXIS = {
+        ...finalOrderBookWithUserBasedDepth.AXIS,
+        lastTradedPrice: (value as number)
+      }
     })
+
+  Object.entries(this.ORDERBOOK[stock].asks).map((data) => {
+    const orderBookKey = data[0]
+    const price = orderBookKey.split("-")[0]!;
+    const userId = orderBookKey.split(`${price}-`)[1]!;      
+
+    const value = this.ORDERBOOK[stock].asks[orderBookKey]!
+
+    finalOrderBookWithUserBasedDepth.AXIS.asks[price] = {
+      ...finalOrderBookWithUserBasedDepth.AXIS.asks[price],
+      totalQuantity: value.totalQuantity,
+      userId
+    }
+  });
+
+  Object.entries(this.ORDERBOOK[stock].bids).map((data) => {
+    const orderBookKey = data[0]
+    const price = orderBookKey.split("-")[0]!;
+    const userId = orderBookKey.split(`${price}-`)[1]!;      
     
-    return this.ORDERBOOK[stock]
+    const value = this.ORDERBOOK[stock].bids[orderBookKey]!
+
+    finalOrderBookWithUserBasedDepth.AXIS.bids[price] = {
+      ...finalOrderBookWithUserBasedDepth.AXIS.bids[price],
+      totalQuantity: value.totalQuantity,
+      userId
+    }
+  });
+    
+    return finalOrderBookWithUserBasedDepth[stock]
   }
 
   getFills = (userId: string) => {
