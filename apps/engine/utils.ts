@@ -4,7 +4,7 @@ import { engineStore } from "./engine-store";
 export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
   if (parsedResponse.type !== "create_order") return {
     clientId: parsedResponse.clientId,
-    ok: false
+    ok: false,
   }
 
   const { side, symbol, type, userId, price, qty } = parsedResponse.data;
@@ -18,64 +18,28 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
       };
     }
 
-    const isUserHaveBalance = engineStore.gettingAndLockingUserBalance(
-      userId,
-      price,
-      qty,
-      side,
-    );
-
-    console.log("isUserHaveBalance", isUserHaveBalance);
-
-    if (!isUserHaveBalance) {
-      return {
-        clientId: parsedResponse.clientId,
-        ok: false,
-        error: "Insufficient balance.",
-      };
+    const res = engineStore.beforeOrder(parsedResponse);
+    
+    if (!res.ok) return res
+    if (res.ok && !res.data?.data) return res
+    
+    const { keyPrice, qty: keyQty, orderBookKey } = res.data?.data! as {
+      keyPrice: number,
+      qty: number,
+      orderBookKey: string
     }
-
-    const availablePrice = engineStore.checkAvailablePriceInOrderBook(
-      price,
-      "AXIS",
-      side === "BUY" ? "asks" : "bids",
-    );
-
-    console.log("availablePrice", availablePrice);
-
-    if (!availablePrice) {
-      // push in the order book
-      engineStore.addNewAsksOrBidsInOrderBook(
-        side === "SELL" ? "asks" : "bids",
-        price,
-        userId,
-        "AXIS",
-        qty,
-      );
-
-      return {
-        clientId: parsedResponse.clientId,
-        ok: true,
-        data: {
-          message: "Order added in the order book",
-          data: undefined,
-        },
-      };
-    }
-
-    // quantiy thing
-    const { keyPrice, qty: keyQty, orderBookKey } = availablePrice;
 
     if (keyQty >= qty) {
       if (side === "BUY") {
         const userProfit = price - Number(keyPrice);
         const finalPrice = price - userProfit;
-        const res = engineStore.completeLimitOrder(
+        const res = engineStore.completeOrder(
           side,
           orderBookKey,
           qty,
           userId,
           finalPrice,
+          type
         );
 
         engineStore.resetLockBalalnceOfUser(userId, side);
@@ -100,14 +64,15 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
       }
 
       if (side === "SELL") {
-        const userProfit = Number(keyPrice) - price;
+        const userProfit = keyPrice - price;
         const finalPrice = price + userProfit;
-        const res = engineStore.completeLimitOrder(
+        const res = engineStore.completeOrder(
           side,
           orderBookKey,
           qty,
           userId,
           finalPrice,
+          type,
         );
 
         engineStore.resetLockBalalnceOfUser(userId, side);
@@ -130,6 +95,87 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           },
         };
       }
+    } else {
+      const leftQty = qty - keyQty;
+      const finalPrice = keyQty * keyPrice
+
+      console.log("leftqty", leftQty);
+      
+      const firstIterationOrder = engineStore.completeOrder(
+        side,
+        orderBookKey,
+        qty,
+        userId,
+        finalPrice,
+        type
+      );
+
+      engineStore.resetLockBalalnceOfUser(userId, side);
+      engineStore.deductTotalBalalnceOfUser(
+        userId,
+        side,
+        finalPrice,
+        qty,
+      );
+
+      if (leftQty !== 0) {
+        const beforeOrderResponse = engineStore.beforeOrder(parsedResponse, firstIterationOrder.orderId);
+        
+        if (!beforeOrderResponse.ok) return beforeOrderResponse
+
+        if (beforeOrderResponse.ok && !beforeOrderResponse.data?.data) return beforeOrderResponse
+
+        const { keyPrice, qty: keyQty, orderBookKey } = beforeOrderResponse.data?.data! as {
+          keyPrice: number,
+          qty: number,
+          orderBookKey: string
+        };
+        
+        const finalPrice = leftQty * keyPrice;
+
+        const res = engineStore.completeOrder(
+          side,
+          orderBookKey,
+          leftQty,
+          userId,
+          finalPrice,
+          type,
+          firstIterationOrder.orderId
+        );
+
+        engineStore.resetLockBalalnceOfUser(userId, side);
+        engineStore.deductTotalBalalnceOfUser(
+          userId,
+          side,
+          finalPrice,
+          leftQty,
+        );
+        
+        return {
+          clientId: parsedResponse.clientId,
+          ok: true,
+          data: {
+            message: "Order swapped successfully",
+            data: {
+              ...res,
+              totalPrice: finalPrice * qty,
+            },
+          },
+        };
+      }
+      
+
+      return {
+        clientId: parsedResponse.clientId,
+        ok: true,
+        data: {
+          message: "Order partially filled successfully",
+          data: {
+            ...firstIterationOrder,
+            totalPrice: finalPrice * qty,
+          },
+        },
+      };
     }
   }
 

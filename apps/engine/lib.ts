@@ -9,8 +9,8 @@ export function engineRequestHandler(
     ok: false
   } 
   
-  if (parsedResponse.type === "create_order") {
-    engineResponse = createOrder(parsedResponse);
+  if (parsedResponse.type === "create_order") { 
+      engineResponse = createOrder(parsedResponse)
   }
 
   if (parsedResponse.type === "cancel_order") {

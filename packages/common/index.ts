@@ -132,7 +132,7 @@ export type Order = {
   market: BalanceKey;
   price: number;
   qty: number;
-  type: "LIMIT" | "MARKET";
+  type: orderType;
   side: orderSide
   filledQty: number;
   status: "FILLED" | "CANCELLED" | "PARTIAL_FILLED" | "OPEN";
@@ -140,6 +140,7 @@ export type Order = {
 };
 
 export type orderSide = "BUY" | "SELL";
+export type orderType = "LIMIT" | "MARKET";
 
 export type OrderBookKey = "AXIS" | "HDFC" | "TATA";
 

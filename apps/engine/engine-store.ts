@@ -1,4 +1,4 @@
-import type { Balance, Fill, Order, OrderBook, OrderBookKey, orderSide } from "@repo/common/common";
+import type { Balance, EngineResponse, Fill, Order, OrderBook, OrderBookKey, orderSide, orderType, RedisQueueData } from "@repo/common/common";
 
 class EngineStore {
   private static instance: EngineStore;
@@ -307,26 +307,28 @@ class EngineStore {
     return null;
   }
 
-  completeLimitOrder = (side: orderSide, orderBookKey: string, userQty: number, userId: string, finalPrice: number,) => {
+  completeOrder = (side: orderSide, orderBookKey: string, userQty: number, userId: string, finalPrice: number, type: orderType, oldOrderId?: string) => {
     const order =
       this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey];
 
-    const orderId = crypto.randomUUID();
+    const orderId = oldOrderId ?? crypto.randomUUID();
       
     const keyPrice = orderBookKey.split("-")[0]!
 
-    this.ORDERS.push({
-      id: orderId,
-      createdAt: new Date(),
-      filledQty: userQty,
-      qty: userQty,
-      userId,
-      price: finalPrice,
-      market: "AXIS",
-      side,
-      status: "FILLED",
-      type: "LIMIT",
-    });
+    if (!oldOrderId) {
+      this.ORDERS.push({
+        id: orderId,
+        createdAt: new Date(),
+        filledQty: userQty,
+        qty: userQty,
+        userId,
+        price: finalPrice,
+        market: "AXIS",
+        side,
+        status: "FILLED",
+        type,
+      });
+    }
 
     const fillId = crypto.randomUUID();
 
@@ -361,6 +363,86 @@ class EngineStore {
       orderId,
       fills,
     };
+  }
+
+  beforeOrder = (parsedResponse: RedisQueueData, oldOrderId?: string): EngineResponse => {
+    if (parsedResponse.type !== "create_order") return {
+      clientId: parsedResponse.clientId,
+      ok: false
+    }
+    
+    const { side, symbol, type, userId, price, qty } = parsedResponse.data;
+    
+    if (price === undefined || qty === undefined) {
+      return {
+        clientId: parsedResponse.clientId,
+        ok: false,
+        error: "Price and quantity both should be defined.",
+      };
+    }
+
+    const isUserHaveBalance = this.gettingAndLockingUserBalance(
+      userId,
+      price,
+      qty,
+      side,
+    );
+
+    console.log("isUserHaveBalance", isUserHaveBalance);
+
+    if (!isUserHaveBalance && oldOrderId) {
+      return {
+        clientId: parsedResponse.clientId,
+        ok: false,
+        error: "Order is partially filled and insufficient balance.",
+      };
+    } else if (!isUserHaveBalance) {
+      return {
+        clientId: parsedResponse.clientId,
+        ok: false,
+        error: "Insufficient balance.",
+      };
+    }
+
+    const availablePrice = engineStore.checkAvailablePriceInOrderBook(
+      price,
+      "AXIS",
+      side === "BUY" ? "asks" : "bids",
+    );
+
+    console.log("availablePrice", availablePrice);
+
+    if (!availablePrice) {
+      // push in the order book
+      this.addNewAsksOrBidsInOrderBook(
+        side === "SELL" ? "asks" : "bids",
+        price,
+        userId,
+        "AXIS",
+        qty,
+      );
+
+      return {
+        clientId: parsedResponse.clientId,
+        ok: true,
+        data: {
+          message: "Order added in the order book",
+          data: undefined,
+        },
+      };
+    }
+
+    // quantiy thing
+    return {
+      clientId: parsedResponse.clientId,
+      ok: true,
+      data: {
+        message: "available price found",
+        data: availablePrice
+      }
+    }
+
+    
   }
 }
 
