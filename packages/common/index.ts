@@ -20,7 +20,7 @@ export const deleteSingleOrderSchema = z.object({
 });
 
 export const getSymbolDepthSchema = z.object({
-  symbol: z.string().includes("/"),
+  symbol: z.string().includes("-"),
 });
 
 export const getSingleOrderSchema = z.object({
@@ -147,17 +147,15 @@ export type OrderBook = Record<
   OrderBookKey,
   {
     bids: Record<
-      number,
+      string,
       {
         totalQuantity: number;
-        // orders: Order[];
       }
     >;
     asks: Record<
-      number,
+      string,
       {
         totalQuantity: number;
-        // orders: Order[];
       }
     >;
     lastTradedPrice: number;

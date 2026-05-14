@@ -48,6 +48,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
       engineStore.addNewAsksOrBidsInOrderBook(
         side === "SELL" ? "asks" : "bids",
         price,
+        userId,
         "AXIS",
         qty,
       );
@@ -63,19 +64,18 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
     }
 
     // quantiy thing
-    const { keyPrice, qty: keyQty } = availablePrice;
+    const { keyPrice, qty: keyQty, orderBookKey } = availablePrice;
 
-    if (keyQty > qty) {
+    if (keyQty >= qty) {
       if (side === "BUY") {
-        const userProfit = price - keyPrice;
+        const userProfit = price - Number(keyPrice);
         const finalPrice = price - userProfit;
         const res = engineStore.completeLimitOrder(
           side,
-          keyPrice,
+          orderBookKey,
           qty,
           userId,
           finalPrice,
-          price,
         );
 
         engineStore.resetLockBalalnceOfUser(userId, side);
@@ -100,15 +100,14 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
       }
 
       if (side === "SELL") {
-        const userProfit = keyPrice - price;
+        const userProfit = Number(keyPrice) - price;
         const finalPrice = price + userProfit;
         const res = engineStore.completeLimitOrder(
           side,
-          keyPrice,
+          orderBookKey,
           qty,
           userId,
           finalPrice,
-          price,
         );
 
         engineStore.resetLockBalalnceOfUser(userId, side);
@@ -281,7 +280,7 @@ export function getUserBalance(parsedResponse: RedisQueueData): EngineResponse {
     error: !res
       ? "User balance with the given userId not found"
       : undefined,
-}
+  }
 
 }
 

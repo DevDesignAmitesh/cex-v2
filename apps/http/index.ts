@@ -30,13 +30,8 @@ app.post("/signup", signup);
 
 app.post("/signin", signin);
 
-
 app.post("/order", auth, createOrder);
 
-/*
-    returns the status of an order (partially filled, success, cancellled)
-    ALSO RETURNS THE INDIVIDUAL FILLS OF THIS ORDER 
-*/
 app.get("/order/:orderId", auth, getSingleOrder);
 
 app.delete("/order/:orderId", auth, deleteSingleOrder);
@@ -47,7 +42,4 @@ app.get("/orders", auth, getOrders);
 
 app.get("/fills", auth, getFills);
 
-// /*  
-//     Returns the balance of all stocks
-// */
 app.get("/balance", auth, getBalance);

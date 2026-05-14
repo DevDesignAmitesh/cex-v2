@@ -40,9 +40,42 @@ class EngineStore {
 
   getSymbolDepth = (symbol: string) => {
     // symbol === CURRENCY/STOCK (INR/AXIS);
-    const stock = symbol.split("/")[1] as OrderBookKey | undefined;
+    const stock = symbol.split("-")[1] as OrderBookKey | undefined;
     if(!stock) return null
 
+    let finalOrderBookWithUserBasedDepth: Record<
+      OrderBookKey,
+      {
+        bids: Record<
+          string,
+          {
+            totalQuantity: number;
+            userId: string
+          }
+        >;
+        asks: Record<
+          string,
+          {
+            totalQuantity: number;
+            userId: string
+          }
+        >;
+        lastTradedPrice: number;
+      }
+    > = {
+      AXIS: { bids: {}, asks: {}, lastTradedPrice: 0 },
+      HDFC: { bids: {}, asks: {}, lastTradedPrice: 0 },
+      TATA: { bids: {}, asks: {}, lastTradedPrice: 0 },
+    }
+    
+    Object.entries(this.ORDERBOOK[stock]).map((data) => {
+      const bids = data[0];
+      
+      console.log("---------------")
+      console.log("data in the orderbook", data);
+      console.log("---------------")
+    })
+    
     return this.ORDERBOOK[stock]
   }
 
@@ -138,16 +171,20 @@ class EngineStore {
     if (!userBalance) return false;
 
     if (side === "BUY") {
-      userBalance.INR.total -= finalPrice;
+      userBalance.INR.total -= finalPrice * qty;
     } else if (side === "SELL") {
       userBalance.AXIS.total -= qty;
     }
+
+    console.log("orderbook", this.ORDERBOOK);
+    console.log("balances", this.BALANCES);
   }
 
 
   addNewAsksOrBidsInOrderBook = (
     type: "asks" | "bids",
     price: number,
+    userId: string,
     orderBookKey: OrderBookKey,
     leftQty: number,
   ) => { 
@@ -156,14 +193,16 @@ class EngineStore {
      * &&
      * 2. deducting the quantiy of that price
      */
-    const orderQty = this.ORDERBOOK[orderBookKey][type][price]?.totalQuantity || 0;
+    const key = `${price}-${userId}`
+    
+    const orderQty = this.ORDERBOOK[orderBookKey][type][key]?.totalQuantity || 0;
 
-    this.ORDERBOOK[orderBookKey][type][price] = {
+    this.ORDERBOOK[orderBookKey][type][key] = {
       totalQuantity: orderQty + leftQty,
-    };
+    };    
 
-    console.log("orderbook", this.ORDERBOOK);
-    console.log("balances", this.BALANCES);
+    console.log("orderbook", this.ORDERBOOK)
+    console.log("balances", this.BALANCES)
     
   }
 
@@ -173,53 +212,76 @@ class EngineStore {
     type: "asks" | "bids",
   ) => {
     const data = this.ORDERBOOK[balanceKey][type];
-    const stringifiedPrice = String(price);
-    let key: number = 0;
+    let key: {
+      keyWithUser: string,
+      keyWithoutUser: number
+    } = {
+      keyWithoutUser: 0,
+      keyWithUser: ""
+    }
 
     const keys = Object.keys(data);
+    const keyPrice = keys.map((key) => ({
+      keyWithUser: key!,
+      // `${price}-${userId}`
+      keyWithoutUser: Number(key.split("-")[0])!
+    }));
     
     if (type === "asks") {
-      // we can keys[0]
-      if (keys[0]! < stringifiedPrice) {
-        // key = Number(keys.find((key) => key < stringifiedPrice));
-        key = Number(keys[0])
+      if (keyPrice
+          .sort((a, b) => Number(a) - Number(b)).
+          find((data) => Number(data.keyWithoutUser)! < price)) {
 
-        return { keyPrice: key, qty: data[key]!.totalQuantity };
+        key = keyPrice
+          .sort((a, b) => Number(a) - Number(b)).
+          find((data) => data.keyWithoutUser! < price)!
+
+        console.log("keys in asks ", key);
+
+        console.log("all keys in asks ", keyPrice
+          .sort((a, b) => Number(a) - Number(b)))
+        
+        return { orderBookKey: key.keyWithUser, keyPrice: key.keyWithoutUser, qty: data[key.keyWithUser]!.totalQuantity };
       }
     }
 
     if (type === "bids") {
       if (
-        keys
-        // we can add this after sort [0]
-          .sort((a, b) => Number(b) - Number(a))[0]
-          // .find((key) => key > stringifiedPrice)
+        keyPrice
+          .sort((a, b) => Number(b) - Number(a)).
+          find((data) => data.keyWithoutUser! > price)
       ) {
-        key = Number(
-          keys
-            .sort((a, b) => Number(b) - Number(a))[0]
-            // .find((key) => key > stringifiedPrice),
-          );
+        key = keyPrice
+          .sort((a, b) => Number(b) - Number(a)).
+          find((data) => data.keyWithoutUser! > price)!
+
+          console.log("all keys in bids ", keyPrice
+          .sort((a, b) => Number(b) - Number(a)))
           
-          return { keyPrice: key, qty: data[key]!.totalQuantity };
+          console.log("keys in bids ", key);
+          
+          return { orderBookKey: key.keyWithUser, keyPrice: key.keyWithoutUser, qty: data[key.keyWithUser]!.totalQuantity };
         }
-      }
+    }
 
-    if (keys.find((key) => stringifiedPrice === key)) {
-      key = Number(keys.find((key) => stringifiedPrice === key));
+    if (keyPrice.find((key) => price === key.keyWithoutUser)) {
+      key = keyPrice.find((key) => price === key.keyWithoutUser)!;
 
-      return { keyPrice: key, qty: data[key]!.totalQuantity };
+      console.log("keys in else ", key);
+      
+      return { orderBookKey: key.keyWithUser, keyPrice: key.keyWithoutUser, qty: data[key.keyWithUser]!.totalQuantity };
     }
 
     return null;
   }
 
-  completeLimitOrder = (side: orderSide, keyPrice: number, userQty: number, userId: string, finalPrice: number, userPrice: number) => {
+  completeLimitOrder = (side: orderSide, orderBookKey: string, userQty: number, userId: string, finalPrice: number,) => {
     const order =
-      this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][keyPrice];
+      this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey];
 
     const orderId = crypto.randomUUID();
       
+    const keyPrice = orderBookKey.split("-")[0]!
 
     this.ORDERS.push({
       id: orderId,
@@ -248,18 +310,18 @@ class EngineStore {
       createdAt: new Date(),
     });
 
-    this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][keyPrice] = {
+    this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey] = {
       totalQuantity: order?.totalQuantity! - userQty,
     };
 
     if (
-      this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][keyPrice]
+      this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey]
         ?.totalQuantity === 0
     ) {
-      delete this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][keyPrice];
+      delete this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey];
     }
-
-    this.ORDERBOOK["AXIS"].lastTradedPrice = keyPrice;
+    
+    this.ORDERBOOK["AXIS"].lastTradedPrice = Number(keyPrice);
 
     const fills = this.getFills(userId);
     

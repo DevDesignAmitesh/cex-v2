@@ -37,7 +37,7 @@ class RedisManager {
         this.subscriber.unsubscribe(data.clientId);
         res(JSON.parse(message));
       });
-      this.publisher.lPush(REDIS_QUEUE, JSON.stringify({ ...data }));
+      this.publisher.lPush(REDIS_QUEUE, JSON.stringify(data));
     });
   };
 
@@ -47,7 +47,7 @@ class RedisManager {
 
   getDataFromQueue = async () => {
     console.log("queue in get ", REDIS_QUEUE);
-    return await this.subscriber.brPop(REDIS_QUEUE, 5);
+    return await this.subscriber.brPop(REDIS_QUEUE, 0);
   };
 
   static getInstance = (): RedisManager => {
