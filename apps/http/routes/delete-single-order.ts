@@ -22,7 +22,7 @@ export async function deleteSingleOrder(req: Request, res: Response) {
       userId: req.userId,
     },
     clientId,
-  });
+  }, "http-to-orderbook-queue");
 
   return res.json(response);
 }

@@ -16,16 +16,10 @@ model User {
   orders Order[]
 }
 
-model Stock {
-  id     String @id @default(uuid())
-  name   String
-  symbol String
-}
-
 model Order {
   id        String      @id @default(uuid())
   userId    String
-  user      User        @relation(references: [id], fields: [userId])
+  user      User        @relation(references: [id], fields: [userId], onDelete: Cascade)
   market    orderMarket
   price     Int
   qty       Int
@@ -40,7 +34,7 @@ model Order {
 model Fill {
   id      String    @id @default(uuid())
   orderId String
-  order   Order     @relation(references: [id], fields: [orderId])
+  order   Order     @relation(references: [id], fields: [orderId], onDelete: Cascade)
   qty     Int
   side    orderSide
   type    fillType

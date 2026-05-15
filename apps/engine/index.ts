@@ -5,7 +5,7 @@ import { engineRequestHandler } from "./lib";
 async function main() {
   for (;;) {
     try {    
-      const response = await redisManager.getDataFromQueue();
+      const response = await redisManager.getDataFromQueue("http-to-orderbook-queue");
       if (!response) continue;
   
       const parsedResponse = JSON.parse(response.element) as RedisQueueData;  

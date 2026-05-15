@@ -11,7 +11,6 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
   const { side, symbol, type, userId, price, qty } = parsedResponse.data;
 
   if (type === "LIMIT") {
-    
     if (price === undefined || qty === undefined) {
       return {
         clientId: parsedResponse.clientId,
@@ -24,7 +23,6 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
     
     if (!beforeOrderResponseOne.ok) return beforeOrderResponseOne
     if (beforeOrderResponseOne.ok && !beforeOrderResponseOne.data?.data) return beforeOrderResponseOne
-    
     
     const { keyPrice, qty: keyQty, orderBookKey } = beforeOrderResponseOne.data?.data! as {
       keyPrice: number,
@@ -54,7 +52,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           finalPrice,
           qty,
         );
-
+        
         return {
           clientId: parsedResponse.clientId,
           ok: true,
@@ -88,7 +86,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           finalPrice,
           qty,
         );
-
+        
         return {
           clientId: parsedResponse.clientId,
           ok: true,
@@ -102,7 +100,6 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
         };
       }
     } else {
-      
       if (side === "BUY") {
         const leftQty = qty - keyQty
         const userProfit = price - keyPrice;
@@ -132,7 +129,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
             data: { ...parsedResponse.data, qty: leftQty }
           })
         }
-
+        
         return {
           clientId: parsedResponse.clientId,
           ok: true,
@@ -175,7 +172,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
             data: { ...parsedResponse.data, qty: leftQty }
           })
         }
-        
+                
         return {
           clientId: parsedResponse.clientId,
           ok: true,
@@ -284,6 +281,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           calculatedQty,
         );
 
+        
         return {
           clientId: parsedResponse.clientId,
           ok: true,
@@ -321,7 +319,6 @@ export function deleteOrder(parsedResponse: RedisQueueData): EngineResponse {
 
   const { orderId, userId } = parsedResponse.data;
   const res = engineStore.deleteOrder(userId, orderId);
-
   return {
     clientId: parsedResponse.clientId,
     ok: res ? true : false,

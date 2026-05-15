@@ -20,7 +20,7 @@ export async function getOrders(req: Request, res: Response) {
     type: "get_orders",
     data,
     clientId,
-  });
+  }, "http-to-orderbook-queue");
 
   return res.json(response);
 }

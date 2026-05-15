@@ -8,7 +8,7 @@ export async function getFills(req: Request, res: Response) {
     type: "get_fills",
     data: { userId: req.userId },
     clientId,
-  });
+  }, "http-to-orderbook-queue");
 
   return res.json(response);
 }

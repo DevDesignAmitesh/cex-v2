@@ -1,1 +1,0 @@
-export const REDIS_QUEUE = `http-to-orderbook-queue`

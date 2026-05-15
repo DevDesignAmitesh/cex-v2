@@ -1,6 +1,5 @@
 import { createClient, type RedisClientType } from "redis";
-import { type EngineResponse, type RedisQueueData } from "@repo/common/common";
-import { REDIS_QUEUE } from "./utils";
+import { type EngineResponse, type REDIS_QUEUE_TYPE, type RedisQueueData } from "@repo/common/common";
 
 class RedisManager {
   private static instance: RedisManager;
@@ -29,7 +28,7 @@ class RedisManager {
     }
   };
 
-  waitForData = async (data: RedisQueueData) => {
+  waitForData = async (data: RedisQueueData, REDIS_QUEUE: REDIS_QUEUE_TYPE) => {
     console.log("queue in wait ", REDIS_QUEUE);
     
     return new Promise<EngineResponse>((res) => {
@@ -41,11 +40,15 @@ class RedisManager {
     });
   };
 
+  pushDataInQueue = (data: RedisQueueData, REDIS_QUEUE: REDIS_QUEUE_TYPE) => {
+    this.publisher.lPush(REDIS_QUEUE, JSON.stringify(data));
+  }
+
   publishData = async (key: string, data: EngineResponse) => {
     this.publisher.publish(key, JSON.stringify(data));
   }
 
-  getDataFromQueue = async () => {
+  getDataFromQueue = async (REDIS_QUEUE: REDIS_QUEUE_TYPE) => {
     console.log("queue in get ", REDIS_QUEUE);
     return await this.subscriber.brPop(REDIS_QUEUE, 0);
   };

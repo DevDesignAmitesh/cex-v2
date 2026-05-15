@@ -8,7 +8,7 @@ export async function getBalance(req: Request, res: Response) {
     type: "get_user_balance",
     data: { userId: req.userId },
     clientId,
-  });
+  }, "http-to-orderbook-queue");
 
   return res.json(response);
 }

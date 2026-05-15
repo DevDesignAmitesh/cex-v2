@@ -23,11 +23,6 @@ export * from './enums.ts';
  */
 export type User = Prisma.UserModel
 /**
- * Model Stock
- * 
- */
-export type Stock = Prisma.StockModel
-/**
  * Model Order
  * 
  */

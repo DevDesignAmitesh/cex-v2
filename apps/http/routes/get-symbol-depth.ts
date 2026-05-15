@@ -11,7 +11,7 @@ export async function getSymbolDepth(req: Request, res: Response) {
   }
 
   const clientId = crypto.randomUUID();
-  const response = await redisManager.waitForData({ type: "get_depth", data, clientId });
+  const response = await redisManager.waitForData({ type: "get_depth", data, clientId }, "http-to-orderbook-queue");
 
   return res.json(response);
 }

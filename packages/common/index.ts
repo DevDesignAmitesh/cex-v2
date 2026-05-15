@@ -174,3 +174,5 @@ export type Fill = {
   orderId: string;
   createdAt: Date;
 };
+
+export type REDIS_QUEUE_TYPE = "http-to-orderbook-queue" | "orderbook-to-db-queue"

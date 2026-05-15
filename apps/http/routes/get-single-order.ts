@@ -16,7 +16,7 @@ export async function getSingleOrder(req: Request, res: Response) {
   }
 
   const clientId = crypto.randomUUID();
-  const response = await redisManager.waitForData({ type: "get_order", data, clientId });
+  const response = await redisManager.waitForData({ type: "get_order", data, clientId }, "http-to-orderbook-queue");
 
   return res.json(response);
 }
