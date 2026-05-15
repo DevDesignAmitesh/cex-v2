@@ -80,39 +80,54 @@ class EngineStore {
       }
     })
 
-  Object.entries(this.ORDERBOOK[stock].asks).map((data) => {
-    const orderBookKey = data[0]
-    const price = orderBookKey.split("-")[0]!;
-    const userId = orderBookKey.split(`${price}-`)[1]!;      
+  Object.entries(this.ORDERBOOK[stock].asks)
+    .sort((a, b) => Number(b) - Number(a))
+    .map((data) => {
+      const orderBookKey = data[0]
+      const price = orderBookKey.split("-")[0]!;
+      const userId = orderBookKey.split(`${price}-`)[1]!;      
 
-    const value = this.ORDERBOOK[stock].asks[orderBookKey]!
+      const value = this.ORDERBOOK[stock].asks[orderBookKey]!
 
-    finalOrderBookWithUserBasedDepth.AXIS.asks[price] = {
-      ...finalOrderBookWithUserBasedDepth.AXIS.asks[price],
-      totalQuantity: value.totalQuantity,
-      userId
-    }
+      finalOrderBookWithUserBasedDepth.AXIS.asks[price] = {
+        ...finalOrderBookWithUserBasedDepth.AXIS.asks[price],
+        totalQuantity: value.totalQuantity,
+        userId
+      }
   });
 
-  Object.entries(this.ORDERBOOK[stock].bids).map((data) => {
-    const orderBookKey = data[0]
-    const price = orderBookKey.split("-")[0]!;
-    const userId = orderBookKey.split(`${price}-`)[1]!;      
-    
-    const value = this.ORDERBOOK[stock].bids[orderBookKey]!
+  Object.entries(this.ORDERBOOK[stock].bids)
+    .sort((a, b) => Number(a) - Number(b))
+    .map((data) => {
+      const orderBookKey = data[0]
+      const price = orderBookKey.split("-")[0]!;
+      const userId = orderBookKey.split(`${price}-`)[1]!;      
+      
+      const value = this.ORDERBOOK[stock].bids[orderBookKey]!
 
-    finalOrderBookWithUserBasedDepth.AXIS.bids[price] = {
-      ...finalOrderBookWithUserBasedDepth.AXIS.bids[price],
-      totalQuantity: value.totalQuantity,
-      userId
-    }
+      finalOrderBookWithUserBasedDepth.AXIS.bids[price] = {
+        ...finalOrderBookWithUserBasedDepth.AXIS.bids[price],
+        totalQuantity: value.totalQuantity,
+        userId
+      }
   });
     
     return finalOrderBookWithUserBasedDepth[stock]
   }
 
   getFills = (userId: string) => {
-    return this.FILLS.find((fls) => fls.userId === userId);
+    const arr: Fill[] = []    
+
+    this.FILLS.forEach((fls) => {
+      console.log(fls.userId === userId);
+      if (fls.userId === userId) {
+        arr.push(fls)
+      }
+    });
+    
+    console.log("arr", arr)
+    
+    return arr;
   }
 
   getOrder = (orderId: string, userId: string) => {
@@ -208,8 +223,6 @@ class EngineStore {
       userBalance.AXIS.total -= qty;
     }
 
-    console.log("orderbook", this.ORDERBOOK);
-    console.log("balances", this.BALANCES);
   }
 
 
@@ -233,8 +246,6 @@ class EngineStore {
       totalQuantity: orderQty + leftQty,
     };    
 
-    console.log("orderbook", this.ORDERBOOK)
-    console.log("balances", this.BALANCES)
     
   }
 
@@ -268,10 +279,6 @@ class EngineStore {
           .sort((a, b) => Number(a) - Number(b)).
           find((data) => data.keyWithoutUser! < price)!
 
-        console.log("keys in asks ", key);
-
-        console.log("all keys in asks ", keyPrice
-          .sort((a, b) => Number(a) - Number(b)))
         
         return { orderBookKey: key.keyWithUser, keyPrice: key.keyWithoutUser, qty: data[key.keyWithUser]!.totalQuantity };
       }
@@ -287,10 +294,6 @@ class EngineStore {
           .sort((a, b) => Number(b) - Number(a)).
           find((data) => data.keyWithoutUser! > price)!
 
-          console.log("all keys in bids ", keyPrice
-          .sort((a, b) => Number(b) - Number(a)))
-          
-          console.log("keys in bids ", key);
           
           return { orderBookKey: key.keyWithUser, keyPrice: key.keyWithoutUser, qty: data[key.keyWithUser]!.totalQuantity };
         }
@@ -299,7 +302,6 @@ class EngineStore {
     if (keyPrice.find((key) => price === key.keyWithoutUser)) {
       key = keyPrice.find((key) => price === key.keyWithoutUser)!;
 
-      console.log("keys in else ", key);
       
       return { orderBookKey: key.keyWithUser, keyPrice: key.keyWithoutUser, qty: data[key.keyWithUser]!.totalQuantity };
     }
@@ -307,28 +309,29 @@ class EngineStore {
     return null;
   }
 
-  completeOrder = (side: orderSide, orderBookKey: string, userQty: number, userId: string, finalPrice: number, type: orderType, oldOrderId?: string) => {
+  completeOrder = (side: orderSide, orderBookKey: string, userQty: number, availableQty: number, userId: string, finalPrice: number, type: orderType) => {
     const order =
       this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey];
 
-    const orderId = oldOrderId ?? crypto.randomUUID();
+    console.log("order", this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey])
+    console.log("userqty", userQty)
+      
+    const orderId = crypto.randomUUID();
       
     const keyPrice = orderBookKey.split("-")[0]!
 
-    if (!oldOrderId) {
-      this.ORDERS.push({
-        id: orderId,
-        createdAt: new Date(),
-        filledQty: userQty,
-        qty: userQty,
-        userId,
-        price: finalPrice,
-        market: "AXIS",
-        side,
-        status: "FILLED",
-        type,
-      });
-    }
+    this.ORDERS.push({
+      id: orderId,
+      createdAt: new Date(),
+      filledQty: availableQty,
+      qty: userQty,
+      userId,
+      price: finalPrice,
+      market: "AXIS",
+      side,
+      status: "FILLED",
+      type,
+    });
 
     const fillId = crypto.randomUUID();
 
@@ -337,7 +340,7 @@ class EngineStore {
       orderId,
       userId,
       price: finalPrice,
-      qty: userQty,
+      qty: availableQty,
       side,
       asset: "AXIS",
       type: "TAKER",
@@ -345,9 +348,12 @@ class EngineStore {
     });
 
     this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey] = {
-      totalQuantity: order?.totalQuantity! - userQty,
+      totalQuantity: order?.totalQuantity! - availableQty,
     };
 
+    console.log("condition", this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey]
+        ?.totalQuantity === 0)
+    
     if (
       this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey]
         ?.totalQuantity === 0
@@ -365,13 +371,31 @@ class EngineStore {
     };
   }
 
-  beforeOrder = (parsedResponse: RedisQueueData, oldOrderId?: string): EngineResponse => {
+  beforeOrder = (parsedResponse: RedisQueueData): EngineResponse => {
     if (parsedResponse.type !== "create_order") return {
       clientId: parsedResponse.clientId,
       ok: false
     }
-    
+      
     const { side, symbol, type, userId, price, qty } = parsedResponse.data;
+
+    if (type === "LIMIT") {
+      if (price === undefined || qty === undefined) {
+        return {
+          clientId: parsedResponse.clientId,
+          ok: false,
+          error: "Price and quantity both should be defined.",
+        };
+      }
+    } else if (type === "MARKET") {
+      if (price === undefined && qty === undefined) {
+        return {
+          clientId: parsedResponse.clientId,
+          ok: false,
+          error: "Price and quantity both should be defined.",
+        };
+      }
+    }
     
     if (price === undefined || qty === undefined) {
       return {
@@ -381,6 +405,7 @@ class EngineStore {
       };
     }
 
+
     const isUserHaveBalance = this.gettingAndLockingUserBalance(
       userId,
       price,
@@ -388,15 +413,8 @@ class EngineStore {
       side,
     );
 
-    console.log("isUserHaveBalance", isUserHaveBalance);
 
-    if (!isUserHaveBalance && oldOrderId) {
-      return {
-        clientId: parsedResponse.clientId,
-        ok: false,
-        error: "Order is partially filled and insufficient balance.",
-      };
-    } else if (!isUserHaveBalance) {
+    if (!isUserHaveBalance) {
       return {
         clientId: parsedResponse.clientId,
         ok: false,
@@ -410,8 +428,18 @@ class EngineStore {
       side === "BUY" ? "asks" : "bids",
     );
 
-    console.log("availablePrice", availablePrice);
 
+    if (!availablePrice && type === "MARKET") {
+      return {
+      clientId: parsedResponse.clientId,
+      ok: false,
+      data: {
+        message: "available price not found",
+        data: undefined
+      }
+    }
+    }
+    
     if (!availablePrice) {
       // push in the order book
       this.addNewAsksOrBidsInOrderBook(
@@ -441,9 +469,12 @@ class EngineStore {
         data: availablePrice
       }
     }
-
-    
   }
+
+  getLastTradingPrice() {
+    return this.ORDERBOOK["AXIS"].lastTradedPrice
+  }
+  
 }
 
 export const engineStore = EngineStore.getInstance();

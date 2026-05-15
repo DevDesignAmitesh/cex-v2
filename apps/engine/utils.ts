@@ -5,11 +5,13 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
   if (parsedResponse.type !== "create_order") return {
     clientId: parsedResponse.clientId,
     ok: false,
+    error: "invalid type"
   }
 
   const { side, symbol, type, userId, price, qty } = parsedResponse.data;
 
   if (type === "LIMIT") {
+    
     if (price === undefined || qty === undefined) {
       return {
         clientId: parsedResponse.clientId,
@@ -18,28 +20,31 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
       };
     }
 
-    const res = engineStore.beforeOrder(parsedResponse);
+    const beforeOrderResponseOne = engineStore.beforeOrder(parsedResponse);
     
-    if (!res.ok) return res
-    if (res.ok && !res.data?.data) return res
+    if (!beforeOrderResponseOne.ok) return beforeOrderResponseOne
+    if (beforeOrderResponseOne.ok && !beforeOrderResponseOne.data?.data) return beforeOrderResponseOne
     
-    const { keyPrice, qty: keyQty, orderBookKey } = res.data?.data! as {
+    
+    const { keyPrice, qty: keyQty, orderBookKey } = beforeOrderResponseOne.data?.data! as {
       keyPrice: number,
       qty: number,
       orderBookKey: string
     }
 
+    
     if (keyQty >= qty) {
       if (side === "BUY") {
-        const userProfit = price - Number(keyPrice);
+        const userProfit = price - keyPrice;
         const finalPrice = price - userProfit;
         const res = engineStore.completeOrder(
           side,
           orderBookKey,
           qty,
+          qty,
           userId,
           finalPrice,
-          type
+          type,
         );
 
         engineStore.resetLockBalalnceOfUser(userId, side);
@@ -70,6 +75,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           side,
           orderBookKey,
           qty,
+          qty,
           userId,
           finalPrice,
           type,
@@ -96,51 +102,20 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
         };
       }
     } else {
-      const leftQty = qty - keyQty;
-      const finalPrice = keyQty * keyPrice
-
-      console.log("leftqty", leftQty);
       
-      const firstIterationOrder = engineStore.completeOrder(
-        side,
-        orderBookKey,
-        qty,
-        userId,
-        finalPrice,
-        type
-      );
-
-      engineStore.resetLockBalalnceOfUser(userId, side);
-      engineStore.deductTotalBalalnceOfUser(
-        userId,
-        side,
-        finalPrice,
-        qty,
-      );
-
-      if (leftQty !== 0) {
-        const beforeOrderResponse = engineStore.beforeOrder(parsedResponse, firstIterationOrder.orderId);
+      if (side === "BUY") {
+        const leftQty = qty - keyQty
+        const userProfit = price - keyPrice;
+        const finalPrice = price - userProfit;
         
-        if (!beforeOrderResponse.ok) return beforeOrderResponse
-
-        if (beforeOrderResponse.ok && !beforeOrderResponse.data?.data) return beforeOrderResponse
-
-        const { keyPrice, qty: keyQty, orderBookKey } = beforeOrderResponse.data?.data! as {
-          keyPrice: number,
-          qty: number,
-          orderBookKey: string
-        };
-        
-        const finalPrice = leftQty * keyPrice;
-
         const res = engineStore.completeOrder(
           side,
           orderBookKey,
-          leftQty,
+          qty,
+          keyQty,
           userId,
           finalPrice,
           type,
-          firstIterationOrder.orderId
         );
 
         engineStore.resetLockBalalnceOfUser(userId, side);
@@ -148,8 +123,58 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           userId,
           side,
           finalPrice,
-          leftQty,
+          keyQty,
         );
+
+        if (leftQty !== 0) {
+          createOrder({
+            ...parsedResponse,
+            data: { ...parsedResponse.data, qty: leftQty }
+          })
+        }
+
+        return {
+          clientId: parsedResponse.clientId,
+          ok: true,
+          data: {
+            message: "Order swapped successfully",
+            data: {
+              ...res,
+              totalPrice: finalPrice * keyQty,
+            },
+          },
+        };
+      }
+
+      if (side === "SELL") {
+        const leftQty = qty - keyQty;
+        const userProfit = keyPrice - price;
+        const finalPrice = price + userProfit;
+        
+        const res = engineStore.completeOrder(
+          side,
+          orderBookKey,
+          qty,
+          leftQty,
+          userId,
+          finalPrice,
+          type,
+        );
+
+        engineStore.resetLockBalalnceOfUser(userId, side);
+        engineStore.deductTotalBalalnceOfUser(
+          userId,
+          side,
+          finalPrice,
+          qty,
+        );
+
+        if (leftQty !== 0) {
+          createOrder({
+            ...parsedResponse,
+            data: { ...parsedResponse.data, qty: leftQty }
+          })
+        }
         
         return {
           clientId: parsedResponse.clientId,
@@ -158,30 +183,133 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
             message: "Order swapped successfully",
             data: {
               ...res,
-              totalPrice: finalPrice * qty,
+              totalPrice: finalPrice * keyQty,
             },
           },
         };
       }
-      
-
-      return {
-        clientId: parsedResponse.clientId,
-        ok: true,
-        data: {
-          message: "Order partially filled successfully",
-          data: {
-            ...firstIterationOrder,
-            totalPrice: finalPrice * qty,
-          },
-        },
-      };
     }
   }
 
+  if (type === "MARKET") {
+  
+    if (price === undefined && qty === undefined) {
+      return {
+        clientId: parsedResponse.clientId,
+        ok: false,
+        error: "Price and quantity both should be defined.",
+      };
+    }
+
+    let calculatedPrice = 0;
+    let calculatedQty = 0;
+
+    
+    if (price) {
+      calculatedQty = price / engineStore.getLastTradingPrice()
+      calculatedPrice = price
+    } else if (qty) {
+      calculatedPrice = qty * engineStore.getLastTradingPrice()
+      calculatedQty = qty
+    }
+
+    const beforeOrderResponseOne = engineStore.beforeOrder({
+      ...parsedResponse,
+      data: { ...parsedResponse.data, price: calculatedPrice, qty: calculatedQty }
+    });
+    
+    if (!beforeOrderResponseOne.ok) return beforeOrderResponseOne
+    if (beforeOrderResponseOne.ok && !beforeOrderResponseOne.data?.data) return beforeOrderResponseOne
+    
+    
+    const { keyPrice, qty: keyQty, orderBookKey } = beforeOrderResponseOne.data?.data! as {
+      keyPrice: number,
+      qty: number,
+      orderBookKey: string
+    }
+
+    if (keyQty >= qty!) {
+      if (side === "BUY") {
+        const userProfit = calculatedPrice - keyPrice;
+        const finalPrice = calculatedPrice - userProfit;
+        const res = engineStore.completeOrder(
+          side,
+          orderBookKey,
+          calculatedQty,
+          calculatedQty,
+          userId,
+          finalPrice,
+          type,
+        );
+
+        engineStore.resetLockBalalnceOfUser(userId, side);
+        engineStore.deductTotalBalalnceOfUser(
+          userId,
+          side,
+          finalPrice,
+          calculatedQty,
+        );
+
+        return {
+          clientId: parsedResponse.clientId,
+          ok: true,
+          data: {
+            message: "Order swapped successfully",
+            data: {
+              ...res,
+              totalPrice: finalPrice * calculatedQty,
+            },
+          },
+        };
+      }
+
+      if (side === "SELL") {
+        const userProfit = keyPrice - calculatedPrice;
+        const finalPrice = calculatedPrice + userProfit;
+        const res = engineStore.completeOrder(
+          side,
+          orderBookKey,
+          calculatedQty,
+          calculatedQty,
+          userId,
+          finalPrice,
+          type,
+        );
+
+        engineStore.resetLockBalalnceOfUser(userId, side);
+        engineStore.deductTotalBalalnceOfUser(
+          userId,
+          side,
+          finalPrice,
+          calculatedQty,
+        );
+
+        return {
+          clientId: parsedResponse.clientId,
+          ok: true,
+          data: {
+            message: "Order swapped successfully",
+            data: {
+              ...res,
+              totalPrice: finalPrice * calculatedQty,
+            },
+          },
+        };
+      }
+
+    } else {
+      return {
+        clientId: parsedResponse.clientId,
+        ok: false,
+        error: "No matching orders found"
+      }
+    }
+  } 
+
   return {
     clientId: parsedResponse.clientId,
-    ok: false
+    ok: false,
+    error: "meowww"
   }
 }
 

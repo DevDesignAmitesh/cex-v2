@@ -39,7 +39,7 @@ export const createOrderSchema = z.object({
   symbol: z.string().includes("/"),
   price: z.number().optional(),
   qty: z.number().optional(),
-  userId: z.string(),
+  userId: z.uuid(),
 });
 
 type CreateOrder = z.infer<typeof createOrderSchema>;
