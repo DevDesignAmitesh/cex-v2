@@ -57,6 +57,26 @@ export const verifyToken = (token: string, secret: string) => {
   }
 };
 
+export type RedisDbQueueData =
+  | {
+      type: "create_order";
+      data: {
+        side: "BUY" | "SELL";
+        type: "LIMIT" | "MARKET";
+        userId: string;
+        price: number;
+        qty: number;
+        status: orderStatus, 
+        filledQty: number, 
+        fillType: fillType
+      }
+    }
+  | {
+      type: "cancel_order";
+      data: { orderId: string; userId: string };
+      clientId: string;
+    };
+
 export type RedisQueueData =
   | {
       type: "create_order";
@@ -135,10 +155,11 @@ export type Order = {
   type: orderType;
   side: orderSide
   filledQty: number;
-  status: "FILLED" | "CANCELLED" | "PARTIAL_FILLED" | "OPEN";
+  status: orderStatus;
   createdAt: Date;
 };
 
+export type orderStatus = "FILLED" | "CANCELLED" | "PARTIAL_FILLED" | "OPEN";
 export type orderSide = "BUY" | "SELL";
 export type orderType = "LIMIT" | "MARKET";
 
@@ -163,10 +184,12 @@ export type OrderBook = Record<
   }
 >;
 
+export type fillType = "MAKER" | "TAKER";
+
 export type Fill = {
   id: string;
   qty: number;
-  type: "MAKER" | "TAKER";
+  type: fillType;
   side: orderSide;
   userId: string;
   price: number;

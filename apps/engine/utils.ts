@@ -1,5 +1,6 @@
 import type { EngineResponse, RedisQueueData } from "@repo/common/common";
 import { engineStore } from "./engine-store";
+import { redisManager } from "@repo/redis/redis";
 
 export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
   if (parsedResponse.type !== "create_order") return {
@@ -319,6 +320,7 @@ export function deleteOrder(parsedResponse: RedisQueueData): EngineResponse {
 
   const { orderId, userId } = parsedResponse.data;
   const res = engineStore.deleteOrder(userId, orderId);
+  redisManager.pushDataInOrderQueue(parsedResponse, "orderbook-to-db-queue")
   return {
     clientId: parsedResponse.clientId,
     ok: res ? true : false,

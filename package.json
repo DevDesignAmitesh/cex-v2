@@ -17,6 +17,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
     "db:migrate": "cd packages/db && bunx prisma migrate dev",
+    "db:studio": "cd packages/db && bunx prisma studio",
     "db:generate": "cd packages/db && bunx prisma generate"
   },
   "workspaces": [

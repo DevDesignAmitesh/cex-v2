@@ -1,4 +1,5 @@
 import type { Balance, EngineResponse, Fill, Order, OrderBook, OrderBookKey, orderSide, orderType, RedisQueueData } from "@repo/common/common";
+import { redisManager } from "@repo/redis/redis";
 
 class EngineStore {
   private static instance: EngineStore;
@@ -32,9 +33,22 @@ class EngineStore {
   };
 
   deleteOrder = (userId: string, orderId: string) => {
-    const index = this.ORDERS.findIndex((ord) => ord.userId === userId && ord.id === orderId);
-    if (index === -1) return false;
-    this.ORDERS.splice(index, 1);
+    const order = this.ORDERS.find((ord) => ord.userId === userId && ord.id === orderId);
+    if (!order) return false;
+
+    let newOrder = order;
+
+    if (order) {
+      newOrder = {
+        ...order,
+        status: "CANCELLED"
+      }
+    }
+
+    const fillteredOrder = this.ORDERS.filter((ord) => ord.userId === userId && ord.id === orderId);
+    fillteredOrder.push(newOrder)
+
+    this.ORDERS = fillteredOrder;
     return true;
   }
 
@@ -131,7 +145,7 @@ class EngineStore {
   }
 
   getOrder = (orderId: string, userId: string) => {
-    return this.ORDERS.find((ord) => ord.userId === userId && ord.id === orderId);
+    return this.ORDERS.find((ord) => ord.userId === userId && ord.id === orderId && ord.status !== "CANCELLED");
   }
 
   getOrders = (userId: string, open?: boolean) => {
@@ -139,6 +153,7 @@ class EngineStore {
 
     if (open && open === true) {
       for (let ord of this.ORDERS) {
+        if (ord.status === "CANCELLED") continue;
         if (ord.userId !== userId) continue;
         if (ord.status !== "OPEN") continue;
         
@@ -146,6 +161,7 @@ class EngineStore {
       }
     } else {
       for (let ord of this.ORDERS) {
+        if (ord.status === "CANCELLED") continue;
         if (ord.userId !== userId) continue;
         arr.push(ord);
       }
@@ -364,6 +380,20 @@ class EngineStore {
     this.ORDERBOOK["AXIS"].lastTradedPrice = Number(keyPrice);
 
     const fills = this.getFills(userId);
+    
+    redisManager.pushDataInOrderQueue({
+      type: "create_order",
+      data: {
+        filledQty: availableQty,
+        fillType: "TAKER",
+        price: finalPrice,
+        qty: userQty,
+        side,
+        status: "FILLED",
+        type,
+        userId
+      }
+    }, "orderbook-to-db-queue")
     
     return {
       orderId,
