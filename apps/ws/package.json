@@ -1,5 +1,5 @@
 {
-  "name": "ws",
+  "name": "@repo/ws",
   "module": "index.ts",
   "type": "module",
   "private": true,
@@ -14,5 +14,8 @@
   "dependencies": {
     "@types/ws": "^8.18.1",
     "ws": "^8.20.1"
+  },
+  "exports": {
+    "./ws": "./wsUserManager.ts"
   }
 }

@@ -187,27 +187,15 @@ class EngineStore {
     price: number,
     userId: string,
     orderBookKey: OrderBookKey,
-    leftQty: number,
+    qtyToAdd: number,
   ) => { 
-    /**
-     * 1. adding user's order in orderBook
-     * &&
-     * 2. deducting the quantiy of that price
-     */
-    // const key = `${price}-${userId}`
-    
-    // const orderQty = this.ORDERBOOK[orderBookKey][type][key]?.totalQuantity || 0;
-
-    // this.ORDERBOOK[orderBookKey][type][key] = {
-    //   totalQuantity: orderQty + leftQty,
-    // };    
-
+    // for orignal order book
     const key = price;
     
     const orderQty = this.ORDERBOOK[orderBookKey][type][key]?.totalQuantity || 0;
 
     this.ORDERBOOK[orderBookKey][type][key] = {
-      totalQuantity: orderQty + leftQty,
+      totalQuantity: orderQty + qtyToAdd,
     };
   }
 
@@ -299,9 +287,6 @@ class EngineStore {
     this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey] = {
       totalQuantity: order?.totalQuantity! - availableQty,
     };
-
-    console.log("condition", this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey]
-        ?.totalQuantity === 0)
     
     if (
       this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey]

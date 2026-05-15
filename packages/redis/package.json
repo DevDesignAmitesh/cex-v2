@@ -5,7 +5,8 @@
   "private": true,
   "devDependencies": {
     "@types/bun": "latest",
-    "@repo/common": "workspace:*"
+    "@repo/common": "workspace:*",
+    "@repo/ws": "workspace:*"
   },
   "peerDependencies": {
     "typescript": "^5"

@@ -1,5 +1,6 @@
 import { createClient, type RedisClientType } from "redis";
 import { type EngineResponse, type REDIS_QUEUE_TYPE, type RedisDbQueueData, type RedisQueueData, type RedisWsQueueData } from "@repo/common/common";
+import { wsUserManager } from "@repo/ws/ws";
 
 class RedisManager {
   private static instance: RedisManager;
@@ -56,10 +57,26 @@ class RedisManager {
     this.publisher.publish(key, JSON.stringify(data));
   }
 
+  publishData2 = async (key: string, data: unknown) => {
+    this.publisher.publish(key, JSON.stringify(data));
+  }
+
   getDataFromQueue = async (REDIS_QUEUE: REDIS_QUEUE_TYPE) => {
     console.log("queue in get ", REDIS_QUEUE);
-    return await this.subscriber.brPop(REDIS_QUEUE, 0);
+    return await this.client.brPop(REDIS_QUEUE, 0);
   };
+
+  subscribe = async (key: string) => {
+    this.subscriber.subscribe(key, (message) => {
+      console.log("message in subscribe", message);
+      
+      const parsedResponse = JSON.parse(message);
+
+      if (parsedResponse.type === "order_book") {
+        wsUserManager.broadcast(parsedResponse.data);
+      }
+    })
+  }
 
   static getInstance = (): RedisManager => {
     if (!RedisManager.instance) RedisManager.instance = new RedisManager();

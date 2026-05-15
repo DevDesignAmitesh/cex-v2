@@ -13,7 +13,8 @@ async function main() {
     const parsedResponse = JSON.parse(response?.element) as RedisWsQueueData  
 
     if (parsedResponse.type === "order_book") {
-      wsUserManager.broadcast(parsedResponse.data);
+      redisManager.publishData2("AXIS", parsedResponse)
+      // wsUserManager.broadcast(parsedResponse.data);
     }
   } 
 }
@@ -22,7 +23,19 @@ async function main() {
 const wss = new WebSocketServer({ port: 8080 });
 
 wss.on("connection", (ws: WebSocket) => {
+
   wsUserManager.add(ws);
+  
+  ws.on("message", (data) => {
+    const parsedResponse = JSON.parse(data.toString());
+
+    if (parsedResponse.type === "SUBSCRIBE") {
+      // symbol = "AXIS" | "HDFC"
+      const { symbol } = parsedResponse.payload;
+      redisManager.subscribe("AXIS");
+    }
+  })
+
 });
 
 main();
