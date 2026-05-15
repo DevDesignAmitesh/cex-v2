@@ -175,13 +175,13 @@ export type OrderBook = Record<
   OrderBookKey,
   {
     bids: Record<
-      string,
+      number,
       {
         totalQuantity: number;
       }
     >;
     asks: Record<
-      string,
+      number,
       {
         totalQuantity: number;
       }

@@ -58,86 +58,15 @@ class EngineStore {
     // symbol === CURRENCY/STOCK (INR/AXIS);
     const stock = symbol.split("-")[1] as OrderBookKey | undefined;
     if(!stock) return null
-
-    let finalOrderBookWithUserBasedDepth: Record<
-      OrderBookKey,
-      {
-        bids: Record<
-          string,
-          {
-            totalQuantity: number;
-            userId: string
-          }
-        >;
-        asks: Record<
-          string,
-          {
-            totalQuantity: number;
-            userId: string
-          }
-        >;
-        lastTradedPrice: number;
-      }
-    > = {
-      AXIS: { bids: {}, asks: {}, lastTradedPrice: 0 },
-      HDFC: { bids: {}, asks: {}, lastTradedPrice: 0 },
-      TATA: { bids: {}, asks: {}, lastTradedPrice: 0 },
-    }
-    
-    Object.entries(this.ORDERBOOK[stock]).map((data) => {
-      const key = data[0];
-      const value = data[1];
-
-      if (key !== "lastTradedPrice") return;
-      
-      finalOrderBookWithUserBasedDepth.AXIS = {
-        ...finalOrderBookWithUserBasedDepth.AXIS,
-        lastTradedPrice: (value as number)
-      }
-    })
-
-    Object.entries(this.ORDERBOOK[stock].asks)
-      .sort((a, b) => Number(b) - Number(a))
-      .map((data) => {
-        const orderBookKey = data[0]
-        const price = orderBookKey.split("-")[0]!;
-        const userId = orderBookKey.split(`${price}-`)[1]!;      
-
-        const value = this.ORDERBOOK[stock].asks[orderBookKey]!
-
-        finalOrderBookWithUserBasedDepth.AXIS.asks[price] = {
-          ...finalOrderBookWithUserBasedDepth.AXIS.asks[price],
-          totalQuantity: value.totalQuantity,
-          userId
-        }
-    });
-
-    Object.entries(this.ORDERBOOK[stock].bids)
-      .sort((a, b) => Number(a) - Number(b))
-      .map((data) => {
-        const orderBookKey = data[0]
-        const price = orderBookKey.split("-")[0]!;
-        const userId = orderBookKey.split(`${price}-`)[1]!;      
-        
-        const value = this.ORDERBOOK[stock].bids[orderBookKey]!
-
-        finalOrderBookWithUserBasedDepth.AXIS.bids[price] = {
-          ...finalOrderBookWithUserBasedDepth.AXIS.bids[price],
-          totalQuantity: value.totalQuantity,
-          userId
-        }
-    });
       
     if (isQueue) {  
-      setInterval(() => {
-          redisManager.pushDataInWsQueue({
-          type: "order_book",
-          data: finalOrderBookWithUserBasedDepth
-        }, "orderbook-to-ws-queue")
-      }, 2 * 1000)
+        redisManager.pushDataInWsQueue({
+        type: "order_book",
+        data: this.ORDERBOOK
+      }, "orderbook-to-ws-queue")
     }
     
-    return finalOrderBookWithUserBasedDepth[stock]
+    return this.ORDERBOOK[stock]
   }
 
   getFills = (userId: string) => {
@@ -265,15 +194,21 @@ class EngineStore {
      * &&
      * 2. deducting the quantiy of that price
      */
-    const key = `${price}-${userId}`
+    // const key = `${price}-${userId}`
+    
+    // const orderQty = this.ORDERBOOK[orderBookKey][type][key]?.totalQuantity || 0;
+
+    // this.ORDERBOOK[orderBookKey][type][key] = {
+    //   totalQuantity: orderQty + leftQty,
+    // };    
+
+    const key = price;
     
     const orderQty = this.ORDERBOOK[orderBookKey][type][key]?.totalQuantity || 0;
 
     this.ORDERBOOK[orderBookKey][type][key] = {
       totalQuantity: orderQty + leftQty,
-    };    
-
-    
+    };
   }
 
   checkAvailablePriceInOrderBook =(
@@ -282,61 +217,50 @@ class EngineStore {
     type: "asks" | "bids",
   ) => {
     const data = this.ORDERBOOK[balanceKey][type];
-    let key: {
-      keyWithUser: string,
-      keyWithoutUser: number
-    } = {
-      keyWithoutUser: 0,
-      keyWithUser: ""
-    }
+    let key: number = 0
 
     const keys = Object.keys(data);
-    const keyPrice = keys.map((key) => ({
-      keyWithUser: key!,
-      // `${price}-${userId}`
-      keyWithoutUser: Number(key.split("-")[0])!
-    }));
     
     if (type === "asks") {
-      if (keyPrice
+      if (keys
           .sort((a, b) => Number(a) - Number(b)).
-          find((data) => Number(data.keyWithoutUser)! < price)) {
+          find((data) => Number(data)! < price)) {
 
-        key = keyPrice
+        key = Number(keys
           .sort((a, b) => Number(a) - Number(b)).
-          find((data) => data.keyWithoutUser! < price)!
+          find((data) => Number(data)! < price))!
 
         
-        return { orderBookKey: key.keyWithUser, keyPrice: key.keyWithoutUser, qty: data[key.keyWithUser]!.totalQuantity };
+        return { orderBookKey: key, keyPrice: key, qty: data[key]!.totalQuantity };
       }
     }
 
     if (type === "bids") {
       if (
-        keyPrice
+        keys
           .sort((a, b) => Number(b) - Number(a)).
-          find((data) => data.keyWithoutUser! > price)
+          find((data) => Number(data)! > price)
       ) {
-        key = keyPrice
+        key = Number(keys
           .sort((a, b) => Number(b) - Number(a)).
-          find((data) => data.keyWithoutUser! > price)!
+          find((data) => Number(data)! > price))!
 
           
-          return { orderBookKey: key.keyWithUser, keyPrice: key.keyWithoutUser, qty: data[key.keyWithUser]!.totalQuantity };
+          return { orderBookKey: key, keyPrice: key, qty: data[key]!.totalQuantity };
         }
     }
 
-    if (keyPrice.find((key) => price === key.keyWithoutUser)) {
-      key = keyPrice.find((key) => price === key.keyWithoutUser)!;
+    if (keys.find((key) => price === Number(key))) {
+      key = Number(keys.find((key) => price === Number(key)))!;
 
       
-      return { orderBookKey: key.keyWithUser, keyPrice: key.keyWithoutUser, qty: data[key.keyWithUser]!.totalQuantity };
+      return { orderBookKey: key, keyPrice: key, qty: data[key]!.totalQuantity };
     }
 
     return null;
   }
 
-  completeOrder = (side: orderSide, orderBookKey: string, userQty: number, availableQty: number, userId: string, finalPrice: number, type: orderType) => {
+  completeOrder = (side: orderSide, orderBookKey: number, userQty: number, availableQty: number, userId: string, finalPrice: number, type: orderType) => {
     const order =
       this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey];
 
@@ -345,8 +269,6 @@ class EngineStore {
       
     const orderId = crypto.randomUUID();
       
-    const keyPrice = orderBookKey.split("-")[0]!
-
     this.ORDERS.push({
       id: orderId,
       createdAt: new Date(),
@@ -356,7 +278,7 @@ class EngineStore {
       price: finalPrice,
       market: "AXIS",
       side,
-      status: "FILLED",
+      status: "OPEN",
       type,
     });
 
@@ -388,7 +310,7 @@ class EngineStore {
       delete this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey];
     }
     
-    this.ORDERBOOK["AXIS"].lastTradedPrice = Number(keyPrice);
+    this.ORDERBOOK["AXIS"].lastTradedPrice = orderBookKey;
 
     const fills = this.getFills(userId);
     

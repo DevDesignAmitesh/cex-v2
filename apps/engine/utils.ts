@@ -28,7 +28,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
     const { keyPrice, qty: keyQty, orderBookKey } = beforeOrderResponseOne.data?.data! as {
       keyPrice: number,
       qty: number,
-      orderBookKey: string
+      orderBookKey: number
     }
 
     
@@ -223,7 +223,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
     const { keyPrice, qty: keyQty, orderBookKey } = beforeOrderResponseOne.data?.data! as {
       keyPrice: number,
       qty: number,
-      orderBookKey: string
+      orderBookKey: number
     }
 
     if (keyQty >= qty!) {
