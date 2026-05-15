@@ -77,6 +77,12 @@ export type RedisDbQueueData =
       clientId: string;
     };
 
+export type RedisWsQueueData =
+  | {
+      type: "order_book";
+      data: OrderBook
+    }
+
 export type RedisQueueData =
   | {
       type: "create_order";
@@ -198,4 +204,4 @@ export type Fill = {
   createdAt: Date;
 };
 
-export type REDIS_QUEUE_TYPE = "http-to-orderbook-queue" | "orderbook-to-db-queue"
+export type REDIS_QUEUE_TYPE = "http-to-orderbook-queue" | "orderbook-to-db-queue" | "orderbook-to-ws-queue"

@@ -25,6 +25,8 @@ class EngineStore {
       HDFC: { bids: {}, asks: {}, lastTradedPrice: 0 },
       TATA: { bids: {}, asks: {}, lastTradedPrice: 0 },
     };
+
+    setInterval(() => this.getSymbolDepth("INR-AXIS", true), 5 * 1000)
   }
 
   static getInstance = (): EngineStore => {
@@ -52,7 +54,7 @@ class EngineStore {
     return true;
   }
 
-  getSymbolDepth = (symbol: string) => {
+  getSymbolDepth = (symbol: string, isQueue?: boolean) => {
     // symbol === CURRENCY/STOCK (INR/AXIS);
     const stock = symbol.split("-")[1] as OrderBookKey | undefined;
     if(!stock) return null
@@ -94,37 +96,46 @@ class EngineStore {
       }
     })
 
-  Object.entries(this.ORDERBOOK[stock].asks)
-    .sort((a, b) => Number(b) - Number(a))
-    .map((data) => {
-      const orderBookKey = data[0]
-      const price = orderBookKey.split("-")[0]!;
-      const userId = orderBookKey.split(`${price}-`)[1]!;      
+    Object.entries(this.ORDERBOOK[stock].asks)
+      .sort((a, b) => Number(b) - Number(a))
+      .map((data) => {
+        const orderBookKey = data[0]
+        const price = orderBookKey.split("-")[0]!;
+        const userId = orderBookKey.split(`${price}-`)[1]!;      
 
-      const value = this.ORDERBOOK[stock].asks[orderBookKey]!
+        const value = this.ORDERBOOK[stock].asks[orderBookKey]!
 
-      finalOrderBookWithUserBasedDepth.AXIS.asks[price] = {
-        ...finalOrderBookWithUserBasedDepth.AXIS.asks[price],
-        totalQuantity: value.totalQuantity,
-        userId
-      }
-  });
+        finalOrderBookWithUserBasedDepth.AXIS.asks[price] = {
+          ...finalOrderBookWithUserBasedDepth.AXIS.asks[price],
+          totalQuantity: value.totalQuantity,
+          userId
+        }
+    });
 
-  Object.entries(this.ORDERBOOK[stock].bids)
-    .sort((a, b) => Number(a) - Number(b))
-    .map((data) => {
-      const orderBookKey = data[0]
-      const price = orderBookKey.split("-")[0]!;
-      const userId = orderBookKey.split(`${price}-`)[1]!;      
+    Object.entries(this.ORDERBOOK[stock].bids)
+      .sort((a, b) => Number(a) - Number(b))
+      .map((data) => {
+        const orderBookKey = data[0]
+        const price = orderBookKey.split("-")[0]!;
+        const userId = orderBookKey.split(`${price}-`)[1]!;      
+        
+        const value = this.ORDERBOOK[stock].bids[orderBookKey]!
+
+        finalOrderBookWithUserBasedDepth.AXIS.bids[price] = {
+          ...finalOrderBookWithUserBasedDepth.AXIS.bids[price],
+          totalQuantity: value.totalQuantity,
+          userId
+        }
+    });
       
-      const value = this.ORDERBOOK[stock].bids[orderBookKey]!
-
-      finalOrderBookWithUserBasedDepth.AXIS.bids[price] = {
-        ...finalOrderBookWithUserBasedDepth.AXIS.bids[price],
-        totalQuantity: value.totalQuantity,
-        userId
-      }
-  });
+    if (isQueue) {  
+      setInterval(() => {
+          redisManager.pushDataInWsQueue({
+          type: "order_book",
+          data: finalOrderBookWithUserBasedDepth
+        }, "orderbook-to-ws-queue")
+      }, 2 * 1000)
+    }
     
     return finalOrderBookWithUserBasedDepth[stock]
   }

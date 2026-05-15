@@ -1,5 +1,5 @@
 import { createClient, type RedisClientType } from "redis";
-import { type EngineResponse, type REDIS_QUEUE_TYPE, type RedisDbQueueData, type RedisQueueData } from "@repo/common/common";
+import { type EngineResponse, type REDIS_QUEUE_TYPE, type RedisDbQueueData, type RedisQueueData, type RedisWsQueueData } from "@repo/common/common";
 
 class RedisManager {
   private static instance: RedisManager;
@@ -45,6 +45,10 @@ class RedisManager {
   }
 
   pushDataInOrderQueue = (data: RedisDbQueueData, REDIS_QUEUE: REDIS_QUEUE_TYPE) => {
+    this.publisher.lPush(REDIS_QUEUE, JSON.stringify(data));
+  }
+
+  pushDataInWsQueue = (data: RedisWsQueueData, REDIS_QUEUE: REDIS_QUEUE_TYPE) => {
     this.publisher.lPush(REDIS_QUEUE, JSON.stringify(data));
   }
 
