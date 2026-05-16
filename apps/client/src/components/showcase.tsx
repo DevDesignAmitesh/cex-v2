@@ -1,3 +1,4 @@
+import Button from "./button";
 import ShowcaseScreen1 from "./showcase-screen1";
 import ShowcaseScreen2 from "./showcase-screen2";
 
@@ -19,6 +20,13 @@ export default function ShowCase() {
       <ShowcaseScreen1 />
       <ShowcaseScreen2 />
       
+      <div className="flex flex-col justify-center items-center gap-6 py-32">
+      <h1 className="text-5xl text-center font-semibold text-neutral-50 mt-6">Modern finance starts 
+        {" "}<span className="text-[#E33E3F]">here</span>.</h1>
+
+        <Button type="primary" label="Sign up for free" isLink href="/auth" />
+
+      </div>
     </div>
   </div>
 }

@@ -37,3 +37,27 @@ export const showcaseScreen1: ShowcaseScreenProps[] = [
     content: "Move assets instantly between wallet and exchange",
   },
 ]
+
+type FooterProps = {
+  content: string
+  isHeading?: boolean
+}
+
+export const footer1: FooterProps[] = [
+  {
+    content: "company",
+    isHeading: true
+  },
+  {
+    content: "about",
+    isHeading: false
+  },
+  {
+    content: "careers",
+    isHeading: false
+  },
+  {
+    content: "contact",
+    isHeading: false
+  },
+]
