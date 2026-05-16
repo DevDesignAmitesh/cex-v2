@@ -3,8 +3,8 @@ import NavCtas from "./navctas";
 import NavItems from "./navitems";
 
 export default function Header() {
-  return <footer className="w-full fixed top-0 px-5 py-3">
-    <div className="w-full max-w-7xl mx-auto flex justify-between items-center">
+  return <footer className="w-full fixed z-1 top-0 p-3 bg-[#0E0F14]">
+    <div className="w-full max-w-7xl mx-auto flex justify-between items-center bg-[#0E0F14]">
       <Logo />
       <NavItems />
       <NavCtas /> 

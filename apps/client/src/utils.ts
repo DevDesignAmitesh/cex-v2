@@ -9,5 +9,9 @@ export const navItems: NavItemsProps[] = [
   {
     href: "/trade/INR-AXIS",
     label: "trade"
+  },
+  {
+    href: "/wallet",
+    label: "wallet"
   }
 ];
