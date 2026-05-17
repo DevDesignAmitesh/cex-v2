@@ -9,10 +9,9 @@ export async function createOrder(
   const { data, success, error } = createOrderSchema.safeParse({
     ...req.body,
     userId: req.userId,
+    market: req.params.market,
   });
 
-  console.log(req.body);
-  
   if (!success) {
     res
       .status(411)

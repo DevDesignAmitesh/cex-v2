@@ -45,14 +45,6 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           finalPrice,
           type,
         );
-
-        engineStore.resetLockBalalnceOfUser(userId, side);
-        engineStore.deductTotalBalalnceOfUser(
-          userId,
-          side,
-          finalPrice,
-          qty,
-        );
         
         return {
           clientId: parsedResponse.clientId,
@@ -79,14 +71,6 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           finalPrice,
           type,
         );
-
-        engineStore.resetLockBalalnceOfUser(userId, side);
-        engineStore.deductTotalBalalnceOfUser(
-          userId,
-          side,
-          finalPrice,
-          qty,
-        );
         
         return {
           clientId: parsedResponse.clientId,
@@ -110,18 +94,10 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           side,
           orderBookKey,
           qty,
-          keyQty,
+          keyQty, 
           userId,
           finalPrice,
           type,
-        );
-
-        engineStore.resetLockBalalnceOfUser(userId, side);
-        engineStore.deductTotalBalalnceOfUser(
-          userId,
-          side,
-          finalPrice,
-          keyQty,
         );
 
         if (leftQty !== 0) {
@@ -157,14 +133,6 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           userId,
           finalPrice,
           type,
-        );
-
-        engineStore.resetLockBalalnceOfUser(userId, side);
-        engineStore.deductTotalBalalnceOfUser(
-          userId,
-          side,
-          finalPrice,
-          qty,
         );
 
         if (leftQty !== 0) {
@@ -240,14 +208,6 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           type,
         );
 
-        engineStore.resetLockBalalnceOfUser(userId, side);
-        engineStore.deductTotalBalalnceOfUser(
-          userId,
-          side,
-          finalPrice,
-          calculatedQty,
-        );
-
         return {
           clientId: parsedResponse.clientId,
           ok: true,
@@ -273,15 +233,6 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           finalPrice,
           type,
         );
-
-        engineStore.resetLockBalalnceOfUser(userId, side);
-        engineStore.deductTotalBalalnceOfUser(
-          userId,
-          side,
-          finalPrice,
-          calculatedQty,
-        );
-
         
         return {
           clientId: parsedResponse.clientId,

@@ -30,7 +30,7 @@ app.post("/signup", signup);
 
 app.post("/signin", signin);
 
-app.post("/order", auth, createOrder);
+app.post("/order/:market", auth, createOrder);
 
 app.get("/order/:orderId", auth, getSingleOrder);
 

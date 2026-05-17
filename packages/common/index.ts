@@ -40,6 +40,7 @@ export const createOrderSchema = z.object({
   price: z.number().optional(),
   qty: z.number().optional(),
   userId: z.uuid(),
+  // market: z.enum(["SPOT", "PERPS"]),
 });
 
 type CreateOrder = z.infer<typeof createOrderSchema>;
@@ -143,7 +144,7 @@ export interface EngineResponse {
   error?: string;
 }
 
-export type BalanceKey = "INR" | "AXIS" | "HDFC" | "TATA";
+export type BalanceKey = "INR" | "AXIS" | "COLLATERAL";
 
 export type Balance = Record<
   string,
@@ -169,12 +170,6 @@ export type Order = {
   createdAt: Date;
 };
 
-export type orderStatus = "FILLED" | "CANCELLED" | "PARTIAL_FILLED" | "OPEN";
-export type orderSide = "BUY" | "SELL";
-export type orderType = "LIMIT" | "MARKET";
-
-export type OrderBookKey = "AXIS" | "HDFC" | "TATA";
-
 export type OrderBook = Record<
   OrderBookKey,
   {
@@ -193,6 +188,12 @@ export type OrderBook = Record<
     lastTradedPrice: number;
   }
 >;
+
+export type orderStatus = "FILLED" | "CANCELLED" | "PARTIAL_FILLED" | "OPEN";
+export type orderSide = "BUY" | "SELL";
+export type orderType = "LIMIT" | "MARKET";
+export type OrderBookKey = "AXIS" | "TATA";
+
 
 export type OrderBookOrder = {
   totalQuantity: number;

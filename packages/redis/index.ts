@@ -7,7 +7,6 @@ class RedisManager {
   private publisher: RedisClientType;
   private subscriber: RedisClientType;
   private client: RedisClientType;
-  public static REDIS_QUEUE = `http-orderbook-queue-${crypto.randomUUID()}`;
 
   constructor() {
     this.publisher = createClient();

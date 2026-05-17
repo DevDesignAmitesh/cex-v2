@@ -1,4 +1,4 @@
-import type { Balance, EngineResponse, Fill, Order, OrderBook, OrderBookKey, OrderBookOrder, orderSide, orderType, RedisQueueData, UserBasedOrderBook } from "@repo/common/common";
+import type { Balance, BalanceKey, EngineResponse, Fill, Order, OrderBook, OrderBookKey, OrderBookOrder, orderSide, orderType, RedisQueueData, UserBasedOrderBook } from "@repo/common/common";
 import { redisManager } from "@repo/redis/redis";
 
 class EngineStore {
@@ -28,7 +28,6 @@ class EngineStore {
 
     this.USERORDERBOOK = {
       AXIS: { bids: {}, asks: {}, lastTradedPrice: 0 },
-      HDFC: { bids: {}, asks: {}, lastTradedPrice: 0 },
       TATA: { bids: {}, asks: {}, lastTradedPrice: 0 },
     };
 
@@ -173,9 +172,8 @@ class EngineStore {
     if (!this.BALANCES[userId]) {
       this.BALANCES[userId] = {
         AXIS: { locked: 0, total: 1000 },
-        HDFC: { locked: 0, total: 1000 },
         INR: { locked: 0, total: 10000 },
-        TATA: { locked: 0, total: 1000 },
+        COLLATERAL: { locked: 0, total: 10000 },
       };
     }
 
@@ -432,6 +430,13 @@ class EngineStore {
       }
     }, "orderbook-to-db-queue")
     
+    engineStore.resetLockBalalnceOfUser(userId, side);
+    engineStore.deductTotalBalalnceOfUser(
+      userId,
+      side,
+      finalPrice,
+      userQty,
+    );
     return {
       orderId,
       fills,
@@ -444,7 +449,9 @@ class EngineStore {
       ok: false
     }
       
-    const { side, symbol, type, userId, price, qty } = parsedResponse.data;
+    const { side, symbol, type, userId, price, qty, 
+      // market 
+    } = parsedResponse.data;
 
     if (type === "LIMIT") {
       if (price === undefined || qty === undefined) {
@@ -464,6 +471,7 @@ class EngineStore {
       }
     }
     
+    // one time more just for making TS happy.
     if (price === undefined || qty === undefined) {
       return {
         clientId: parsedResponse.clientId,
@@ -473,13 +481,40 @@ class EngineStore {
     }
 
 
+    // if (market === "PERPS") {
+    //   const usersPriceIncludingLeverage = this.calculateFinalPriceWithLeverage(userId, price, qty);
+
+    //   return { 
+    //     clientId: parsedResponse.clientId, 
+    //     ok: true, 
+    //     data: {
+    //       message: "perps related balance found",
+    //       data: { market, usersPriceIncludingLeverage }
+    //     } 
+    //   }
+    // } else {
+    //   const isUserHaveBalance = this.gettingAndLockingUserBalance(
+    //     userId,
+    //     price,
+    //     qty,
+    //     side,
+    //   );
+  
+    //   if (!isUserHaveBalance) {
+    //     return {
+    //       clientId: parsedResponse.clientId,
+    //       ok: false,
+    //       error: "Insufficient balance.",
+    //     };
+    //   }
+    // }
+
     const isUserHaveBalance = this.gettingAndLockingUserBalance(
       userId,
       price,
       qty,
       side,
     );
-
 
     if (!isUserHaveBalance) {
       return {
@@ -534,6 +569,7 @@ class EngineStore {
       data: {
         message: "available price found",
         data: availablePrice
+        // data: { market, availablePrice }
       }
     }
   }
@@ -553,6 +589,45 @@ class EngineStore {
       })!
       
       return { reFetchedOrder, reFetchedOrderIdx }
+  }
+  
+  calculateFinalPriceWithLeverage = (userId: string, price: number, qty: number) => {
+    const userBalance = this.getUserBalance(userId);
+    
+    // 1 = 1x || 2 = 2x and so on
+    let leverage = 0;
+    let lockedPrice = 0;
+    
+    const priceAskedByUser = price * qty;
+    
+    const userActualBalance = userBalance.COLLATERAL.total - userBalance.COLLATERAL.locked; 
+    
+    if (userActualBalance >= priceAskedByUser) {
+      lockedPrice = priceAskedByUser;
+      leverage = 1
+    } else {
+      lockedPrice = userActualBalance
+      leverage =  priceAskedByUser / userActualBalance;
+    }
+    
+    this.updatingUserBalance(userId, userBalance.COLLATERAL.total, lockedPrice, "COLLATERAL")
+
+    return { leverage, priceAskedByUser, userActualBalance }
+  }
+
+
+  updatingUserBalance = (userId: string, total: number, locked: number, key: BalanceKey) => {
+    const userBalance = this.BALANCES[userId]!;
+
+    const updatedUserBalance: Record<BalanceKey, {
+      total: number;
+      locked: number;
+    }> = {
+      ...userBalance,
+      [key]: { total, locked }
+    }
+
+    this.BALANCES[userId] = updatedUserBalance;
   }
   
 }
