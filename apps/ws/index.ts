@@ -10,7 +10,7 @@ async function main() {
   
     if (!response) continue;
   
-    const parsedResponse = JSON.parse(response?.element) as RedisWsQueueData  
+    const parsedResponse = JSON.parse(response?.element) as RedisWsQueueData
 
     if (parsedResponse.type === "order_book") {
       redisManager.publishData2("AXIS", parsedResponse)

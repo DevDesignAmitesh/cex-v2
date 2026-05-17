@@ -78,9 +78,13 @@ export type RedisDbQueueData =
     };
 
 export type RedisWsQueueData =
+  // | {
+  //     type: "order_book";
+  //     data: OrderBook
+  //   }
   | {
       type: "order_book";
-      data: OrderBook
+      data: UserBasedOrderBook
     }
 
 export type RedisQueueData =
@@ -185,6 +189,27 @@ export type OrderBook = Record<
       {
         totalQuantity: number;
       }
+    >;
+    lastTradedPrice: number;
+  }
+>;
+
+export type OrderBookOrder = {
+  totalQuantity: number;
+  userId: string
+  price: number   
+}
+
+export type UserBasedOrderBook = Record<
+  OrderBookKey,
+  {
+    bids: Record<
+      number,
+      OrderBookOrder[]
+    >;
+    asks: Record<
+      number,
+      OrderBookOrder[]
     >;
     lastTradedPrice: number;
   }

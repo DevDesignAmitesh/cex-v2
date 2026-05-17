@@ -1,4 +1,4 @@
-import type { Balance, EngineResponse, Fill, Order, OrderBook, OrderBookKey, orderSide, orderType, RedisQueueData } from "@repo/common/common";
+import type { Balance, EngineResponse, Fill, Order, OrderBook, OrderBookKey, OrderBookOrder, orderSide, orderType, RedisQueueData, UserBasedOrderBook } from "@repo/common/common";
 import { redisManager } from "@repo/redis/redis";
 
 class EngineStore {
@@ -6,25 +6,81 @@ class EngineStore {
   private FILLS: Fill[];
   private ORDERS: Order[];
   private BALANCES: Balance;
-  private ORDERBOOK: OrderBook;
+  // private ORDERBOOK: OrderBook;
+  private USERORDERBOOK: UserBasedOrderBook
 
   constructor() {
     this.FILLS = [];
     this.ORDERS = [];
-    // this.BALANCES = {
-    //   "1": {
-    //     AXIS: { locked, total },
-    //     HDFC: { locked, total },
-    //     INR: { locked, total },
-    //     TATA: { locked, total },
-    //   },
+    // this.BALANCES["1"] = {
+    //   AXIS: { locked, total },
+    //   HDFC: { locked, total },
+    //   INR: { locked, total },
+    //   TATA: { locked, total },
     // };
+
     this.BALANCES = {};
-    this.ORDERBOOK = {
+    // this.ORDERBOOK = {
+    //   AXIS: { bids: {}, asks: {}, lastTradedPrice: 0 },
+    //   HDFC: { bids: {}, asks: {}, lastTradedPrice: 0 },
+    //   TATA: { bids: {}, asks: {}, lastTradedPrice: 0 },
+    // };
+
+    this.USERORDERBOOK = {
       AXIS: { bids: {}, asks: {}, lastTradedPrice: 0 },
       HDFC: { bids: {}, asks: {}, lastTradedPrice: 0 },
       TATA: { bids: {}, asks: {}, lastTradedPrice: 0 },
     };
+
+    // this.USERORDERBOOK = {
+    //   AXIS: { bids: {
+    //     500: [
+    //       {
+    //         totalQuantity: 20,
+    //         userId: "1",
+    //         price: 500
+    //       }
+    //     ],
+    //     200: [
+    //       {
+    //         totalQuantity: 20,
+    //         userId: "1",
+    //         price: 200
+    //       }
+    //     ],
+    //     600: [
+    //       {
+    //         totalQuantity: 20,
+    //         userId: "1",
+    //         price: 600
+    //       }
+    //     ],
+    //   }, asks: {
+    //     200: [
+    //       {
+    //         totalQuantity: 20,
+    //         userId: "1",
+    //         price: 200
+    //       }
+    //     ],
+    //     500: [
+    //       {
+    //         totalQuantity: 20,
+    //         userId: "1",
+    //         price: 200
+    //       }
+    //     ],
+    //     300: [
+    //       {
+    //         totalQuantity: 20,
+    //         userId: "1",
+    //         price: 200
+    //       }
+    //     ],
+    //   }, lastTradedPrice: 0 },
+    //   HDFC: { bids: {}, asks: {}, lastTradedPrice: 0 },
+    //   TATA: { bids: {}, asks: {}, lastTradedPrice: 0 },
+    // };
 
     setInterval(() => this.getSymbolDepth("INR-AXIS", true), 5 * 1000)
   }
@@ -62,11 +118,13 @@ class EngineStore {
     if (isQueue) {  
         redisManager.pushDataInWsQueue({
         type: "order_book",
-        data: this.ORDERBOOK
+        // data: this.ORDERBOOK
+        data: this.USERORDERBOOK
       }, "orderbook-to-ws-queue")
     }
     
-    return this.ORDERBOOK[stock]
+    // return this.ORDERBOOK[stock]
+    return this.USERORDERBOOK[stock]
   }
 
   getFills = (userId: string) => {
@@ -112,12 +170,12 @@ class EngineStore {
 
 
   getUserBalance = (userId: string) => {
-    if (!this.BALANCES[userId]){
+    if (!this.BALANCES[userId]) {
       this.BALANCES[userId] = {
-          AXIS: { locked: 0, total: 1000 },
-          HDFC: { locked: 0, total: 1000 },
-          INR: { locked: 0, total: 10000 },
-          TATA: { locked: 0, total: 1000 },
+        AXIS: { locked: 0, total: 1000 },
+        HDFC: { locked: 0, total: 1000 },
+        INR: { locked: 0, total: 10000 },
+        TATA: { locked: 0, total: 1000 },
       };
     }
 
@@ -192,11 +250,17 @@ class EngineStore {
     // for orignal order book
     const key = price;
     
-    const orderQty = this.ORDERBOOK[orderBookKey][type][key]?.totalQuantity || 0;
+    // const orderQty = this.ORDERBOOK[orderBookKey][type][key]?.totalQuantity || 0;
 
-    this.ORDERBOOK[orderBookKey][type][key] = {
-      totalQuantity: orderQty + qtyToAdd,
-    };
+    // this.ORDERBOOK[orderBookKey][type][key] = {
+    //   totalQuantity: orderQty.totalQuantity + qtyToAdd,
+    // };
+
+    this.USERORDERBOOK[orderBookKey][type][key]!.push({
+      totalQuantity: qtyToAdd,
+      price: key,
+      userId
+    }) 
   }
 
   checkAvailablePriceInOrderBook =(
@@ -204,56 +268,83 @@ class EngineStore {
     balanceKey: OrderBookKey,
     type: "asks" | "bids",
   ) => {
-    const data = this.ORDERBOOK[balanceKey][type];
-    let key: number = 0
+    // const data = this.ORDERBOOK[balanceKey][type];
+    const data2 = this.USERORDERBOOK[balanceKey][type];
+    // let key: number = 0
 
-    const keys = Object.keys(data);
+    // const keys = Object.keys(data);
+
+    let keys;
     
     if (type === "asks") {
-      if (keys
-          .sort((a, b) => Number(a) - Number(b)).
-          find((data) => Number(data)! < price)) {
-
-        key = Number(keys
-          .sort((a, b) => Number(a) - Number(b)).
-          find((data) => Number(data)! < price))!
-
-        
-        return { orderBookKey: key, keyPrice: key, qty: data[key]!.totalQuantity };
-      }
+      keys = Object.entries(data2);
+    } else {
+      keys = Object.entries(data2).sort((a, b) => Number(b[0]) - Number(a[0]));
     }
 
-    if (type === "bids") {
-      if (
-        keys
-          .sort((a, b) => Number(b) - Number(a)).
-          find((data) => Number(data)! > price)
-      ) {
-        key = Number(keys
-          .sort((a, b) => Number(b) - Number(a)).
-          find((data) => Number(data)! > price))!
+    for (const [idx, [key, value]] of Object.entries(keys)) {
+      console.log(idx)
+      console.log(key)
+      console.log(value)
+
+      const keyPrice = Number(key);
+      const keyValue = value.find((val) => val.price === keyPrice)!;
+
+      if (type === "asks") {
+        if (keyPrice <= price) {
+          return { orderBookKey: keyPrice, keyPrice, qty: keyValue.totalQuantity };
+        }
+      }
+      
+      if (type === "bids") {
+        if (keyPrice >= price) {
+          return { orderBookKey: keyPrice, keyPrice, qty: keyValue.totalQuantity };
+        }
+      }
+      
+    }
+
+    
+    // if (type === "asks") {
+    //   if (keys
+    //         .find((data) => Number(data)! < price)) {
+
+    //     key = Number(keys.find((data) => Number(data)! < price))!
+
+    //     return { orderBookKey: key, keyPrice: key, qty: data[key]!.totalQuantity };
+    //   }
+    // }
+
+    // if (type === "bids") {
+    //   if (
+    //     keys
+    //       .sort((a, b) => Number(b) - Number(a) ? 1 : -1).
+    //       find((data) => Number(data)! > price)
+    //   ) {
+    //     key = Number(keys
+    //       .sort((a, b) => Number(b) - Number(a)).
+    //       find((data) => Number(data)! > price))!
 
           
-          return { orderBookKey: key, keyPrice: key, qty: data[key]!.totalQuantity };
-        }
-    }
+    //       return { orderBookKey: key, keyPrice: key, qty: data[key]!.totalQuantity };
+    //     }
+    // }
 
-    if (keys.find((key) => price === Number(key))) {
-      key = Number(keys.find((key) => price === Number(key)))!;
+    // if (keys.find((key) => price === Number(key))) {
+    //   key = Number(keys.find((key) => price === Number(key)))!;
 
       
-      return { orderBookKey: key, keyPrice: key, qty: data[key]!.totalQuantity };
-    }
+    //   return { orderBookKey: key, keyPrice: key, qty: data[key]!.totalQuantity };
+    // }
 
     return null;
   }
 
   completeOrder = (side: orderSide, orderBookKey: number, userQty: number, availableQty: number, userId: string, finalPrice: number, type: orderType) => {
-    const order =
-      this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey];
-
-    console.log("order", this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey])
-    console.log("userqty", userQty)
+    // const order =
+    //   this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey];
+    const order2 =
+      this.USERORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey]?.find((ord) => ord.price === orderBookKey)!;
       
     const orderId = crypto.randomUUID();
       
@@ -284,18 +375,46 @@ class EngineStore {
       createdAt: new Date(),
     });
 
-    this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey] = {
-      totalQuantity: order?.totalQuantity! - availableQty,
-    };
+    // this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey] = {
+    //   totalQuantity: order2?.totalQuantity! - availableQty,
+    // };
     
-    if (
-      this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey]
-        ?.totalQuantity === 0
-    ) {
-      delete this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey];
+    const updatedOrder: OrderBookOrder = {
+      ...order2,
+      totalQuantity: order2?.totalQuantity! - availableQty
+    }
+
+    const updatedAXISOrder = this.USERORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey]
+      ?.filter((ord) => ord.price === orderBookKey)!
+      
+    updatedAXISOrder?.push(updatedOrder)
+
+    this.USERORDERBOOK.AXIS[side === "BUY" ? "asks" : "bids"][orderBookKey] = {
+      ...this.USERORDERBOOK.AXIS[side === "BUY" ? "asks" : "bids"][orderBookKey] = updatedAXISOrder
     }
     
-    this.ORDERBOOK["AXIS"].lastTradedPrice = orderBookKey;
+    // if (
+    //   this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey]
+    //     ?.totalQuantity === 0
+    // ) {
+    //   delete this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey];
+    // }
+
+    const reFetchedOrder = 
+      this.USERORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey]?.find((ord, idx) => ord.price === orderBookKey)!
+    
+    const reFetchedOrderIdx = 
+      this.USERORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey]?.findIndex((ord, idx) => ord.price === orderBookKey)!
+      
+    if (reFetchedOrder.totalQuantity === 0) {
+      this.USERORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey]
+        ?.splice(reFetchedOrderIdx, 0)
+    }
+    
+    
+    // this.ORDERBOOK["AXIS"].lastTradedPrice = orderBookKey;
+
+    this.USERORDERBOOK["AXIS"].lastTradedPrice = orderBookKey;
 
     const fills = this.getFills(userId);
     
@@ -420,7 +539,20 @@ class EngineStore {
   }
 
   getLastTradingPrice() {
-    return this.ORDERBOOK["AXIS"].lastTradedPrice
+    // return this.ORDERBOOK["AXIS"].lastTradedPrice
+    return this.USERORDERBOOK["AXIS"].lastTradedPrice
+  }
+
+  testFn = () => {
+    let reFetchedOrderIdx = 0
+    
+    const reFetchedOrder = 
+      this.USERORDERBOOK["AXIS"]["bids"][600]?.find((ord, idx) => {
+        reFetchedOrderIdx = idx; 
+        return ord.price === 600
+      })!
+      
+      return { reFetchedOrder, reFetchedOrderIdx }
   }
   
 }
