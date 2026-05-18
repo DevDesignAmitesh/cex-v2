@@ -1,4 +1,4 @@
-import type { EngineResponse, RedisQueueData } from "@repo/common/common";
+import type { EngineResponse, RedisQueueData, UserInOrderBook } from "@repo/common/common";
 import { engineStore } from "./engine-store";
 import { redisManager } from "@repo/redis/redis";
 
@@ -12,6 +12,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
   const { side, symbol, type, userId, price, qty } = parsedResponse.data;
 
   if (type === "LIMIT") {
+    // for limit we need both price and qty (conceptual)
     if (price === undefined || qty === undefined) {
       return {
         clientId: parsedResponse.clientId,
@@ -20,20 +21,31 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
       };
     }
 
+    // things like checking balances, locking amount and finding best price
     const beforeOrderResponseOne = engineStore.beforeOrder(parsedResponse);
     
     if (!beforeOrderResponseOne.ok) return beforeOrderResponseOne
     if (beforeOrderResponseOne.ok && !beforeOrderResponseOne.data?.data) return beforeOrderResponseOne
     
-    const { keyPrice, qty: keyQty, orderBookKey } = beforeOrderResponseOne.data?.data! as {
+    const { keyPrice, qty: keyQty, orderBookKey, user } = beforeOrderResponseOne.data?.data! as {
       keyPrice: number,
       qty: number,
       orderBookKey: number
+      user: UserInOrderBook
     }
 
     
     if (keyQty >= qty) {
       if (side === "BUY") {
+        /**
+         * here we are handling that the key's qty is greater than user's ask so we will give all of that
+         * userProfit = price - keyPrice (keyPrice can be less also as we are finding best price)
+         * 
+         * so if price = 100
+         * and keyPrice = 80
+         * userProfit = 100 - 80 =20
+         * finalPrice = price - userProfit (user have to pay this much only)
+         */
         const userProfit = price - keyPrice;
         const finalPrice = price - userProfit;
         const res = engineStore.completeOrder(
@@ -44,6 +56,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           userId,
           finalPrice,
           type,
+          user
         );
         
         return {
@@ -70,6 +83,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           userId,
           finalPrice,
           type,
+          user
         );
         
         return {
@@ -98,6 +112,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           userId,
           finalPrice,
           type,
+          user
         );
 
         if (leftQty !== 0) {
@@ -133,6 +148,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           userId,
           finalPrice,
           type,
+          user
         );
 
         if (leftQty !== 0) {
@@ -188,10 +204,11 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
     if (beforeOrderResponseOne.ok && !beforeOrderResponseOne.data?.data) return beforeOrderResponseOne
     
     
-    const { keyPrice, qty: keyQty, orderBookKey } = beforeOrderResponseOne.data?.data! as {
+    const { keyPrice, qty: keyQty, orderBookKey, user } = beforeOrderResponseOne.data?.data! as {
       keyPrice: number,
       qty: number,
       orderBookKey: number
+      user: UserInOrderBook
     }
 
     if (keyQty >= qty!) {
@@ -206,6 +223,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           userId,
           finalPrice,
           type,
+          user
         );
 
         return {
@@ -232,6 +250,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           userId,
           finalPrice,
           type,
+          user
         );
         
         return {

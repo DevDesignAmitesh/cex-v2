@@ -1,4 +1,4 @@
-import type { Balance, BalanceKey, EngineResponse, Fill, Order, OrderBook, OrderBookKey, OrderBookOrder, orderSide, orderType, RedisQueueData, UserBasedOrderBook } from "@repo/common/common";
+import type { Balance, BalanceKey, EngineResponse, Fill, Order, OrderBook, OrderBookKey, OrderBookOrder, orderSide, orderType, RedisQueueData, UserBasedOrderBook, UserInOrderBook } from "@repo/common/common";
 import { redisManager } from "@repo/redis/redis";
 
 class EngineStore {
@@ -169,6 +169,8 @@ class EngineStore {
 
 
   getUserBalance = (userId: string) => {
+    // if not then assign default values to the user and return it
+    
     if (!this.BALANCES[userId]) {
       this.BALANCES[userId] = {
         AXIS: { locked: 0, total: 1000 },
@@ -181,10 +183,12 @@ class EngineStore {
   }
 
   gettingAndLockingUserBalance = (userId: string, price: number, qty: number, side: orderSide) => {
+    // getting user's balance
     const userBalance = this.getUserBalance(userId);
     if (!userBalance) return false;
     
     if (side === "BUY") {
+      // while buying qty of a stock we need to confirm does the user have this much amout to PAY
       const requiredBalance = price * qty;
       /**
        * requiredBalance = 1000;
@@ -197,6 +201,7 @@ class EngineStore {
       userBalance.INR.locked += requiredBalance;
       return true;
     } else if (side === "SELL") {
+      // in the case of selling, does the user have this much qty to sell
       const requiredQty = qty;
 
       /**
@@ -245,20 +250,41 @@ class EngineStore {
     orderBookKey: OrderBookKey,
     qtyToAdd: number,
   ) => { 
-    // for orignal order book
-    const key = price;
+    // if not created assigning default values
+    if (!this.USERORDERBOOK[orderBookKey][type][price]) {
+      this.USERORDERBOOK[orderBookKey][type][price] = {
+        createdAt: Date.now(),
+        totalQuantity: 0,
+        users: []
+      }
+    }
     
-    // const orderQty = this.ORDERBOOK[orderBookKey][type][key]?.totalQuantity || 0;
+    // fetching the order 
+    const order = this.USERORDERBOOK[orderBookKey][type][price]!;
+    
+    // apending all latest details to this one
+    this.USERORDERBOOK[orderBookKey][type][price] = {
+      createdAt: Date.now(),
+      totalQuantity: order.totalQuantity + qtyToAdd,
+      users: [ ...order.users, { id: userId, createdAt: Date.now(), qty: qtyToAdd, price } ]
+    }
 
-    // this.ORDERBOOK[orderBookKey][type][key] = {
-    //   totalQuantity: orderQty.totalQuantity + qtyToAdd,
-    // };
+    // refetching the order with the latest details
+    const reFetchedOrder = this.USERORDERBOOK[orderBookKey][type][price]!;
 
-    this.USERORDERBOOK[orderBookKey][type][key]!.push({
-      totalQuantity: qtyToAdd,
-      price: key,
-      userId
-    }) 
+    // deleting this one
+    delete this.USERORDERBOOK[orderBookKey][type][price]
+    
+    // sorting the users
+    const sortedUsers = reFetchedOrder.users.sort((a, b) => a.createdAt - b.createdAt);
+    
+    // creating new one with the refetched order book with the sorted users
+    this.USERORDERBOOK[orderBookKey][type][price] = {
+      createdAt: reFetchedOrder.createdAt,
+      totalQuantity: reFetchedOrder.createdAt,
+      users: sortedUsers
+    }
+    
   }
 
   checkAvailablePriceInOrderBook =(
@@ -267,7 +293,7 @@ class EngineStore {
     type: "asks" | "bids",
   ) => {
     // const data = this.ORDERBOOK[balanceKey][type];
-    const data2 = this.USERORDERBOOK[balanceKey][type];
+    const data = this.USERORDERBOOK[balanceKey][type];
     // let key: number = 0
 
     // const keys = Object.keys(data);
@@ -275,9 +301,11 @@ class EngineStore {
     let keys;
     
     if (type === "asks") {
-      keys = Object.entries(data2);
+      // by default sorting from small to big numbers
+      keys = Object.entries(data)
     } else {
-      keys = Object.entries(data2).sort((a, b) => Number(b[0]) - Number(a[0]));
+      // for bids we need the biggest number on the top, so thats why sorting it
+      keys = Object.entries(data).sort((a, b) => Number(b[0]) - Number(a[0]));
     }
 
     for (const [idx, [key, value]] of Object.entries(keys)) {
@@ -285,18 +313,34 @@ class EngineStore {
       console.log(key)
       console.log(value)
 
+      /**
+       * 
+       * here 200 is the keyPrice and keyvalue is that array
+       * 200: [{
+       *    totalQuantity: number,
+       *    userId: string
+       * }]
+       */
+      
       const keyPrice = Number(key);
-      const keyValue = value.find((val) => val.price === keyPrice)!;
-
+      const user = value.users[0]!;
+      
+      // TODO: figurig out how to find number of users which will fill the order (qty)
+      
+      
+      
+      // in the array there are many qty of different users to adding thosee
       if (type === "asks") {
+        // finding the best buying price for the buyers for that we need LESS or EQUAL price (compare to the user)
         if (keyPrice <= price) {
-          return { orderBookKey: keyPrice, keyPrice, qty: keyValue.totalQuantity };
+          return { orderBookKey: keyPrice, keyPrice, qty: value.totalQuantity, user };
         }
       }
       
       if (type === "bids") {
+        // finding best selling price for the sellers for that we need MORE or EQUAL price (compare to the user)
         if (keyPrice >= price) {
-          return { orderBookKey: keyPrice, keyPrice, qty: keyValue.totalQuantity };
+          return { orderBookKey: keyPrice, keyPrice, qty: value.totalQuantity, user };
         }
       }
       
@@ -338,11 +382,34 @@ class EngineStore {
     return null;
   }
 
-  completeOrder = (side: orderSide, orderBookKey: number, userQty: number, availableQty: number, userId: string, finalPrice: number, type: orderType) => {
+  /**
+   * 
+   * @param side => (asks | bids)
+   * @param orderBookKey => price on the which the user get matched
+   * @param userQty => quantity asked by the user
+   * @param availableQty => available qty in the key
+   * @param userId => present user
+   * @param finalPrice => price paid by the user
+   * @param type => (MARKET | LIMIT)
+   * @param user => the user of which qty we are eating
+   * @param oldOrderId => is it the same order (looping on it)
+   * @returns 
+   */
+  completeOrder = (
+    side: orderSide, 
+    orderBookKey: number, 
+    userQty: number, 
+    availableQty: number, 
+    userId: string, 
+    finalPrice: number, 
+    type: orderType,
+    user: UserInOrderBook,
+    oldOrderId: string
+  ) => {
     // const order =
     //   this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey];
-    const order2 =
-      this.USERORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey]?.find((ord) => ord.price === orderBookKey)!;
+    const order =
+      this.USERORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey]!;
       
     const orderId = crypto.randomUUID();
       
@@ -376,19 +443,10 @@ class EngineStore {
     // this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey] = {
     //   totalQuantity: order2?.totalQuantity! - availableQty,
     // };
-    
-    const updatedOrder: OrderBookOrder = {
-      ...order2,
-      totalQuantity: order2?.totalQuantity! - availableQty
-    }
-
-    const updatedAXISOrder = this.USERORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey]
-      ?.filter((ord) => ord.price === orderBookKey)!
-      
-    updatedAXISOrder?.push(updatedOrder)
 
     this.USERORDERBOOK.AXIS[side === "BUY" ? "asks" : "bids"][orderBookKey] = {
-      ...this.USERORDERBOOK.AXIS[side === "BUY" ? "asks" : "bids"][orderBookKey] = updatedAXISOrder
+      ...order,
+      totalQuantity: order.totalQuantity - availableQty
     }
     
     // if (
@@ -399,20 +457,15 @@ class EngineStore {
     // }
 
     const reFetchedOrder = 
-      this.USERORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey]?.find((ord, idx) => ord.price === orderBookKey)!
-    
-    const reFetchedOrderIdx = 
-      this.USERORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey]?.findIndex((ord, idx) => ord.price === orderBookKey)!
+      this.USERORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey]!
       
-    if (reFetchedOrder.totalQuantity === 0) {
-      this.USERORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey]
-        ?.splice(reFetchedOrderIdx, 0)
-    }
-    
-    
-    // this.ORDERBOOK["AXIS"].lastTradedPrice = orderBookKey;
+      if (reFetchedOrder.totalQuantity === 0) {
+        delete this.USERORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey]
+      }
+      
+      // this.ORDERBOOK["AXIS"].lastTradedPrice = orderBookKey;
+      this.USERORDERBOOK["AXIS"].lastTradedPrice = orderBookKey;
 
-    this.USERORDERBOOK["AXIS"].lastTradedPrice = orderBookKey;
 
     const fills = this.getFills(userId);
     
@@ -454,6 +507,7 @@ class EngineStore {
     } = parsedResponse.data;
 
     if (type === "LIMIT") {
+      // for limit we need both price and qty (conceptual)
       if (price === undefined || qty === undefined) {
         return {
           clientId: parsedResponse.clientId,
@@ -462,6 +516,7 @@ class EngineStore {
         };
       }
     } else if (type === "MARKET") {
+      // for market any one value is able to find the other one thats why one value should be defined
       if (price === undefined && qty === undefined) {
         return {
           clientId: parsedResponse.clientId,
@@ -509,6 +564,8 @@ class EngineStore {
     //   }
     // }
 
+
+    // fn for checking does user have balance 
     const isUserHaveBalance = this.gettingAndLockingUserBalance(
       userId,
       price,
@@ -524,6 +581,7 @@ class EngineStore {
       };
     }
 
+    // finding available price from the orderbook
     const availablePrice = engineStore.checkAvailablePriceInOrderBook(
       price,
       "AXIS",
@@ -531,6 +589,7 @@ class EngineStore {
     );
 
 
+    // if price is not available and type is market, means the user want on the spot execution, so will cancel the order
     if (!availablePrice && type === "MARKET") {
       return {
       clientId: parsedResponse.clientId,
@@ -542,8 +601,8 @@ class EngineStore {
     }
     }
     
+    // here the type will be LIMI, so we will add it in the orderBook
     if (!availablePrice) {
-      // push in the order book
       this.addNewAsksOrBidsInOrderBook(
         side === "SELL" ? "asks" : "bids",
         price,
@@ -562,7 +621,7 @@ class EngineStore {
       };
     }
 
-    // quantiy thing
+    // returning the avilable qty for the further processing
     return {
       clientId: parsedResponse.clientId,
       ok: true,
@@ -577,18 +636,6 @@ class EngineStore {
   getLastTradingPrice() {
     // return this.ORDERBOOK["AXIS"].lastTradedPrice
     return this.USERORDERBOOK["AXIS"].lastTradedPrice
-  }
-
-  testFn = () => {
-    let reFetchedOrderIdx = 0
-    
-    const reFetchedOrder = 
-      this.USERORDERBOOK["AXIS"]["bids"][600]?.find((ord, idx) => {
-        reFetchedOrderIdx = idx; 
-        return ord.price === 600
-      })!
-      
-      return { reFetchedOrder, reFetchedOrderIdx }
   }
   
   calculateFinalPriceWithLeverage = (userId: string, price: number, qty: number) => {
@@ -630,6 +677,10 @@ class EngineStore {
     this.BALANCES[userId] = updatedUserBalance;
   }
   
+
+  testfn = () => {
+    return null
+  }
 }
 
 export const engineStore = EngineStore.getInstance();

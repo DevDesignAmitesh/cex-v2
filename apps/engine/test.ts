@@ -1,10 +1,9 @@
 import { engineStore } from "./engine-store";
 
 function main() {
-  const { reFetchedOrder, reFetchedOrderIdx } = engineStore.testFn()!
+  const res = engineStore.testfn()!
   
-  console.log(reFetchedOrder)
-  console.log(reFetchedOrderIdx)
+  console.log(res)
 }
 
 

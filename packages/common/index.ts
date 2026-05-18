@@ -195,10 +195,19 @@ export type orderType = "LIMIT" | "MARKET";
 export type OrderBookKey = "AXIS" | "TATA";
 
 
-export type OrderBookOrder = {
-  totalQuantity: number;
-  userId: string
-  price: number   
+// export type OrderBookOrder = {
+//   totalQuantity: number;
+//   userId: string
+//   price: number, 
+//   createdAt: Date
+// }
+
+export type UserInOrderBook = { id: string, qty: number, price: number, createdAt: number }
+
+export type OrderBookOrder = { 
+  totalQuantity: number, 
+  createdAt: number, 
+  users: UserInOrderBook[] 
 }
 
 export type UserBasedOrderBook = Record<
@@ -206,11 +215,11 @@ export type UserBasedOrderBook = Record<
   {
     bids: Record<
       number,
-      OrderBookOrder[]
+      OrderBookOrder
     >;
     asks: Record<
       number,
-      OrderBookOrder[]
+      OrderBookOrder
     >;
     lastTradedPrice: number;
   }
@@ -220,13 +229,15 @@ export type fillType = "MAKER" | "TAKER";
 
 export type Fill = {
   id: string;
-  qty: number;
-  type: fillType;
-  side: orderSide;
+  orderId: string;
+  otherUserId: string;
   userId: string;
+  filledQty: number,
+  askedQty: number;
   price: number;
   asset: BalanceKey;
-  orderId: string;
+  type: fillType;
+  side: orderSide;
   createdAt: Date;
 };
 
