@@ -1,9 +1,14 @@
-import { engineStore } from "./engine-store";
+import type { UserInOrderBook } from "@repo/common/common"
 
 function main() {
-  const res = engineStore.testfn()!
-  
-  console.log(res)
+    let users: UserInOrderBook[] = []
+
+    const qty = 20;
+    
+    for (const [idx, val] of users.entries()) {
+      
+    }
+
 }
 
 

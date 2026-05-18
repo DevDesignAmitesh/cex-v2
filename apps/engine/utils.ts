@@ -27,13 +27,24 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
     if (!beforeOrderResponseOne.ok) return beforeOrderResponseOne
     if (beforeOrderResponseOne.ok && !beforeOrderResponseOne.data?.data) return beforeOrderResponseOne
     
-    const { keyPrice, qty: keyQty, orderBookKey, user } = beforeOrderResponseOne.data?.data! as {
+    const { keyPrice, qty: keyQty, orderBookKey, users } = beforeOrderResponseOne.data?.data! as {
       keyPrice: number,
       qty: number,
       orderBookKey: number
-      user: UserInOrderBook
+      users: UserInOrderBook[]
     }
 
+    // pushing my details also, because its getting used for creating fills and mine one will also get created
+    users.push({
+      id: crypto.randomUUID(),
+      createdAt: Date.now(),
+      price,
+      qty
+    })
+
+
+    console.log("beforeOrderResponseOne.data?.data", beforeOrderResponseOne.data?.data)
+    
     
     if (keyQty >= qty) {
       if (side === "BUY") {
@@ -43,11 +54,13 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
          * 
          * so if price = 100
          * and keyPrice = 80
-         * userProfit = 100 - 80 =20
+         * userProfit = 100 - 80 = 20
          * finalPrice = price - userProfit (user have to pay this much only)
          */
         const userProfit = price - keyPrice;
         const finalPrice = price - userProfit;
+
+        // main fn for completing the shit
         const res = engineStore.completeOrder(
           side,
           orderBookKey,
@@ -56,7 +69,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           userId,
           finalPrice,
           type,
-          user
+          // user
         );
         
         return {
@@ -83,7 +96,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           userId,
           finalPrice,
           type,
-          user
+          // user
         );
         
         return {
@@ -112,7 +125,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           userId,
           finalPrice,
           type,
-          user
+          // user
         );
 
         if (leftQty !== 0) {
@@ -148,7 +161,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           userId,
           finalPrice,
           type,
-          user
+          // user
         );
 
         if (leftQty !== 0) {
@@ -223,7 +236,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           userId,
           finalPrice,
           type,
-          user
+          // user
         );
 
         return {
@@ -250,7 +263,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           userId,
           finalPrice,
           type,
-          user
+          // user
         );
         
         return {

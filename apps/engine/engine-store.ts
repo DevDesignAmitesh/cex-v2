@@ -1,5 +1,6 @@
 import type { Balance, BalanceKey, EngineResponse, Fill, Order, OrderBook, OrderBookKey, OrderBookOrder, orderSide, orderType, RedisQueueData, UserBasedOrderBook, UserInOrderBook } from "@repo/common/common";
 import { redisManager } from "@repo/redis/redis";
+import fs from "fs";
 
 class EngineStore {
   private static instance: EngineStore;
@@ -17,16 +18,16 @@ class EngineStore {
     //   HDFC: { locked, total },
     //   INR: { locked, total },
     //   TATA: { locked, total },
-    // };
+    // };    
 
-    this.BALANCES = {};
+    this.BALANCES = this.readBackupData().BALANCES ?? {};
     // this.ORDERBOOK = {
     //   AXIS: { bids: {}, asks: {}, lastTradedPrice: 0 },
     //   HDFC: { bids: {}, asks: {}, lastTradedPrice: 0 },
     //   TATA: { bids: {}, asks: {}, lastTradedPrice: 0 },
     // };
 
-    this.USERORDERBOOK = {
+    this.USERORDERBOOK = this.readBackupData().USERORDERBOOK ?? {
       AXIS: { bids: {}, asks: {}, lastTradedPrice: 0 },
       TATA: { bids: {}, asks: {}, lastTradedPrice: 0 },
     };
@@ -82,6 +83,9 @@ class EngineStore {
     // };
 
     setInterval(() => this.getSymbolDepth("INR-AXIS", true), 5 * 1000)
+    setInterval(() => this.backupData(), 3 * 1000)
+    
+    // this.backupData();
   }
 
   static getInstance = (): EngineStore => {
@@ -129,12 +133,12 @@ class EngineStore {
   getFills = (userId: string) => {
     const arr: Fill[] = []    
 
-    this.FILLS.forEach((fls) => {
-      console.log(fls.userId === userId);
-      if (fls.userId === userId) {
-        arr.push(fls)
-      }
-    });
+    // this.FILLS.forEach((fls) => {
+    //   console.log(fls.userId === userId);
+    //   if (fls.userId === userId) {
+    //     arr.push(fls)
+    //   }
+    // });
     
     console.log("arr", arr)
     
@@ -281,7 +285,7 @@ class EngineStore {
     // creating new one with the refetched order book with the sorted users
     this.USERORDERBOOK[orderBookKey][type][price] = {
       createdAt: reFetchedOrder.createdAt,
-      totalQuantity: reFetchedOrder.createdAt,
+      totalQuantity: reFetchedOrder.totalQuantity,
       users: sortedUsers
     }
     
@@ -308,13 +312,14 @@ class EngineStore {
       keys = Object.entries(data).sort((a, b) => Number(b[0]) - Number(a[0]));
     }
 
+    const users: UserInOrderBook[] = [];
+    
     for (const [idx, [key, value]] of Object.entries(keys)) {
       console.log(idx)
       console.log(key)
       console.log(value)
 
       /**
-       * 
        * here 200 is the keyPrice and keyvalue is that array
        * 200: [{
        *    totalQuantity: number,
@@ -323,8 +328,7 @@ class EngineStore {
        */
       
       const keyPrice = Number(key);
-      const user = value.users[0]!;
-      
+
       // TODO: figurig out how to find number of users which will fill the order (qty)
       
       
@@ -333,14 +337,16 @@ class EngineStore {
       if (type === "asks") {
         // finding the best buying price for the buyers for that we need LESS or EQUAL price (compare to the user)
         if (keyPrice <= price) {
-          return { orderBookKey: keyPrice, keyPrice, qty: value.totalQuantity, user };
+          users.push(value.users[Number(idx)]!);
+          return { orderBookKey: keyPrice, keyPrice, qty: value.totalQuantity, users };
         }
       }
       
       if (type === "bids") {
         // finding best selling price for the sellers for that we need MORE or EQUAL price (compare to the user)
         if (keyPrice >= price) {
-          return { orderBookKey: keyPrice, keyPrice, qty: value.totalQuantity, user };
+          users.push(value.users[Number(idx)]!);
+          return { orderBookKey: keyPrice, keyPrice, qty: value.totalQuantity, users };
         }
       }
       
@@ -382,6 +388,31 @@ class EngineStore {
     return null;
   }
 
+
+  createFillsForUsers = (users: UserInOrderBook[], orderId: string, userId: string, availableQty: number) => {    
+    let decreasingQty = availableQty; // let say this 10
+    
+    const updatedUsers: UserInOrderBook[] = []
+    
+    for (const val of users) {
+      if (decreasingQty - val.qty >= 0 ) { // here it will be 10 - (4) imaginary = 6 (means this user's all qty gone)
+        updatedUsers.push({
+          ...val,
+          qty: 0
+        })
+        
+        decreasingQty -= val.qty // decrasing the value for the next loop
+      } else {
+        const leftQty = Math.abs(decreasingQty - val.qty);
+
+        updatedUsers.push({
+          ...val,
+          qty: leftQty
+        })
+      }
+    }
+  } 
+
   /**
    * 
    * @param side => (asks | bids)
@@ -391,7 +422,7 @@ class EngineStore {
    * @param userId => present user
    * @param finalPrice => price paid by the user
    * @param type => (MARKET | LIMIT)
-   * @param user => the user of which qty we are eating
+   * @param users => the user of which qty we are eating
    * @param oldOrderId => is it the same order (looping on it)
    * @returns 
    */
@@ -403,8 +434,8 @@ class EngineStore {
     userId: string, 
     finalPrice: number, 
     type: orderType,
-    user: UserInOrderBook,
-    oldOrderId: string
+    // users: UserInOrderBook[],
+    // oldOrderId: string
   ) => {
     // const order =
     //   this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey];
@@ -426,19 +457,24 @@ class EngineStore {
       type,
     });
 
-    const fillId = crypto.randomUUID();
+    // TODO: have to figure it out
 
-    this.FILLS.push({
-      id: fillId,
-      orderId,
-      userId,
-      price: finalPrice,
-      qty: availableQty,
-      side,
-      asset: "AXIS",
-      type: "TAKER",
-      createdAt: new Date(),
-    });
+    // this.createFillsForUsers();
+    
+    // this.FILLS.push({
+    //   askedQty,
+    //   asset,
+    //   createdAt,
+    //   filledQty,
+    //   id,
+    //   makerId,
+    //   makerOrderId,
+    //   price,
+    //   side,
+    //   takerId,
+    //   takerOrderId,
+    //   type
+    // });
 
     // this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey] = {
     //   totalQuantity: order2?.totalQuantity! - availableQty,
@@ -469,19 +505,19 @@ class EngineStore {
 
     const fills = this.getFills(userId);
     
-    redisManager.pushDataInOrderQueue({
-      type: "create_order",
-      data: {
-        filledQty: availableQty,
-        fillType: "TAKER",
-        price: finalPrice,
-        qty: userQty,
-        side,
-        status: "FILLED",
-        type,
-        userId
-      }
-    }, "orderbook-to-db-queue")
+    // redisManager.pushDataInOrderQueue({
+    //   type: "create_order",
+    //   data: {
+    //     filledQty: availableQty,
+    //     fillType: "TAKER",
+    //     price: finalPrice,
+    //     qty: userQty,
+    //     side,
+    //     status: "FILLED",
+    //     type,
+    //     userId
+    //   }
+    // }, "orderbook-to-db-queue")
     
     engineStore.resetLockBalalnceOfUser(userId, side);
     engineStore.deductTotalBalalnceOfUser(
@@ -675,6 +711,21 @@ class EngineStore {
     }
 
     this.BALANCES[userId] = updatedUserBalance;
+  }
+
+  backupData = () => {
+    fs.writeFileSync("./orderbook.json", JSON.stringify(this.USERORDERBOOK))      
+    fs.writeFileSync("./balances.json", JSON.stringify(this.BALANCES))      
+  }
+
+  readBackupData = () => {
+    const USERORDERBOOK = JSON.parse(fs.readFileSync("./orderbook.json").toString() ?? "{}");
+    const BALANCES = JSON.parse(fs.readFileSync("./balances.json").toString() ?? "{}");
+
+    console.log("orderbook", USERORDERBOOK)
+    console.log("balances", BALANCES)
+
+    return { USERORDERBOOK, BALANCES }
   }
   
 

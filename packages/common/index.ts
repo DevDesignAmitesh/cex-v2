@@ -229,9 +229,10 @@ export type fillType = "MAKER" | "TAKER";
 
 export type Fill = {
   id: string;
-  orderId: string;
-  otherUserId: string;
-  userId: string;
+  makerOrderId: string;
+  takerOrderId: string;
+  makerId: string;
+  takerId: string;
   filledQty: number,
   askedQty: number;
   price: number;
