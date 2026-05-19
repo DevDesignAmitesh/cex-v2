@@ -6,10 +6,13 @@ export async function createOrder(
   req: Request,
   res: Response,
 ) {
+  const orderId = crypto.randomUUID();
+
   const { data, success, error } = createOrderSchema.safeParse({
     ...req.body,
     userId: req.userId,
     market: req.params.market,
+    orderId,
   });
 
   if (!success) {

@@ -1,7 +1,6 @@
 import type { EngineResponse, RedisQueueData } from "@repo/common/common";
 import { redisManager } from "@repo/redis/redis";
 import { engineRequestHandler } from "./lib";
-import { engineStore } from "./engine-store";
 
 async function main() {
   for (;;) {

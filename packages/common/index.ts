@@ -40,6 +40,7 @@ export const createOrderSchema = z.object({
   price: z.number().optional(),
   qty: z.number().optional(),
   userId: z.uuid(),
+  orderId: z.uuid(),
   // market: z.enum(["SPOT", "PERPS"]),
 });
 

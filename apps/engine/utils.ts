@@ -9,7 +9,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
     error: "invalid type"
   }
 
-  const { side, symbol, type, userId, price, qty } = parsedResponse.data;
+  const { side, symbol, type, userId, price, qty, orderId } = parsedResponse.data;
 
   if (type === "LIMIT") {
     // for limit we need both price and qty (conceptual)
@@ -27,26 +27,17 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
     if (!beforeOrderResponseOne.ok) return beforeOrderResponseOne
     if (beforeOrderResponseOne.ok && !beforeOrderResponseOne.data?.data) return beforeOrderResponseOne
     
-    const { keyPrice, qty: keyQty, orderBookKey, users } = beforeOrderResponseOne.data?.data! as {
+    const { keyPrice, qty: keyQty, orderBookKey } = beforeOrderResponseOne.data?.data! as {
       keyPrice: number,
       qty: number,
       orderBookKey: number
-      users: UserInOrderBook[]
     }
 
-    // pushing my details also, because its getting used for creating fills and mine one will also get created
-    users.push({
-      id: crypto.randomUUID(),
-      createdAt: Date.now(),
-      price,
-      qty
-    })
-
-
-    console.log("beforeOrderResponseOne.data?.data", beforeOrderResponseOne.data?.data)
     
     
     if (keyQty >= qty) {
+      const users = engineStore.getUserInvolvedInSwap(orderBookKey, qty, side)
+
       if (side === "BUY") {
         /**
          * here we are handling that the key's qty is greater than user's ask so we will give all of that
@@ -69,7 +60,8 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           userId,
           finalPrice,
           type,
-          // user
+          users,
+          orderId
         );
         
         return {
@@ -96,7 +88,8 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           userId,
           finalPrice,
           type,
-          // user
+          users,
+          orderId
         );
         
         return {
@@ -112,6 +105,8 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
         };
       }
     } else {
+      const users = engineStore.getUserInvolvedInSwap(orderBookKey, keyQty, side)
+      
       if (side === "BUY") {
         const leftQty = qty - keyQty
         const userProfit = price - keyPrice;
@@ -125,7 +120,8 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           userId,
           finalPrice,
           type,
-          // user
+          users,
+          orderId
         );
 
         if (leftQty !== 0) {
@@ -161,7 +157,8 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           userId,
           finalPrice,
           type,
-          // user
+          users,
+          orderId
         );
 
         if (leftQty !== 0) {
@@ -217,14 +214,17 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
     if (beforeOrderResponseOne.ok && !beforeOrderResponseOne.data?.data) return beforeOrderResponseOne
     
     
-    const { keyPrice, qty: keyQty, orderBookKey, user } = beforeOrderResponseOne.data?.data! as {
+    const { keyPrice, qty: keyQty, orderBookKey } = beforeOrderResponseOne.data?.data! as {
       keyPrice: number,
       qty: number,
       orderBookKey: number
-      user: UserInOrderBook
     }
 
+    
+    
     if (keyQty >= qty!) {
+      const users = engineStore.getUserInvolvedInSwap(orderBookKey, calculatedQty, side)
+
       if (side === "BUY") {
         const userProfit = calculatedPrice - keyPrice;
         const finalPrice = calculatedPrice - userProfit;
@@ -236,7 +236,8 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           userId,
           finalPrice,
           type,
-          // user
+          users,
+          orderId
         );
 
         return {
@@ -263,7 +264,8 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           userId,
           finalPrice,
           type,
-          // user
+          users,
+          orderId
         );
         
         return {

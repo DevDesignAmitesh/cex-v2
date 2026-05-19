@@ -223,14 +223,14 @@ class EngineStore {
     return false;
   }
 
-  resetLockBalalnceOfUser = (userId: string, side: orderSide) => {
+  resetLockBalalnceOfUser = (userId: string, side: orderSide, finalPrice: number, availableQty: number) => {
     const userBalance = this.getUserBalance(userId);
     if (!userBalance) return false;
 
     if (side === "BUY") {
-      userBalance.INR.locked = 0;
+      userBalance.INR.locked -= finalPrice;
     } else {
-      userBalance.AXIS.locked = 0;
+      userBalance.AXIS.locked -= availableQty;
     }
   }
 
@@ -312,13 +312,8 @@ class EngineStore {
       keys = Object.entries(data).sort((a, b) => Number(b[0]) - Number(a[0]));
     }
 
-    const users: UserInOrderBook[] = [];
-    
+    // these are the users from which we are deducting stocks (quantity)
     for (const [idx, [key, value]] of Object.entries(keys)) {
-      console.log(idx)
-      console.log(key)
-      console.log(value)
-
       /**
        * here 200 is the keyPrice and keyvalue is that array
        * 200: [{
@@ -328,25 +323,19 @@ class EngineStore {
        */
       
       const keyPrice = Number(key);
-
-      // TODO: figurig out how to find number of users which will fill the order (qty)
-      
-      
       
       // in the array there are many qty of different users to adding thosee
       if (type === "asks") {
         // finding the best buying price for the buyers for that we need LESS or EQUAL price (compare to the user)
         if (keyPrice <= price) {
-          users.push(value.users[Number(idx)]!);
-          return { orderBookKey: keyPrice, keyPrice, qty: value.totalQuantity, users };
+          return { orderBookKey: keyPrice, keyPrice, qty: value.totalQuantity };
         }
       }
       
       if (type === "bids") {
         // finding best selling price for the sellers for that we need MORE or EQUAL price (compare to the user)
         if (keyPrice >= price) {
-          users.push(value.users[Number(idx)]!);
-          return { orderBookKey: keyPrice, keyPrice, qty: value.totalQuantity, users };
+          return { orderBookKey: keyPrice, keyPrice, qty: value.totalQuantity };
         }
       }
       
@@ -389,11 +378,12 @@ class EngineStore {
   }
 
 
-  createFillsForUsers = (users: UserInOrderBook[], orderId: string, userId: string, availableQty: number) => {    
+  deductQtyAndBalanceOfInvolvedUsers = (users: UserInOrderBook[], availableQty: number, side: orderSide, finalPrice: number) => {    
     let decreasingQty = availableQty; // let say this 10
     
     const updatedUsers: UserInOrderBook[] = []
-    
+
+    // deducting quantity of the users involved in the swap
     for (const val of users) {
       if (decreasingQty - val.qty >= 0 ) { // here it will be 10 - (4) imaginary = 6 (means this user's all qty gone)
         updatedUsers.push({
@@ -402,6 +392,15 @@ class EngineStore {
         })
         
         decreasingQty -= val.qty // decrasing the value for the next loop
+
+        // handling user balances
+        engineStore.deductTotalBalalnceOfUser(
+          val.id,
+          side,
+          finalPrice,
+          val.qty,
+        );
+        engineStore.resetLockBalalnceOfUser(val.id, side, finalPrice, val.qty);
       } else {
         const leftQty = Math.abs(decreasingQty - val.qty);
 
@@ -409,9 +408,64 @@ class EngineStore {
           ...val,
           qty: leftQty
         })
+        
+        // handling user balances
+        engineStore.deductTotalBalalnceOfUser(
+          val.id,
+          side,
+          finalPrice,
+          decreasingQty,
+        );
+        engineStore.resetLockBalalnceOfUser(val.id, side, finalPrice, decreasingQty);
       }
     }
+
+    return updatedUsers;
   } 
+
+  updateInvolvedUsersQtyInOrderBook = (users: UserInOrderBook[], side: orderSide, orderBookKey: number) => {
+    const keySide = side === "BUY" ? "asks" : "bids";
+
+    // getting the latest state
+    const orderBook = this.USERORDERBOOK["AXIS"][keySide][orderBookKey]!;
+
+    // deleting this one
+    delete this.USERORDERBOOK["AXIS"][keySide][orderBookKey];
+
+    // updating the users with the latest one
+    const updatedUsers = orderBook.users.concat(users);
+
+    // updating the order book
+    this.USERORDERBOOK["AXIS"][keySide][orderBookKey] = {
+      ...this.USERORDERBOOK["AXIS"][keySide][orderBookKey]!,
+      users: updatedUsers
+    }
+  }
+
+  creatingFillsForSwap = (updatedUsers: UserInOrderBook[], userId: string, orderId: string) => {
+    const order = this.getOrder(orderId, userId)!;
+    
+    // find out how to get their idss
+    const TODO_ID = crypto.randomUUID();
+    
+    for (const val of updatedUsers) {
+      this.FILLS.push({
+        id: crypto.randomUUID(),
+        askedQty: order.qty,
+        asset: "AXIS",
+        createdAt: new Date(),
+        filledQty: order.filledQty,
+        makerId: val.id,
+        makerOrderId: TODO_ID,
+        price: order.price,
+        side: order.side,
+        takerId: userId,
+        takerOrderId: orderId,
+        type: "TAKER"
+      });
+    }
+  }
+
 
   /**
    * 
@@ -434,15 +488,13 @@ class EngineStore {
     userId: string, 
     finalPrice: number, 
     type: orderType,
-    // users: UserInOrderBook[],
-    // oldOrderId: string
+    users: UserInOrderBook[],
+    orderId: string,
   ) => {
     // const order =
     //   this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey];
     const order =
       this.USERORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey]!;
-      
-    const orderId = crypto.randomUUID();
       
     this.ORDERS.push({
       id: orderId,
@@ -457,40 +509,17 @@ class EngineStore {
       type,
     });
 
-    // TODO: have to figure it out
+    const updatedUsers = this.deductQtyAndBalanceOfInvolvedUsers(users, availableQty, side, finalPrice);
 
-    // this.createFillsForUsers();
+    // updating the users in the order book
+    this.updateInvolvedUsersQtyInOrderBook(updatedUsers, side, orderBookKey);
     
-    // this.FILLS.push({
-    //   askedQty,
-    //   asset,
-    //   createdAt,
-    //   filledQty,
-    //   id,
-    //   makerId,
-    //   makerOrderId,
-    //   price,
-    //   side,
-    //   takerId,
-    //   takerOrderId,
-    //   type
-    // });
-
-    // this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey] = {
-    //   totalQuantity: order2?.totalQuantity! - availableQty,
-    // };
+    this.creatingFillsForSwap(updatedUsers, userId, orderId);
 
     this.USERORDERBOOK.AXIS[side === "BUY" ? "asks" : "bids"][orderBookKey] = {
       ...order,
       totalQuantity: order.totalQuantity - availableQty
-    }
-    
-    // if (
-    //   this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey]
-    //     ?.totalQuantity === 0
-    // ) {
-    //   delete this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey];
-    // }
+    };
 
     const reFetchedOrder = 
       this.USERORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey]!
@@ -499,37 +528,35 @@ class EngineStore {
         delete this.USERORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey]
       }
       
-      // this.ORDERBOOK["AXIS"].lastTradedPrice = orderBookKey;
       this.USERORDERBOOK["AXIS"].lastTradedPrice = orderBookKey;
 
 
     const fills = this.getFills(userId);
     
-    // redisManager.pushDataInOrderQueue({
-    //   type: "create_order",
-    //   data: {
-    //     filledQty: availableQty,
-    //     fillType: "TAKER",
-    //     price: finalPrice,
-    //     qty: userQty,
-    //     side,
-    //     status: "FILLED",
-    //     type,
-    //     userId
-    //   }
-    // }, "orderbook-to-db-queue")
+    redisManager.pushDataInOrderQueue({
+      type: "create_order",
+      data: {
+        filledQty: availableQty,
+        fillType: "TAKER",
+        price: finalPrice,
+        qty: userQty,
+        side,
+        status: "FILLED",
+        type,
+        userId,
+      }
+    }, "orderbook-to-db-queue")
     
-    engineStore.resetLockBalalnceOfUser(userId, side);
+    // handle balances on the current user
     engineStore.deductTotalBalalnceOfUser(
       userId,
       side,
       finalPrice,
-      userQty,
+      availableQty,
     );
-    return {
-      orderId,
-      fills,
-    };
+    engineStore.resetLockBalalnceOfUser(userId, side, finalPrice, availableQty);
+
+    return { orderId, fills };
   }
 
   beforeOrder = (parsedResponse: RedisQueueData): EngineResponse => {
@@ -711,6 +738,22 @@ class EngineStore {
     }
 
     this.BALANCES[userId] = updatedUserBalance;
+  }
+
+  getUserInvolvedInSwap = (orderBookKey: number, totalQuantity: number, side: orderSide) => {
+    let startQty = 0;
+    const users: UserInOrderBook[] = [];
+
+    const orderBook = this.USERORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey]!;
+
+    if (startQty >= totalQuantity) return users;
+    
+    for (const val of orderBook.users) {
+      startQty += val.qty
+      users.push(val)
+    }
+
+    return [];
   }
 
   backupData = () => {
