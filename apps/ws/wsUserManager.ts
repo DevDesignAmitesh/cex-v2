@@ -26,6 +26,7 @@ class WsUserManager {
   }
 
   broadcast(data: OrderBook) {
+    // TODO: fix this the orignal type now changes to UserOrderBook
     let arrayBasedOrderBook: {
       asks: {key: string, value: number }[]
       bids: {key: string, value: number }[]

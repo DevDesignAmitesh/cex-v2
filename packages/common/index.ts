@@ -169,6 +169,7 @@ export type Order = {
   filledQty: number;
   status: orderStatus;
   createdAt: Date;
+  updatedAt: Date;
 };
 
 export type OrderBook = Record<

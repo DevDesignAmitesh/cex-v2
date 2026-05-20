@@ -32,8 +32,6 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
       qty: number,
       orderBookKey: number
     }
-
-    
     
     if (keyQty >= qty) {
       const users = engineStore.getUserInvolvedInSwap(orderBookKey, qty, side)
@@ -195,7 +193,6 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
 
     let calculatedPrice = 0;
     let calculatedQty = 0;
-
     
     if (price) {
       calculatedQty = price / engineStore.getLastTradingPrice()
@@ -213,14 +210,11 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
     if (!beforeOrderResponseOne.ok) return beforeOrderResponseOne
     if (beforeOrderResponseOne.ok && !beforeOrderResponseOne.data?.data) return beforeOrderResponseOne
     
-    
     const { keyPrice, qty: keyQty, orderBookKey } = beforeOrderResponseOne.data?.data! as {
       keyPrice: number,
       qty: number,
       orderBookKey: number
     }
-
-    
     
     if (keyQty >= qty!) {
       const users = engineStore.getUserInvolvedInSwap(orderBookKey, calculatedQty, side)

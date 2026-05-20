@@ -94,22 +94,11 @@ class EngineStore {
   };
 
   deleteOrder = (userId: string, orderId: string) => {
-    const order = this.ORDERS.find((ord) => ord.userId === userId && ord.id === orderId);
-    if (!order) return false;
+    const orderIndex = this.ORDERS.findIndex((ord) => ord.userId === userId && ord.id === orderId);
+    if (orderIndex === -1) return false;
 
-    let newOrder = order;
+    this.ORDERS.splice(orderIndex, 0)
 
-    if (order) {
-      newOrder = {
-        ...order,
-        status: "CANCELLED"
-      }
-    }
-
-    const fillteredOrder = this.ORDERS.filter((ord) => ord.userId === userId && ord.id === orderId);
-    fillteredOrder.push(newOrder)
-
-    this.ORDERS = fillteredOrder;
     return true;
   }
 
@@ -130,15 +119,25 @@ class EngineStore {
     return this.USERORDERBOOK[stock]
   }
 
-  getFills = (userId: string) => {
+  getFills = (userId: string, orderId?: string) => {
     const arr: Fill[] = []    
 
-    // this.FILLS.forEach((fls) => {
-    //   console.log(fls.userId === userId);
-    //   if (fls.userId === userId) {
-    //     arr.push(fls)
-    //   }
-    // });
+    if (orderId) {
+      this.FILLS.forEach((fls) => {
+        if (
+          (fls.takerId === userId || fls.makerId == userId) && 
+          (fls.makerOrderId === orderId || fls.takerOrderId === orderId)) {
+          arr.push(fls)
+        }
+      });
+    } else {
+      this.FILLS.forEach((fls) => {
+        if (fls.takerId === userId || fls.makerId == userId) {
+          arr.push(fls)
+        }
+      });
+    }
+    
     
     console.log("arr", arr)
     
@@ -466,6 +465,20 @@ class EngineStore {
     }
   }
 
+  updateOrder = (userId: string, orderId: string, updatedOrderData: Partial<Order>) => {
+    const order = this.getOrder(orderId, userId);
+    if (!order) return;
+
+    const updatedOrder = {
+      ...order,
+      ...updatedOrderData
+    }
+
+    this.deleteOrder(userId, order.id);
+
+    this.ORDERS.push(updatedOrder)
+  }
+
 
   /**
    * 
@@ -496,18 +509,30 @@ class EngineStore {
     const order =
       this.USERORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey]!;
       
-    this.ORDERS.push({
-      id: orderId,
-      createdAt: new Date(),
-      filledQty: availableQty,
-      qty: userQty,
-      userId,
-      price: finalPrice,
-      market: "AXIS",
-      side,
-      status: "OPEN",
-      type,
-    });
+    const existingOrder = this.getOrder(orderId, userId);
+      
+    if (!existingOrder) {
+      this.ORDERS.push({
+        id: orderId,
+        userId,
+        type,
+        status: userQty === availableQty ? "FILLED" : "PARTIAL_FILLED",
+        filledQty: availableQty,
+        qty: userQty,
+        price: finalPrice,
+        market: "AXIS",
+        side,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    } else {
+      this.updateOrder(userId, orderId, {
+        updatedAt: new Date(),
+        filledQty: availableQty,
+        qty: userQty,
+        status: userQty === availableQty ? "FILLED" : "PARTIAL_FILLED"
+      })
+    }
 
     const updatedUsers = this.deductQtyAndBalanceOfInvolvedUsers(users, availableQty, side, finalPrice);
 
@@ -531,7 +556,7 @@ class EngineStore {
       this.USERORDERBOOK["AXIS"].lastTradedPrice = orderBookKey;
 
 
-    const fills = this.getFills(userId);
+    const fills = this.getFills(userId, orderId);
     
     redisManager.pushDataInOrderQueue({
       type: "create_order",
@@ -541,7 +566,7 @@ class EngineStore {
         price: finalPrice,
         qty: userQty,
         side,
-        status: "FILLED",
+        status: userQty === availableQty ? "FILLED" : "PARTIAL_FILLED",
         type,
         userId,
       }
