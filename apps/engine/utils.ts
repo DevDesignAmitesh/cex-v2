@@ -34,7 +34,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
     }
     
     if (keyQty >= qty) {
-      const users = engineStore.getUserInvolvedInSwap(orderBookKey, qty, side)
+      const users = engineStore.getUserInvolvedInSwap(orderBookKey, qty, side) ?? []
 
       if (side === "BUY") {
         /**
@@ -103,7 +103,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
         };
       }
     } else {
-      const users = engineStore.getUserInvolvedInSwap(orderBookKey, keyQty, side)
+      const users = engineStore.getUserInvolvedInSwap(orderBookKey, keyQty, side) ?? []
       
       if (side === "BUY") {
         const leftQty = qty - keyQty
@@ -217,7 +217,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
     }
     
     if (keyQty >= qty!) {
-      const users = engineStore.getUserInvolvedInSwap(orderBookKey, calculatedQty, side)
+      const users = engineStore.getUserInvolvedInSwap(orderBookKey, calculatedQty, side) ?? []
 
       if (side === "BUY") {
         const userProfit = calculatedPrice - keyPrice;

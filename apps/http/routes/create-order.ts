@@ -21,7 +21,7 @@ export async function createOrder(
       .json({ message: "invalid inputs", error: zodErrorMessage({ error }) });
     return;
   }
-
+    
   const clientId = crypto.randomUUID();
   const response = await redisManager.waitForData({ type: "create_order", data, clientId }, "http-to-orderbook-queue");
 

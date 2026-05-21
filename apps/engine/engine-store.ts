@@ -83,9 +83,11 @@ class EngineStore {
     // };
 
     setInterval(() => this.getSymbolDepth("INR-AXIS", true), 5 * 1000)
-    setInterval(() => this.backupData(), 3 * 1000)
-    
-    // this.backupData();
+    setInterval(() => this.backupData(), 5 * 1000)
+    setInterval(() => {
+      console.log("ORDERBOOK", this.USERORDERBOOK)
+      console.log("BALANCES", this.BALANCES)
+    }, 5 * 1000)
   }
 
   static getInstance = (): EngineStore => {
@@ -119,6 +121,7 @@ class EngineStore {
     return this.USERORDERBOOK[stock]
   }
 
+  // TODO: check this why its return only []
   getFills = (userId: string, orderId?: string) => {
     const arr: Fill[] = []    
 
@@ -137,9 +140,6 @@ class EngineStore {
         }
       });
     }
-    
-    
-    console.log("arr", arr)
     
     return arr;
   }
@@ -222,14 +222,14 @@ class EngineStore {
     return false;
   }
 
-  resetLockBalalnceOfUser = (userId: string, side: orderSide, finalPrice: number, availableQty: number) => {
+  resetLockBalalnceOfUser = (userId: string, side: orderSide) => {
     const userBalance = this.getUserBalance(userId);
     if (!userBalance) return false;
 
     if (side === "BUY") {
-      userBalance.INR.locked -= finalPrice;
+      userBalance.INR.locked = 0;
     } else {
-      userBalance.AXIS.locked -= availableQty;
+      userBalance.AXIS.locked = 0;
     }
   }
 
@@ -287,7 +287,6 @@ class EngineStore {
       totalQuantity: reFetchedOrder.totalQuantity,
       users: sortedUsers
     }
-    
   }
 
   checkAvailablePriceInOrderBook =(
@@ -393,13 +392,16 @@ class EngineStore {
         decreasingQty -= val.qty // decrasing the value for the next loop
 
         // handling user balances
-        engineStore.deductTotalBalalnceOfUser(
+        // TODO: if present user buying then the other users qty should get deduct and should add the price of the sold qty
+        // the price from the present user should get deduct
+
+        this.deductTotalBalalnceOfUser(
           val.id,
           side,
           finalPrice,
           val.qty,
         );
-        engineStore.resetLockBalalnceOfUser(val.id, side, finalPrice, val.qty);
+        this.resetLockBalalnceOfUser(val.id, side);
       } else {
         const leftQty = Math.abs(decreasingQty - val.qty);
 
@@ -409,13 +411,13 @@ class EngineStore {
         })
         
         // handling user balances
-        engineStore.deductTotalBalalnceOfUser(
+        this.deductTotalBalalnceOfUser(
           val.id,
           side,
           finalPrice,
           decreasingQty,
         );
-        engineStore.resetLockBalalnceOfUser(val.id, side, finalPrice, decreasingQty);
+        this.resetLockBalalnceOfUser(val.id, side);
       }
     }
 
@@ -509,6 +511,7 @@ class EngineStore {
     const order =
       this.USERORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey]!;
       
+    // if the same order get repeats for the user
     const existingOrder = this.getOrder(orderId, userId);
       
     if (!existingOrder) {
@@ -579,7 +582,7 @@ class EngineStore {
       finalPrice,
       availableQty,
     );
-    engineStore.resetLockBalalnceOfUser(userId, side, finalPrice, availableQty);
+    engineStore.resetLockBalalnceOfUser(userId, side);
 
     return { orderId, fills };
   }
@@ -777,26 +780,30 @@ class EngineStore {
       startQty += val.qty
       users.push(val)
     }
-
-    return [];
   }
 
   backupData = () => {
-    fs.writeFileSync("./orderbook.json", JSON.stringify(this.USERORDERBOOK))      
-    fs.writeFileSync("./balances.json", JSON.stringify(this.BALANCES))      
+    fs.writeFileSync("./orderbook.json", JSON.stringify(this.USERORDERBOOK));      
+    fs.writeFileSync("./balances.json", JSON.stringify(this.BALANCES));
   }
 
   readBackupData = () => {
-    const USERORDERBOOK = JSON.parse(fs.readFileSync("./orderbook.json").toString() ?? "{}");
-    const BALANCES = JSON.parse(fs.readFileSync("./balances.json").toString() ?? "{}");
-
-    console.log("orderbook", USERORDERBOOK)
-    console.log("balances", BALANCES)
-
-    return { USERORDERBOOK, BALANCES }
+    try {
+      const USERORDERBOOK = JSON.parse(fs.readFileSync("./orderbook.json").toString());
+      const BALANCES = JSON.parse(fs.readFileSync("./balances.json").toString());
+  
+      return { USERORDERBOOK, BALANCES }
+    } catch {
+      return { 
+        USERORDERBOOK: {
+          AXIS: { bids: {}, asks: {}, lastTradedPrice: 0 },
+          TATA: { bids: {}, asks: {}, lastTradedPrice: 0 },
+        }, 
+        BALANCES: {} 
+      }
+    }
   }
   
-
   testfn = () => {
     return null
   }

@@ -8,14 +8,17 @@ async function main() {
       const response = await redisManager.getDataFromQueue("http-to-orderbook-queue");
       if (!response) continue;
   
-      const parsedResponse = JSON.parse(response.element) as RedisQueueData;  
+      console.log("response in the engine", response);
       
+      const parsedResponse = JSON.parse(response.element) as RedisQueueData;  
+
       const engineResponse = engineRequestHandler(parsedResponse);
       
       await redisManager.publishData(engineResponse.clientId, engineResponse);
     } catch (e: unknown) {
-      const engineResponse = e as EngineResponse;
-      await redisManager.publishData(engineResponse.clientId, engineResponse);
+      console.log("error in the engine", e)
+      // const engineResponse = e as EngineResponse;
+      // await redisManager.publishData(engineResponse.clientId, engineResponse);
     }
   }
 }
