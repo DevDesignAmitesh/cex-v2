@@ -67,10 +67,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           ok: true,
           data: {
             message: "Order swapped successfully",
-            data: {
-              ...res,
-              totalPrice: finalPrice * qty,
-            },
+            data: res,
           },
         };
       }

@@ -125,12 +125,14 @@ class EngineStore {
   getFills = (userId: string, orderId?: string) => {
     const arr: Fill[] = []    
 
+    console.log("FILLS", this.FILLS);
+    
     if (orderId) {
       this.FILLS.forEach((fls) => {
-        if (
-          (fls.takerId === userId || fls.makerId == userId) && 
-          (fls.makerOrderId === orderId || fls.takerOrderId === orderId)) {
-          arr.push(fls)
+        if (fls.takerId === userId || fls.makerId == userId) {
+          if (fls.makerOrderId === orderId || fls.takerOrderId === orderId) {
+            arr.push(fls)
+          }
         }
       });
     } else {
@@ -233,14 +235,22 @@ class EngineStore {
     }
   }
 
-  deductTotalBalalnceOfUser = (userId: string, side: orderSide, finalPrice: number, qty: number) => {
+  deductTotalBalalnceOfUser = (userId: string, side: orderSide, finalPrice: number, qty: number, presentUser: boolean) => {
     const userBalance = this.getUserBalance(userId);
     if (!userBalance) return false;
 
-    if (side === "BUY") {
-      userBalance.INR.total -= finalPrice * qty;
-    } else if (side === "SELL") {
-      userBalance.AXIS.total -= qty;
+    if (presentUser) {
+      if (side === "BUY") {
+        userBalance.INR.total -= finalPrice * qty;
+      } else if (side === "SELL") {
+        userBalance.AXIS.total -= qty;
+      }
+    } else {
+      if (side === "SELL") {
+        userBalance.INR.total -= finalPrice * qty;
+      } else if (side === "BUY") {
+        userBalance.AXIS.total -= qty;
+      }
     }
 
   }
@@ -400,6 +410,7 @@ class EngineStore {
           side,
           finalPrice,
           val.qty,
+          false
         );
         this.resetLockBalalnceOfUser(val.id, side);
       } else {
@@ -416,6 +427,7 @@ class EngineStore {
           side,
           finalPrice,
           decreasingQty,
+          false
         );
         this.resetLockBalalnceOfUser(val.id, side);
       }
@@ -581,10 +593,17 @@ class EngineStore {
       side,
       finalPrice,
       availableQty,
+      true
     );
     engineStore.resetLockBalalnceOfUser(userId, side);
 
-    return { orderId, fills };
+    return { 
+      status: userQty === availableQty ? "FILLED" : "PARTIAL_FILLED", 
+      orderId, 
+      fills,
+      filledQty: availableQty,
+      averagePrice: finalPrice
+    };
   }
 
   beforeOrder = (parsedResponse: RedisQueueData): EngineResponse => {
@@ -625,35 +644,6 @@ class EngineStore {
         error: "Price and quantity both should be defined.",
       };
     }
-
-
-    // if (market === "PERPS") {
-    //   const usersPriceIncludingLeverage = this.calculateFinalPriceWithLeverage(userId, price, qty);
-
-    //   return { 
-    //     clientId: parsedResponse.clientId, 
-    //     ok: true, 
-    //     data: {
-    //       message: "perps related balance found",
-    //       data: { market, usersPriceIncludingLeverage }
-    //     } 
-    //   }
-    // } else {
-    //   const isUserHaveBalance = this.gettingAndLockingUserBalance(
-    //     userId,
-    //     price,
-    //     qty,
-    //     side,
-    //   );
-  
-    //   if (!isUserHaveBalance) {
-    //     return {
-    //       clientId: parsedResponse.clientId,
-    //       ok: false,
-    //       error: "Insufficient balance.",
-    //     };
-    //   }
-    // }
 
 
     // fn for checking does user have balance 
@@ -702,12 +692,31 @@ class EngineStore {
         qty,
       );
 
+      this.ORDERS.push({
+        id: parsedResponse.data.orderId,
+        userId,
+        status: "OPEN",
+        market: "AXIS",
+        side,
+        type,
+        price,
+        qty,
+        filledQty: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      
       return {
         clientId: parsedResponse.clientId,
         ok: true,
         data: {
           message: "Order added in the order book",
-          data: undefined,
+          data: {
+            status: "OPEN",
+            filledQty: 0,
+            averagePrice: null,
+            fills: []
+          },
         },
       };
     }
