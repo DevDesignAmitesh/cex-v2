@@ -1,4 +1,4 @@
-import type { EngineResponse, RedisQueueData } from "@repo/common/common";
+import type { RedisQueueData } from "@repo/common/common";
 import { redisManager } from "@repo/redis/redis";
 import { engineRequestHandler } from "./lib";
 
@@ -24,7 +24,7 @@ async function main() {
       await redisManager.publishData(clientId, {
         clientId,
         ok: false,
-        error: e ? `${e}` : "something went wrong"
+        error: "something went wrong"
       });
     }
   }

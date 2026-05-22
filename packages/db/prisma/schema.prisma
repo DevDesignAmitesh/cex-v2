@@ -8,18 +8,21 @@ datasource db {
 }
 
 model User {
-  id       String @id @default(uuid())
-  email    String @unique
-  username String
-  password String
+  id            String    @id       @default(uuid())
+  email         String    @unique
+  username      String
+  password      String
 
-  orders Order[]
+  orders        Order[]
+
+  makerFills    Fill[]    @relation("maker")
+  takerFills    Fill[]    @relation("taker")
 }
 
 model Order {
-  id        String      @id @default(uuid())
+  id        String        @id       @default(uuid())
   userId    String
-  user      User        @relation(references: [id], fields: [userId], onDelete: Cascade)
+  user      User          @relation(references: [id], fields: [userId], onDelete: Cascade)
   market    orderMarket
   price     Int
   qty       Int
@@ -28,16 +31,31 @@ model Order {
   type      orderType
   status    orderStatus
 
-  fills Fill[]
+  makerFills Fill[]       @relation("maker_order")
+  takerFills Fill[]       @relation("taker_order")
 }
 
 model Fill {
-  id      String    @id @default(uuid())
-  orderId String
-  order   Order     @relation(references: [id], fields: [orderId], onDelete: Cascade)
-  qty     Int
-  side    orderSide
-  type    fillType
+  id            String         @id       @default(uuid())
+
+  askedQty      Int
+  filledQty     Int
+  side          orderSide
+  type          fillType
+  price         Int
+  asset         orderMarket
+
+  makerId       String
+  maker         User          @relation("maker", references: [id], fields: [makerId])
+
+  takerId       String
+  taker         User          @relation("taker", references: [id], fields: [takerId])
+
+  makerOrderId  String
+  makerOrder    Order         @relation("maker_order", references: [id], fields: [makerOrderId], onDelete: Cascade)
+
+  takerOrderId  String
+  takerOrder    Order         @relation("taker_order", references: [id], fields: [takerOrderId], onDelete: Cascade)
 }
 
 enum fillType {
@@ -58,7 +76,8 @@ enum orderType {
 }
 
 enum orderMarket {
-  SOL
+  AXIS
+  TATA
 }
 
 enum orderSide {

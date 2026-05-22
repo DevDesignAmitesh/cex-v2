@@ -63,14 +63,8 @@ export type RedisDbQueueData =
   | {
       type: "create_order";
       data: {
-        side: "BUY" | "SELL";
-        type: "LIMIT" | "MARKET";
-        userId: string;
-        price: number;
-        qty: number;
-        status: orderStatus, 
-        filledQty: number, 
-        fillType: fillType
+        order: Order,
+        fills: Fill[]
       }
     }
   | {
@@ -161,7 +155,7 @@ export type Balance = Record<
 export type Order = {
   id: string;
   userId: string;
-  market: BalanceKey;
+  market: OrderBookKey;
   price: number;
   qty: number;
   type: orderType;
@@ -238,7 +232,7 @@ export type Fill = {
   filledQty: number,
   askedQty: number;
   price: number;
-  asset: BalanceKey;
+  asset: OrderBookKey;
   type: fillType;
   side: orderSide;
   createdAt: Date;

@@ -36,7 +36,8 @@ export type orderType = (typeof orderType)[keyof typeof orderType]
 
 
 export const orderMarket = {
-  SOL: 'SOL'
+  AXIS: 'AXIS',
+  TATA: 'TATA'
 } as const
 
 export type orderMarket = (typeof orderMarket)[keyof typeof orderMarket]

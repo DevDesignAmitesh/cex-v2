@@ -175,6 +175,8 @@ export type UserWhereInput = {
   username?: Prisma.StringFilter<"User"> | string
   password?: Prisma.StringFilter<"User"> | string
   orders?: Prisma.OrderListRelationFilter
+  makerFills?: Prisma.FillListRelationFilter
+  takerFills?: Prisma.FillListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -183,6 +185,8 @@ export type UserOrderByWithRelationInput = {
   username?: Prisma.SortOrder
   password?: Prisma.SortOrder
   orders?: Prisma.OrderOrderByRelationAggregateInput
+  makerFills?: Prisma.FillOrderByRelationAggregateInput
+  takerFills?: Prisma.FillOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -194,6 +198,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   username?: Prisma.StringFilter<"User"> | string
   password?: Prisma.StringFilter<"User"> | string
   orders?: Prisma.OrderListRelationFilter
+  makerFills?: Prisma.FillListRelationFilter
+  takerFills?: Prisma.FillListRelationFilter
 }, "id" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -222,6 +228,8 @@ export type UserCreateInput = {
   username: string
   password: string
   orders?: Prisma.OrderCreateNestedManyWithoutUserInput
+  makerFills?: Prisma.FillCreateNestedManyWithoutMakerInput
+  takerFills?: Prisma.FillCreateNestedManyWithoutTakerInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -230,6 +238,8 @@ export type UserUncheckedCreateInput = {
   username: string
   password: string
   orders?: Prisma.OrderUncheckedCreateNestedManyWithoutUserInput
+  makerFills?: Prisma.FillUncheckedCreateNestedManyWithoutMakerInput
+  takerFills?: Prisma.FillUncheckedCreateNestedManyWithoutTakerInput
 }
 
 export type UserUpdateInput = {
@@ -238,6 +248,8 @@ export type UserUpdateInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
+  makerFills?: Prisma.FillUpdateManyWithoutMakerNestedInput
+  takerFills?: Prisma.FillUpdateManyWithoutTakerNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -246,6 +258,8 @@ export type UserUncheckedUpdateInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
   orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
+  makerFills?: Prisma.FillUncheckedUpdateManyWithoutMakerNestedInput
+  takerFills?: Prisma.FillUncheckedUpdateManyWithoutTakerNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -313,11 +327,41 @@ export type UserUpdateOneRequiredWithoutOrdersNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutOrdersInput, Prisma.UserUpdateWithoutOrdersInput>, Prisma.UserUncheckedUpdateWithoutOrdersInput>
 }
 
+export type UserCreateNestedOneWithoutMakerFillsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutMakerFillsInput, Prisma.UserUncheckedCreateWithoutMakerFillsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutMakerFillsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserCreateNestedOneWithoutTakerFillsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutTakerFillsInput, Prisma.UserUncheckedCreateWithoutTakerFillsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutTakerFillsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutMakerFillsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutMakerFillsInput, Prisma.UserUncheckedCreateWithoutMakerFillsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutMakerFillsInput
+  upsert?: Prisma.UserUpsertWithoutMakerFillsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutMakerFillsInput, Prisma.UserUpdateWithoutMakerFillsInput>, Prisma.UserUncheckedUpdateWithoutMakerFillsInput>
+}
+
+export type UserUpdateOneRequiredWithoutTakerFillsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutTakerFillsInput, Prisma.UserUncheckedCreateWithoutTakerFillsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutTakerFillsInput
+  upsert?: Prisma.UserUpsertWithoutTakerFillsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutTakerFillsInput, Prisma.UserUpdateWithoutTakerFillsInput>, Prisma.UserUncheckedUpdateWithoutTakerFillsInput>
+}
+
 export type UserCreateWithoutOrdersInput = {
   id?: string
   email: string
   username: string
   password: string
+  makerFills?: Prisma.FillCreateNestedManyWithoutMakerInput
+  takerFills?: Prisma.FillCreateNestedManyWithoutTakerInput
 }
 
 export type UserUncheckedCreateWithoutOrdersInput = {
@@ -325,6 +369,8 @@ export type UserUncheckedCreateWithoutOrdersInput = {
   email: string
   username: string
   password: string
+  makerFills?: Prisma.FillUncheckedCreateNestedManyWithoutMakerInput
+  takerFills?: Prisma.FillUncheckedCreateNestedManyWithoutTakerInput
 }
 
 export type UserCreateOrConnectWithoutOrdersInput = {
@@ -348,6 +394,8 @@ export type UserUpdateWithoutOrdersInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
+  makerFills?: Prisma.FillUpdateManyWithoutMakerNestedInput
+  takerFills?: Prisma.FillUpdateManyWithoutTakerNestedInput
 }
 
 export type UserUncheckedUpdateWithoutOrdersInput = {
@@ -355,6 +403,112 @@ export type UserUncheckedUpdateWithoutOrdersInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.StringFieldUpdateOperationsInput | string
+  makerFills?: Prisma.FillUncheckedUpdateManyWithoutMakerNestedInput
+  takerFills?: Prisma.FillUncheckedUpdateManyWithoutTakerNestedInput
+}
+
+export type UserCreateWithoutMakerFillsInput = {
+  id?: string
+  email: string
+  username: string
+  password: string
+  orders?: Prisma.OrderCreateNestedManyWithoutUserInput
+  takerFills?: Prisma.FillCreateNestedManyWithoutTakerInput
+}
+
+export type UserUncheckedCreateWithoutMakerFillsInput = {
+  id?: string
+  email: string
+  username: string
+  password: string
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutUserInput
+  takerFills?: Prisma.FillUncheckedCreateNestedManyWithoutTakerInput
+}
+
+export type UserCreateOrConnectWithoutMakerFillsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutMakerFillsInput, Prisma.UserUncheckedCreateWithoutMakerFillsInput>
+}
+
+export type UserCreateWithoutTakerFillsInput = {
+  id?: string
+  email: string
+  username: string
+  password: string
+  orders?: Prisma.OrderCreateNestedManyWithoutUserInput
+  makerFills?: Prisma.FillCreateNestedManyWithoutMakerInput
+}
+
+export type UserUncheckedCreateWithoutTakerFillsInput = {
+  id?: string
+  email: string
+  username: string
+  password: string
+  orders?: Prisma.OrderUncheckedCreateNestedManyWithoutUserInput
+  makerFills?: Prisma.FillUncheckedCreateNestedManyWithoutMakerInput
+}
+
+export type UserCreateOrConnectWithoutTakerFillsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutTakerFillsInput, Prisma.UserUncheckedCreateWithoutTakerFillsInput>
+}
+
+export type UserUpsertWithoutMakerFillsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutMakerFillsInput, Prisma.UserUncheckedUpdateWithoutMakerFillsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutMakerFillsInput, Prisma.UserUncheckedCreateWithoutMakerFillsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutMakerFillsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutMakerFillsInput, Prisma.UserUncheckedUpdateWithoutMakerFillsInput>
+}
+
+export type UserUpdateWithoutMakerFillsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
+  takerFills?: Prisma.FillUpdateManyWithoutTakerNestedInput
+}
+
+export type UserUncheckedUpdateWithoutMakerFillsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
+  takerFills?: Prisma.FillUncheckedUpdateManyWithoutTakerNestedInput
+}
+
+export type UserUpsertWithoutTakerFillsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutTakerFillsInput, Prisma.UserUncheckedUpdateWithoutTakerFillsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutTakerFillsInput, Prisma.UserUncheckedCreateWithoutTakerFillsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutTakerFillsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutTakerFillsInput, Prisma.UserUncheckedUpdateWithoutTakerFillsInput>
+}
+
+export type UserUpdateWithoutTakerFillsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  orders?: Prisma.OrderUpdateManyWithoutUserNestedInput
+  makerFills?: Prisma.FillUpdateManyWithoutMakerNestedInput
+}
+
+export type UserUncheckedUpdateWithoutTakerFillsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  orders?: Prisma.OrderUncheckedUpdateManyWithoutUserNestedInput
+  makerFills?: Prisma.FillUncheckedUpdateManyWithoutMakerNestedInput
 }
 
 
@@ -364,10 +518,14 @@ export type UserUncheckedUpdateWithoutOrdersInput = {
 
 export type UserCountOutputType = {
   orders: number
+  makerFills: number
+  takerFills: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   orders?: boolean | UserCountOutputTypeCountOrdersArgs
+  makerFills?: boolean | UserCountOutputTypeCountMakerFillsArgs
+  takerFills?: boolean | UserCountOutputTypeCountTakerFillsArgs
 }
 
 /**
@@ -387,6 +545,20 @@ export type UserCountOutputTypeCountOrdersArgs<ExtArgs extends runtime.Types.Ext
   where?: Prisma.OrderWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountMakerFillsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.FillWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountTakerFillsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.FillWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -394,6 +566,8 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   username?: boolean
   password?: boolean
   orders?: boolean | Prisma.User$ordersArgs<ExtArgs>
+  makerFills?: boolean | Prisma.User$makerFillsArgs<ExtArgs>
+  takerFills?: boolean | Prisma.User$takerFillsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -421,6 +595,8 @@ export type UserSelectScalar = {
 export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "username" | "password", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   orders?: boolean | Prisma.User$ordersArgs<ExtArgs>
+  makerFills?: boolean | Prisma.User$makerFillsArgs<ExtArgs>
+  takerFills?: boolean | Prisma.User$takerFillsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -430,6 +606,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   name: "User"
   objects: {
     orders: Prisma.$OrderPayload<ExtArgs>[]
+    makerFills: Prisma.$FillPayload<ExtArgs>[]
+    takerFills: Prisma.$FillPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -831,6 +1009,8 @@ readonly fields: UserFieldRefs;
 export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   orders<T extends Prisma.User$ordersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$ordersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  makerFills<T extends Prisma.User$makerFillsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$makerFillsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FillPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  takerFills<T extends Prisma.User$takerFillsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$takerFillsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FillPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1278,6 +1458,54 @@ export type User$ordersArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
   take?: number
   skip?: number
   distinct?: Prisma.OrderScalarFieldEnum | Prisma.OrderScalarFieldEnum[]
+}
+
+/**
+ * User.makerFills
+ */
+export type User$makerFillsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Fill
+   */
+  select?: Prisma.FillSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Fill
+   */
+  omit?: Prisma.FillOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.FillInclude<ExtArgs> | null
+  where?: Prisma.FillWhereInput
+  orderBy?: Prisma.FillOrderByWithRelationInput | Prisma.FillOrderByWithRelationInput[]
+  cursor?: Prisma.FillWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.FillScalarFieldEnum | Prisma.FillScalarFieldEnum[]
+}
+
+/**
+ * User.takerFills
+ */
+export type User$takerFillsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Fill
+   */
+  select?: Prisma.FillSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Fill
+   */
+  omit?: Prisma.FillOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.FillInclude<ExtArgs> | null
+  where?: Prisma.FillWhereInput
+  orderBy?: Prisma.FillOrderByWithRelationInput | Prisma.FillOrderByWithRelationInput[]
+  cursor?: Prisma.FillWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.FillScalarFieldEnum | Prisma.FillScalarFieldEnum[]
 }
 
 /**

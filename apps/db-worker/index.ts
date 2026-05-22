@@ -23,30 +23,73 @@ async function main() {
     }
 
     if (parsedResponse.type === "create_order") {
-      const { side, type, userId, price, qty, status, filledQty, fillType } = parsedResponse.data;
+      const { fills, order } = parsedResponse.data;
       
       await prisma.$transaction(async (tx) => {
-        const order = await tx.order.create({
-          data: {
+        const { 
+          filledQty, 
+          id, 
+          market, 
+          price, 
+          qty, 
+          side, 
+          status, 
+          type, 
+          userId 
+        } = order;
+        
+        const dbOrder = await tx.order.upsert({
+          where: { id, userId },
+          update: {
+            filledQty,
+            price,
+            status,
+          },
+          create: {
             userId,
             filledQty,
-            market: "SOL",
             price,
+            market,
             qty,
             side,
             status,
             type,
-          }
+          },
         })
   
-        await tx.fill.create({
-          data: {
-            qty,
-            side,
-            type: fillType,
-            orderId: order.id
-          }
-        })
+        for (const fls of fills) {
+          const { 
+            askedQty, 
+            asset, 
+            filledQty, 
+            id, 
+            makerId, 
+            makerOrderId, 
+            price, 
+            side, 
+            takerId, 
+            takerOrderId, 
+            type 
+          } = fls;
+          
+          await tx.fill.create({
+            data: {
+              id,
+              orderId: dbOrder.id,
+              askedQty,
+              makerId,
+              takerId,
+              makerOrderId,
+              takerOrderId,
+              price,
+              filledQty,
+              asset,
+              side,
+              type,
+            }
+          })
+        }
+        
       })    
     }
   

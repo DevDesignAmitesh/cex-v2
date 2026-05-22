@@ -456,6 +456,7 @@ class EngineStore {
   }
 
   creatingFillsForSwap = (updatedUsers: UserInOrderBook[], userId: string, orderId: string) => {
+    // TODO: return all the created fills of this code
     const order = this.getOrder(orderId, userId)!;
     
     // find out how to get their idss
@@ -476,7 +477,7 @@ class EngineStore {
         takerOrderId: orderId,
         type: "TAKER"
       });
-    }
+    }    
   }
 
   updateOrder = (userId: string, orderId: string, updatedOrderData: Partial<Order>) => {
@@ -563,28 +564,21 @@ class EngineStore {
 
     const reFetchedOrder = 
       this.USERORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey]!
-      
-      if (reFetchedOrder.totalQuantity === 0) {
-        delete this.USERORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey]
-      }
-      
-      this.USERORDERBOOK["AXIS"].lastTradedPrice = orderBookKey;
+    
+    if (reFetchedOrder.totalQuantity === 0) {
+      delete this.USERORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey]
+    }
+    
+    this.USERORDERBOOK["AXIS"].lastTradedPrice = orderBookKey;
 
 
     const fills = this.getFills(userId, orderId);
     
+    const toSendOrder = this.getOrder(orderId, userId)!;
+    
     redisManager.pushDataInOrderQueue({
       type: "create_order",
-      data: {
-        filledQty: availableQty,
-        fillType: "TAKER",
-        price: finalPrice,
-        qty: userQty,
-        side,
-        status: userQty === availableQty ? "FILLED" : "PARTIAL_FILLED",
-        type,
-        userId,
-      }
+      data: { order: toSendOrder, fills }
     }, "orderbook-to-db-queue")
     
     // handle balances on the current user
