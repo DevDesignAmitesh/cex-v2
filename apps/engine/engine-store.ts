@@ -1,4 +1,4 @@
-import type { Balance, BalanceKey, BeforeOrderResponse, EngineResponse, Fill, Order, OrderBook, OrderBookKey, OrderBookOrder, orderSide, orderType, RedisQueueData, UserBasedOrderBook, UserInOrderBook } from "@repo/common/common";
+import { LIQUIDATION_PERCENTAGE, type Balance, type BalanceKey, type BeforeOrderResponse, type EngineResponse, type Fill, type Order, type OrderBook, type OrderBookKey, type OrderBookOrder, type orderSide, type orderType, type Position, type POSITIONS_MAPS, type RedisQueueData, type UserBasedOrderBook, type UserInOrderBook } from "@repo/common/common";
 import { redisManager } from "@repo/redis/redis";
 import fs from "fs";
 
@@ -7,26 +7,23 @@ class EngineStore {
   private FILLS: Fill[];
   private ORDERS: Order[];
   private BALANCES: Balance;
-  // private ORDERBOOK: OrderBook;
   private USERORDERBOOK: UserBasedOrderBook
+  private POSITIONS: Position[]
+  private POSITIONS_MAPS: POSITIONS_MAPS
 
   constructor() {
-    this.FILLS = [];
     this.ORDERS = [];
-    // this.BALANCES["1"] = {
-    //   AXIS: { locked, total },
-    //   HDFC: { locked, total },
-    //   INR: { locked, total },
-    //   TATA: { locked, total },
-    // };    
-
+    this.FILLS = [];
+    this.POSITIONS = [];
+    this.POSITIONS_MAPS = {
+      LONG: {
+        40:  ["1", "2"]
+      },
+      SHORT: {
+        20:  ["1", "2"]
+      }
+    };
     this.BALANCES = this.readBackupData().BALANCES ?? {};
-    // this.ORDERBOOK = {
-    //   AXIS: { bids: {}, asks: {}, lastTradedPrice: 0 },
-    //   HDFC: { bids: {}, asks: {}, lastTradedPrice: 0 },
-    //   TATA: { bids: {}, asks: {}, lastTradedPrice: 0 },
-    // };
-
     this.USERORDERBOOK = this.readBackupData().USERORDERBOOK ?? {
       AXIS: { bids: {}, asks: {}, lastTradedPrice: 0 },
       TATA: { bids: {}, asks: {}, lastTradedPrice: 0 },
@@ -45,6 +42,66 @@ class EngineStore {
     return EngineStore.instance;
   };
 
+  createPosition = (position: Position) => {
+    this.POSITIONS.push(position);
+
+    // create postion map using price and users
+    // TODO: it will be liquidationPrice or price (that the user traded on)
+    if (!this.POSITIONS_MAPS[position.type][position.liquidationPrice]) {
+      this.POSITIONS_MAPS[position.type][position.liquidationPrice] = []
+    }
+
+    this.POSITIONS_MAPS[position.type][position.liquidationPrice]!.push(position.userId)
+  }
+
+  getAllPositions = () => {
+    return this.POSITIONS;
+  }
+
+  getAllPositionsMaps = () => {
+    return this.POSITIONS_MAPS;
+  }
+
+  calculateAveragePrice = (userId: string, type: orderType) => {
+    const orders = this.getOrders(userId);
+    
+    let totalPrice = 0;
+    let totalQty = 0;
+
+    for (let i = 0; i < orders.length; i++) {
+      const order = orders[i];
+      if (!order) continue;
+      if (order.type !== type) continue;
+
+      totalPrice += order.price * order.qty;
+      totalQty += order.qty;
+    }
+
+    return totalPrice / totalQty
+  }
+
+  calculateFinalPriceWithLeverage = (userId: string, price: number, qty: number) => {
+    const balance = this.getUserBalance(userId);
+    
+    // 1 = 1x || 2 = 2x and so on
+    let leverage = 0;
+    let lockedPrice = 0;
+    
+    const priceAskedByUser = price * qty;
+    
+    const userActualBalance = balance.INR.total - balance.INR.locked; 
+
+    if (userActualBalance >= priceAskedByUser) {
+      lockedPrice = priceAskedByUser;
+      leverage = 1
+    } else {
+      lockedPrice = userActualBalance
+      leverage =  priceAskedByUser / userActualBalance;
+    }
+
+    return { leverage, priceAskedByUser, userActualBalance, lockedPrice }
+  }
+  
   deleteOrder = (userId: string, orderId: string) => {
     const orderIndex = this.ORDERS.findIndex((ord) => ord.userId === userId && ord.id === orderId);
     if (orderIndex === -1) return false;
@@ -148,7 +205,6 @@ class EngineStore {
       this.BALANCES[userId] = {
         AXIS: { locked: 0, total: 1000 },
         INR: { locked: 0, total: 10000 },
-        COLLATERAL: { locked: 0, total: 10000 },
       };
     }
 
@@ -495,6 +551,7 @@ class EngineStore {
     type: orderType,
     users: UserInOrderBook[],
     orderId: string,
+    market: "SPOT" | "PERPS"
   ) => {
     // const order =
     //   this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey];
@@ -560,16 +617,49 @@ class EngineStore {
     
     this.pushOrderAndFillToQueue(toSendOrder, fills)
     
-    // handle balances on the current user
-    engineStore.deductTotalBalalnceOfUser(
-      userId,
-      side,
-      finalPrice,
-      availableQty,
-      true
-    );
-    engineStore.resetLockBalalnceOfUser(userId, side, true);
-
+    if (market === "PERPS") {
+      const usersPriceIncludingLeverage = this.calculateFinalPriceWithLeverage(userId, orderBookKey, availableQty);
+      const { leverage, lockedPrice, priceAskedByUser, userActualBalance } = usersPriceIncludingLeverage;
+      
+      const averagePrice = this.calculateAveragePrice(userId, type);
+      const margin = priceAskedByUser / leverage;
+      const liquidationPrice = averagePrice * LIQUIDATION_PERCENTAGE;
+      
+      // for current user
+      this.createPosition({
+        averagePrice,
+        liquidationPrice,
+        margin,
+        market,
+        qty: availableQty,
+        type: side === "BUY" ? "LONG" : "SHORT",
+        userId
+      })
+      
+      // for other involved users
+      for (const val of users) {
+        this.createPosition({
+          averagePrice,
+          liquidationPrice,
+          margin,
+          market,
+          qty: availableQty,
+          type: side === "BUY" ? "SHORT" : "LONG",
+          userId: val.id,
+        })
+      }
+    } else {
+      // handle balances on the current user
+      this.deductTotalBalalnceOfUser(
+        userId,
+        side,
+        finalPrice,
+        availableQty,
+        true
+      );
+      this.resetLockBalalnceOfUser(userId, side, true);
+    }
+    
     return { 
       status: userQty === availableQty ? "FILLED" : "PARTIAL_FILLED", 
       orderId, 
@@ -720,45 +810,6 @@ class EngineStore {
   getLastTradingPrice() {
     // return this.ORDERBOOK["AXIS"].lastTradedPrice
     return this.USERORDERBOOK["AXIS"].lastTradedPrice
-  }
-  
-  calculateFinalPriceWithLeverage = (userId: string, price: number, qty: number) => {
-    const userBalance = this.getUserBalance(userId);
-    
-    // 1 = 1x || 2 = 2x and so on
-    let leverage = 0;
-    let lockedPrice = 0;
-    
-    const priceAskedByUser = price * qty;
-    
-    const userActualBalance = userBalance.COLLATERAL.total - userBalance.COLLATERAL.locked; 
-    
-    if (userActualBalance >= priceAskedByUser) {
-      lockedPrice = priceAskedByUser;
-      leverage = 1
-    } else {
-      lockedPrice = userActualBalance
-      leverage =  priceAskedByUser / userActualBalance;
-    }
-    
-    this.updatingUserBalance(userId, userBalance.COLLATERAL.total, lockedPrice, "COLLATERAL")
-
-    return { leverage, priceAskedByUser, userActualBalance }
-  }
-
-
-  updatingUserBalance = (userId: string, total: number, locked: number, key: BalanceKey) => {
-    const userBalance = this.BALANCES[userId]!;
-
-    const updatedUserBalance: Record<BalanceKey, {
-      total: number;
-      locked: number;
-    }> = {
-      ...userBalance,
-      [key]: { total, locked }
-    }
-
-    this.BALANCES[userId] = updatedUserBalance;
   }
 
   getUserInvolvedInSwap = (orderBookKey: number, totalQuantity: number, side: orderSide) => {

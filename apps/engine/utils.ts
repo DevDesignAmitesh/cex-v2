@@ -1,4 +1,4 @@
-import type { EngineResponse, RedisQueueData, UserInOrderBook } from "@repo/common/common";
+import { type EngineResponse, type RedisQueueData } from "@repo/common/common";
 import { engineStore } from "./engine-store";
 import { redisManager } from "@repo/redis/redis";
 
@@ -9,7 +9,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
     error: "invalid type"
   }
 
-  const { side, symbol, type, userId, price, qty, orderId } = parsedResponse.data;
+  const { side, symbol, type, userId, price, qty, orderId, market } = parsedResponse.data;
 
   if (type === "LIMIT") {
     // for limit we need both price and qty (conceptual)
@@ -33,7 +33,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
       qty: number,
       orderBookKey: number
     }
-    
+        
     if (keyQty >= qty) {
       const users = engineStore.getUserInvolvedInSwap(orderBookKey, qty, side) ?? []
 
@@ -62,7 +62,8 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           finalPrice,
           type,
           users,
-          orderId
+          orderId,
+          market
         );
         
         return {
@@ -87,7 +88,8 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           finalPrice,
           type,
           users,
-          orderId
+          orderId,
+          market
         );
         
         return {
@@ -116,7 +118,8 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           finalPrice,
           type,
           users,
-          orderId
+          orderId,
+          market
         );
 
         if (leftQty !== 0) {
@@ -150,7 +153,8 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           finalPrice,
           type,
           users,
-          orderId
+          orderId,
+          market
         );
 
         if (leftQty !== 0) {
@@ -222,7 +226,8 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           finalPrice,
           type,
           users,
-          orderId
+          orderId,
+          market
         );
 
         return {
@@ -247,7 +252,8 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           finalPrice,
           type,
           users,
-          orderId
+          orderId,
+          market
         );
         
         return {

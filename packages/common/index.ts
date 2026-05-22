@@ -41,7 +41,7 @@ export const createOrderSchema = z.object({
   qty: z.number().optional(),
   userId: z.uuid(),
   orderId: z.uuid(),
-  // market: z.enum(["SPOT", "PERPS"]),
+  market: z.enum(["SPOT", "PERPS"]),
 });
 
 type CreateOrder = z.infer<typeof createOrderSchema>;
@@ -142,7 +142,7 @@ export type BeforeOrderResponse = EngineResponse & {
   type: "ORDER_IN_ORDERBOOK" | "ERROR" | "AVAILABLE_PRICE"
 }
 
-export type BalanceKey = "INR" | "AXIS" | "COLLATERAL";
+export type BalanceKey = "INR" | "AXIS";
 
 export type Balance = Record<
   string,
@@ -224,6 +224,23 @@ export type UserBasedOrderBook = Record<
   }
 >;
 
+export type postionType = "LONG" | "SHORT"
+
+export type Position = {
+  market: string;
+  type: postionType;
+  qty: number;
+  margin: number;
+  liquidationPrice: number;
+  averagePrice: number;
+  userId: string
+}
+
+// LONG: {
+  //  liquidationPice: userIds (string[])
+// }
+export type POSITIONS_MAPS = Record<postionType, Record<number, string[]>>
+
 export type fillType = "MAKER" | "TAKER";
 
 export type Fill = {
@@ -242,3 +259,5 @@ export type Fill = {
 };
 
 export type REDIS_QUEUE_TYPE = "http-to-orderbook-queue" | "orderbook-to-db-queue" | "orderbook-to-ws-queue"
+
+export const LIQUIDATION_PERCENTAGE = 0.2 // 20%
