@@ -129,7 +129,7 @@ export type EngineCommandType =
   | "get_fills"
   | "cancel_order";
 
-export interface EngineResponse {
+export type EngineResponse =  {
   clientId: string;
   ok: boolean;
   data?: {
@@ -137,6 +137,10 @@ export interface EngineResponse {
     data: unknown
   }
   error?: string;
+}
+
+export type BeforeOrderResponse = EngineResponse & {
+  type: "ORDER_IN_ORDERBOOK" | "ERROR" | "AVAILABLE_PRICE"
 }
 
 export type BalanceKey = "INR" | "AXIS" | "COLLATERAL";

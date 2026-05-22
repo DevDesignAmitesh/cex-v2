@@ -24,8 +24,9 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
     // things like checking balances, locking amount and finding best price
     const beforeOrderResponseOne = engineStore.beforeOrder(parsedResponse);
     
-    if (!beforeOrderResponseOne.ok) return beforeOrderResponseOne
-    if (beforeOrderResponseOne.ok && !beforeOrderResponseOne.data?.data) return beforeOrderResponseOne
+    if (beforeOrderResponseOne.type === "ERROR" || beforeOrderResponseOne.type === "ORDER_IN_ORDERBOOK") {
+      return beforeOrderResponseOne
+    }
     
     const { keyPrice, qty: keyQty, orderBookKey } = beforeOrderResponseOne.data?.data! as {
       keyPrice: number,
@@ -36,6 +37,8 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
     if (keyQty >= qty) {
       const users = engineStore.getUserInvolvedInSwap(orderBookKey, qty, side) ?? []
 
+      console.log("users after swap", users)
+      
       if (side === "BUY") {
         /**
          * here we are handling that the key's qty is greater than user's ask so we will give all of that
@@ -92,10 +95,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           ok: true,
           data: {
             message: "Order swapped successfully",
-            data: {
-              ...res,
-              totalPrice: finalPrice * qty,
-            },
+            data: res
           },
         };
       }
@@ -131,10 +131,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           ok: true,
           data: {
             message: "Order swapped successfully",
-            data: {
-              ...res,
-              totalPrice: finalPrice * keyQty,
-            },
+            data: res
           },
         };
       }
@@ -168,10 +165,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           ok: true,
           data: {
             message: "Order swapped successfully",
-            data: {
-              ...res,
-              totalPrice: finalPrice * keyQty,
-            },
+            data: res
           },
         };
       }
@@ -236,10 +230,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           ok: true,
           data: {
             message: "Order swapped successfully",
-            data: {
-              ...res,
-              totalPrice: finalPrice * calculatedQty,
-            },
+            data: res
           },
         };
       }
@@ -264,10 +255,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           ok: true,
           data: {
             message: "Order swapped successfully",
-            data: {
-              ...res,
-              totalPrice: finalPrice * calculatedQty,
-            },
+            data: res
           },
         };
       }

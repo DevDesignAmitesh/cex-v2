@@ -1,4 +1,4 @@
-import type { Balance, BalanceKey, EngineResponse, Fill, Order, OrderBook, OrderBookKey, OrderBookOrder, orderSide, orderType, RedisQueueData, UserBasedOrderBook, UserInOrderBook } from "@repo/common/common";
+import type { Balance, BalanceKey, BeforeOrderResponse, EngineResponse, Fill, Order, OrderBook, OrderBookKey, OrderBookOrder, orderSide, orderType, RedisQueueData, UserBasedOrderBook, UserInOrderBook } from "@repo/common/common";
 import { redisManager } from "@repo/redis/redis";
 import fs from "fs";
 
@@ -32,62 +32,12 @@ class EngineStore {
       TATA: { bids: {}, asks: {}, lastTradedPrice: 0 },
     };
 
-    // this.USERORDERBOOK = {
-    //   AXIS: { bids: {
-    //     500: [
-    //       {
-    //         totalQuantity: 20,
-    //         userId: "1",
-    //         price: 500
-    //       }
-    //     ],
-    //     200: [
-    //       {
-    //         totalQuantity: 20,
-    //         userId: "1",
-    //         price: 200
-    //       }
-    //     ],
-    //     600: [
-    //       {
-    //         totalQuantity: 20,
-    //         userId: "1",
-    //         price: 600
-    //       }
-    //     ],
-    //   }, asks: {
-    //     200: [
-    //       {
-    //         totalQuantity: 20,
-    //         userId: "1",
-    //         price: 200
-    //       }
-    //     ],
-    //     500: [
-    //       {
-    //         totalQuantity: 20,
-    //         userId: "1",
-    //         price: 200
-    //       }
-    //     ],
-    //     300: [
-    //       {
-    //         totalQuantity: 20,
-    //         userId: "1",
-    //         price: 200
-    //       }
-    //     ],
-    //   }, lastTradedPrice: 0 },
-    //   HDFC: { bids: {}, asks: {}, lastTradedPrice: 0 },
-    //   TATA: { bids: {}, asks: {}, lastTradedPrice: 0 },
-    // };
-
-    setInterval(() => this.getSymbolDepth("INR-AXIS", true), 5 * 1000)
-    setInterval(() => this.backupData(), 5 * 1000)
+    // setInterval(() => this.getSymbolDepth("INR-AXIS", true), 5 * 1000)
+    // setInterval(() => this.backupData(), 5 * 1000)
     setInterval(() => {
       console.log("ORDERBOOK", this.USERORDERBOOK)
       console.log("BALANCES", this.BALANCES)
-    }, 5 * 1000)
+    }, 10 * 1000)
   }
 
   static getInstance = (): EngineStore => {
@@ -224,14 +174,22 @@ class EngineStore {
     return false;
   }
 
-  resetLockBalalnceOfUser = (userId: string, side: orderSide) => {
+  resetLockBalalnceOfUser = (userId: string, side: orderSide, presentUser: boolean) => {
     const userBalance = this.getUserBalance(userId);
     if (!userBalance) return false;
 
-    if (side === "BUY") {
-      userBalance.INR.locked = 0;
+    if (presentUser) {
+      if (side === "BUY") {
+        userBalance.INR.locked = 0;
+      } else {
+        userBalance.AXIS.locked = 0;
+      }
     } else {
-      userBalance.AXIS.locked = 0;
+      if (side === "SELL") {
+        userBalance.INR.locked = 0;
+      } else {
+        userBalance.AXIS.locked = 0;
+      }
     }
   }
 
@@ -263,6 +221,8 @@ class EngineStore {
     orderBookKey: OrderBookKey,
     qtyToAdd: number,
   ) => { 
+    console.log("price ", price)
+    
     // if not created assigning default values
     if (!this.USERORDERBOOK[orderBookKey][type][price]) {
       this.USERORDERBOOK[orderBookKey][type][price] = {
@@ -272,31 +232,20 @@ class EngineStore {
       }
     }
     
-    // fetching the order 
+    // fetching the order and sorting the users 
     const order = this.USERORDERBOOK[orderBookKey][type][price]!;
+    order.users.push({ id: userId, createdAt: Date.now(), qty: qtyToAdd, price })
+    const sortedUsers = order.users.sort((a, b) => a.createdAt - b.createdAt);
     
     // apending all latest details to this one
     this.USERORDERBOOK[orderBookKey][type][price] = {
+      ...order,
       createdAt: Date.now(),
       totalQuantity: order.totalQuantity + qtyToAdd,
-      users: [ ...order.users, { id: userId, createdAt: Date.now(), qty: qtyToAdd, price } ]
-    }
-
-    // refetching the order with the latest details
-    const reFetchedOrder = this.USERORDERBOOK[orderBookKey][type][price]!;
-
-    // deleting this one
-    delete this.USERORDERBOOK[orderBookKey][type][price]
-    
-    // sorting the users
-    const sortedUsers = reFetchedOrder.users.sort((a, b) => a.createdAt - b.createdAt);
-    
-    // creating new one with the refetched order book with the sorted users
-    this.USERORDERBOOK[orderBookKey][type][price] = {
-      createdAt: reFetchedOrder.createdAt,
-      totalQuantity: reFetchedOrder.totalQuantity,
       users: sortedUsers
     }
+
+    console.log("while adding to orderbook", this.USERORDERBOOK[orderBookKey][type][price])
   }
 
   checkAvailablePriceInOrderBook =(
@@ -412,7 +361,7 @@ class EngineStore {
           val.qty,
           false
         );
-        this.resetLockBalalnceOfUser(val.id, side);
+        this.resetLockBalalnceOfUser(val.id, side, false);
       } else {
         const leftQty = Math.abs(decreasingQty - val.qty);
 
@@ -429,7 +378,7 @@ class EngineStore {
           decreasingQty,
           false
         );
-        this.resetLockBalalnceOfUser(val.id, side);
+        this.resetLockBalalnceOfUser(val.id, side, false);
       }
     }
 
@@ -550,7 +499,11 @@ class EngineStore {
       })
     }
 
+    
     const updatedUsers = this.deductQtyAndBalanceOfInvolvedUsers(users, availableQty, side, finalPrice);
+    
+    console.log("users in the swap", users);
+    console.log("updated users", updatedUsers)
 
     // updating the users in the order book
     this.updateInvolvedUsersQtyInOrderBook(updatedUsers, side, orderBookKey);
@@ -589,7 +542,7 @@ class EngineStore {
       availableQty,
       true
     );
-    engineStore.resetLockBalalnceOfUser(userId, side);
+    engineStore.resetLockBalalnceOfUser(userId, side, true);
 
     return { 
       status: userQty === availableQty ? "FILLED" : "PARTIAL_FILLED", 
@@ -600,10 +553,11 @@ class EngineStore {
     };
   }
 
-  beforeOrder = (parsedResponse: RedisQueueData): EngineResponse => {
+  beforeOrder = (parsedResponse: RedisQueueData): BeforeOrderResponse => {
     if (parsedResponse.type !== "create_order") return {
       clientId: parsedResponse.clientId,
-      ok: false
+      ok: false,
+      type: "ERROR",
     }
       
     const { side, symbol, type, userId, price, qty, 
@@ -617,6 +571,7 @@ class EngineStore {
           clientId: parsedResponse.clientId,
           ok: false,
           error: "Price and quantity both should be defined.",
+          type: "ERROR",
         };
       }
     } else if (type === "MARKET") {
@@ -626,6 +581,7 @@ class EngineStore {
           clientId: parsedResponse.clientId,
           ok: false,
           error: "Price and quantity both should be defined.",
+          type: "ERROR",
         };
       }
     }
@@ -636,6 +592,7 @@ class EngineStore {
         clientId: parsedResponse.clientId,
         ok: false,
         error: "Price and quantity both should be defined.",
+        type: "ERROR",
       };
     }
 
@@ -653,6 +610,7 @@ class EngineStore {
         clientId: parsedResponse.clientId,
         ok: false,
         error: "Insufficient balance.",
+        type: "ERROR"
       };
     }
 
@@ -672,7 +630,8 @@ class EngineStore {
       data: {
         message: "available price not found",
         data: undefined
-      }
+      },
+      type: "ERROR"
     }
     }
     
@@ -712,6 +671,7 @@ class EngineStore {
             fills: []
           },
         },
+        type: "ORDER_IN_ORDERBOOK"
       };
     }
 
@@ -722,8 +682,8 @@ class EngineStore {
       data: {
         message: "available price found",
         data: availablePrice
-        // data: { market, availablePrice }
-      }
+      },
+      type: "AVAILABLE_PRICE"
     }
   }
 
@@ -777,12 +737,21 @@ class EngineStore {
 
     const orderBook = this.USERORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey]!;
 
-    if (startQty >= totalQuantity) return users;
+    console.log("orderbook key", orderBookKey);
+    console.log("totalQuantity", totalQuantity);
+    console.log("orderBook", orderBook)
+    
+    
+    console.log("users ", users);
+    
     
     for (const val of orderBook.users) {
+      if (startQty >= totalQuantity) break;
       startQty += val.qty
       users.push(val)
     }
+
+    return users;
   }
 
   backupData = () => {

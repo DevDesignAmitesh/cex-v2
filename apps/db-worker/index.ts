@@ -38,7 +38,7 @@ async function main() {
           userId 
         } = order;
         
-        const dbOrder = await tx.order.upsert({
+        await tx.order.upsert({
           where: { id, userId },
           update: {
             filledQty,
@@ -75,7 +75,6 @@ async function main() {
           await tx.fill.create({
             data: {
               id,
-              orderId: dbOrder.id,
               askedQty,
               makerId,
               takerId,
