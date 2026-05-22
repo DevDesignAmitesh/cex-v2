@@ -61,7 +61,7 @@ export const verifyToken = (token: string, secret: string) => {
 
 export type RedisDbQueueData =
   | {
-      type: "create_order";
+      type: "create_order_fills";
       data: {
         order: Order,
         fills: Fill[]
@@ -70,7 +70,6 @@ export type RedisDbQueueData =
   | {
       type: "cancel_order";
       data: { orderId: string; userId: string };
-      clientId: string;
     };
 
 export type RedisWsQueueData =

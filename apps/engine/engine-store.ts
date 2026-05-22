@@ -51,8 +51,27 @@ class EngineStore {
 
     this.ORDERS.splice(orderIndex, 0)
 
+    // send to queue also
+    redisManager.pushDataInOrderQueue({
+      type: "cancel_order",
+      data: { orderId, userId }
+    }, "orderbook-to-db-queue")
+    
     return true;
   }
+
+  createOrder = (order: Order) => {
+    this.ORDERS.push(order)
+  }
+
+  pushOrderAndFillToQueue = (order: Order, fills: Fill[]) => {
+    redisManager.pushDataInOrderQueue({
+      type: "create_order_fills",
+      data: { order, fills }
+    }, "orderbook-to-db-queue")
+  }
+
+
 
   getSymbolDepth = (symbol: string, isQueue?: boolean) => {
     // symbol === CURRENCY/STOCK (INR/AXIS);
@@ -71,7 +90,6 @@ class EngineStore {
     return this.USERORDERBOOK[stock]
   }
 
-  // TODO: check this why its return only []
   getFills = (userId: string, orderId?: string) => {
     const arr: Fill[] = []    
 
@@ -200,17 +218,20 @@ class EngineStore {
     if (presentUser) {
       if (side === "BUY") {
         userBalance.INR.total -= finalPrice * qty;
+        userBalance.AXIS.total += qty;
       } else if (side === "SELL") {
+        userBalance.INR.total += finalPrice * qty;
         userBalance.AXIS.total -= qty;
       }
     } else {
       if (side === "SELL") {
         userBalance.INR.total -= finalPrice * qty;
+        userBalance.AXIS.total += qty;
       } else if (side === "BUY") {
+        userBalance.INR.total += finalPrice * qty;
         userBalance.AXIS.total -= qty;
       }
     }
-
   }
 
 
@@ -351,9 +372,6 @@ class EngineStore {
         decreasingQty -= val.qty // decrasing the value for the next loop
 
         // handling user balances
-        // TODO: if present user buying then the other users qty should get deduct and should add the price of the sold qty
-        // the price from the present user should get deduct
-
         this.deductTotalBalalnceOfUser(
           val.id,
           side,
@@ -404,14 +422,23 @@ class EngineStore {
     }
   }
 
+  getCustomOrder = (userId: string, price: number, side: orderSide) => {
+    const orders = this.getOrders(userId);
+    const order = orders.find((ord) => ord.price === price && ord.side !== side);
+    
+    return order;
+  }
+
   creatingFillsForSwap = (updatedUsers: UserInOrderBook[], userId: string, orderId: string) => {
-    // TODO: return all the created fills of this code
     const order = this.getOrder(orderId, userId)!;
-    
-    // find out how to get their idss
-    const TODO_ID = crypto.randomUUID();
-    
+        
     for (const val of updatedUsers) {
+      const makerOrder = this.getCustomOrder(val.id, order.price, order.side)
+
+      console.log("makerOrder", makerOrder)
+      
+      if (!makerOrder) continue;
+
       this.FILLS.push({
         id: crypto.randomUUID(),
         askedQty: order.qty,
@@ -419,7 +446,7 @@ class EngineStore {
         createdAt: new Date(),
         filledQty: order.filledQty,
         makerId: val.id,
-        makerOrderId: TODO_ID,
+        makerOrderId: makerOrder.id,
         price: order.price,
         side: order.side,
         takerId: userId,
@@ -440,7 +467,8 @@ class EngineStore {
 
     this.deleteOrder(userId, order.id);
 
-    this.ORDERS.push(updatedOrder)
+    this.createOrder(updatedOrder)
+    this.pushOrderAndFillToQueue(updatedOrder, []);
   }
 
 
@@ -477,7 +505,7 @@ class EngineStore {
     const existingOrder = this.getOrder(orderId, userId);
       
     if (!existingOrder) {
-      this.ORDERS.push({
+      const order: Order = {
         id: orderId,
         userId,
         type,
@@ -489,7 +517,9 @@ class EngineStore {
         side,
         createdAt: new Date(),
         updatedAt: new Date(),
-      });
+      }
+      
+      this.createOrder(order);
     } else {
       this.updateOrder(userId, orderId, {
         updatedAt: new Date(),
@@ -526,13 +556,9 @@ class EngineStore {
 
 
     const fills = this.getFills(userId, orderId);
-    
     const toSendOrder = this.getOrder(orderId, userId)!;
     
-    redisManager.pushDataInOrderQueue({
-      type: "create_order",
-      data: { order: toSendOrder, fills }
-    }, "orderbook-to-db-queue")
+    this.pushOrderAndFillToQueue(toSendOrder, fills)
     
     // handle balances on the current user
     engineStore.deductTotalBalalnceOfUser(
@@ -645,7 +671,7 @@ class EngineStore {
         qty,
       );
 
-      this.ORDERS.push({
+      const order: Order = {
         id: parsedResponse.data.orderId,
         userId,
         status: "OPEN",
@@ -657,7 +683,11 @@ class EngineStore {
         filledQty: 0,
         createdAt: new Date(),
         updatedAt: new Date(),
-      })
+      }
+      
+      this.createOrder(order)
+
+      this.pushOrderAndFillToQueue(order, []);
       
       return {
         clientId: parsedResponse.clientId,
