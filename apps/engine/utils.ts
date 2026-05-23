@@ -479,25 +479,14 @@ export function liquidate(userId: string) {
 
   console.log("position", position);
   
-  const clientId = crypto.randomUUID();    
-  const orderId = crypto.randomUUID();
-
-  const res = createOrder({
-    clientId,
-    data: {
-      market: "SPOT",
-      orderId,
-      side: position.type === "LONG" ? "SELL" : "BUY",
-      symbol: "INR/AXIS",
-      type: "MARKET",
-      userId: position.userId,
-      price: position.averagePrice,
-      qty:  position.qty
-    },
-    type: "create_order"
-  })
+  const { averagePrice, isProfit, liquidationPrice, margin, market, pnl, qty, type, userId: usrId } = position;
   
-  console.log("response", res);
+  // liquidate from the positions onlyy
+  const liquidablePositon = engineStore.getLiquidablePosition(averagePrice, qty, type);
+  if (!liquidablePositon) return;
+
+  console.log("liquidablePosition", liquidablePositon);
+  // CONTINUE FROM here
 }
 
 export function updatePnl() {
@@ -507,18 +496,38 @@ export function updatePnl() {
   const positions = engineStore.getAllPositions();
 
   for (const val of positions) {
-    let pnl = 0
-    // for long
-    // if in - then its profit else loss (for client)
+    let pnl = 0 
+    let isProfit = false;
     
-    // for short
-    // if in - then its loss else profit (for client)
-    pnl = val.averagePrice - CURRENT_PRICE
+    if (val.type === "LONG") {
+      if (val.averagePrice >= CURRENT_PRICE) {
+        // avg: 100 - curr: 80
+        pnl = val.averagePrice - CURRENT_PRICE
+        isProfit = false
+      } else {
+        // curr: 120 - avg: 100
+        pnl = CURRENT_PRICE - val.averagePrice
+        isProfit = true
+      }
+    }
+    
+    if (val.type === "SHORT") {
+      if (val.averagePrice >= CURRENT_PRICE) {
+        // avg: 100 - curr: 80
+        pnl = val.averagePrice - CURRENT_PRICE
+        isProfit = true
+      } else {
+        // curr: 120 - avg: 120
+        pnl = CURRENT_PRICE - val.averagePrice
+        isProfit = false
+      }
+    }
     
     engineStore.deletePosition(val.userId);
     engineStore.createPosition({
       ...val,
-      pnl
+      pnl,
+      isProfit,
     });
   } 
 }

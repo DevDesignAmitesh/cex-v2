@@ -235,6 +235,7 @@ export type Position = {
   liquidationPrice: number;
   averagePrice: number;
   userId: string
+  isProfit: boolean
 }
 
 // LONG: {

@@ -55,6 +55,18 @@ class EngineStore {
     return this.POSITIONS;
   }
 
+  getLiquidablePosition = (price: number, qty: number, type: postionType) => {
+    if (type === "LONG") {
+      return this.getAllPositions()
+        .filter((pos) => pos.type !== "LONG")
+        .find((pos) => pos.averagePrice >= price && pos.qty >= qty)
+      } else {
+      return this.getAllPositions()
+        .filter((pos) => pos.type !== "SHORT")
+        .find((pos) => pos.averagePrice <= price && pos.qty >= qty)
+    }
+  }
+
   getPosition = (userId: string) => {
     return this.getAllPositions().find((ps) => ps.userId === userId)
   }
@@ -697,7 +709,8 @@ class EngineStore {
         qty: availableQty,
         type: currentType,
         userId,
-        pnl: 0
+        pnl: 0,
+        isProfit: false
       })
     } else {
       
@@ -711,7 +724,8 @@ class EngineStore {
           qty: position.qty + availableQty,
           type: position.type,
           userId,
-          pnl: position.pnl
+          pnl: position.pnl,
+          isProfit: false
         })  
       } else {
         // if user already had 4 long and done a 4 short then delete the position
@@ -728,7 +742,8 @@ class EngineStore {
             qty: position.qty - availableQty,
             type: position.type,
             userId,
-            pnl: position.pnl
+            pnl: position.pnl,
+            isProfit: false
           })
         } else {
           this.deletePosition(userId);
@@ -740,7 +755,8 @@ class EngineStore {
             qty: availableQty - position.qty,
             type: currentType,
             userId,
-            pnl: 0
+            pnl: 0,
+            isProfit: false
           })
         }
       }
