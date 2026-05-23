@@ -1,4 +1,4 @@
-import { LIQUIDATION_PERCENTAGE, type Balance, type BalanceKey, type BeforeOrderResponse, type EngineResponse, type Fill, type Order, type OrderBook, type OrderBookKey, type OrderBookOrder, type orderSide, type orderType, type Position, type POSITIONS_MAPS, type RedisQueueData, type UserBasedOrderBook, type UserInOrderBook } from "@repo/common/common";
+import { LIQUIDATION_PERCENTAGE, type Balance, type BalanceKey, type BeforeOrderResponse, type EngineResponse, type Fill, type Order, type OrderBook, type OrderBookKey, type OrderBookOrder, type orderSide, type orderType, type Position, type POSITIONS_MAPS, type postionType, type RedisQueueData, type UserBasedOrderBook, type UserInOrderBook } from "@repo/common/common";
 import { redisManager } from "@repo/redis/redis";
 import fs from "fs";
 
@@ -16,12 +16,8 @@ class EngineStore {
     this.FILLS = [];
     this.POSITIONS = [];
     this.POSITIONS_MAPS = {
-      LONG: {
-        40:  ["1", "2"]
-      },
-      SHORT: {
-        20:  ["1", "2"]
-      }
+      LONG: {},
+      SHORT: {}
     };
     this.BALANCES = this.readBackupData().BALANCES ?? {};
     this.USERORDERBOOK = this.readBackupData().USERORDERBOOK ?? {
@@ -34,6 +30,7 @@ class EngineStore {
     setInterval(() => {
       console.log("ORDERBOOK", this.USERORDERBOOK)
       console.log("BALANCES", this.BALANCES)
+      console.log("POSITIONS", this.POSITIONS)
     }, 10 * 1000)
   }
 
@@ -56,6 +53,10 @@ class EngineStore {
 
   getAllPositions = () => {
     return this.POSITIONS;
+  }
+
+  getPosition = (userId: string) => {
+    return this.getAllPositions().find((ps) => ps.userId === userId)
   }
 
   getAllPositionsMaps = () => {
@@ -618,47 +619,25 @@ class EngineStore {
     this.pushOrderAndFillToQueue(toSendOrder, fills)
     
     if (market === "PERPS") {
-      const usersPriceIncludingLeverage = this.calculateFinalPriceWithLeverage(userId, orderBookKey, availableQty);
-      const { leverage, lockedPrice, priceAskedByUser, userActualBalance } = usersPriceIncludingLeverage;
-      
-      const averagePrice = this.calculateAveragePrice(userId, type);
-      const margin = priceAskedByUser / leverage;
-      const liquidationPrice = averagePrice * LIQUIDATION_PERCENTAGE;
-      
-      // for current user
-      this.createPosition({
-        averagePrice,
-        liquidationPrice,
-        margin,
-        market,
-        qty: availableQty,
-        type: side === "BUY" ? "LONG" : "SHORT",
-        userId
-      })
+      // for current users
+      this.handlePosistionCreationAndCompensation(userId, orderBookKey, availableQty, side, type, true)
       
       // for other involved users
       for (const val of users) {
-        this.createPosition({
-          averagePrice,
-          liquidationPrice,
-          margin,
-          market,
-          qty: availableQty,
-          type: side === "BUY" ? "SHORT" : "LONG",
-          userId: val.id,
-        })
+        this.handlePosistionCreationAndCompensation(val.id, orderBookKey, availableQty, side, type, false)
       }
-    } else {
-      // handle balances on the current user
-      this.deductTotalBalalnceOfUser(
-        userId,
-        side,
-        finalPrice,
-        availableQty,
-        true
-      );
-      this.resetLockBalalnceOfUser(userId, side, true);
     }
+
+    // handle balances on the current user
+    // got used for SPOT (only)
+    this.deductTotalBalalnceOfUser(
+      userId,
+      side,
+      finalPrice,
+      availableQty,
+      true
+    );
+    this.resetLockBalalnceOfUser(userId, side, true);
     
     return { 
       status: userQty === availableQty ? "FILLED" : "PARTIAL_FILLED", 
@@ -667,6 +646,105 @@ class EngineStore {
       filledQty: availableQty,
       averagePrice: finalPrice
     };
+  }
+
+  deletePosition = (userId: string) => {
+    const position = this.getAllPositions().find((pos) => pos.userId === userId);
+    if (!position) return;
+
+    this.POSITIONS = this.POSITIONS.filter((pos) => pos.userId !== userId);
+    delete this.POSITIONS_MAPS[position.type][position.liquidationPrice]
+  }
+
+  handlePosistionCreationAndCompensation = (userId: string, orderBookKey: number, availableQty: number, side: orderSide, type: orderType, presentUser: boolean) => {
+    const position = this.getPosition(userId);
+    const usersPriceIncludingLeverage = this.calculateFinalPriceWithLeverage(userId, orderBookKey, availableQty);
+    const { leverage, lockedPrice, priceAskedByUser, userActualBalance } = usersPriceIncludingLeverage;
+
+    const averagePrice = this.calculateAveragePrice(userId, type);
+    const margin = priceAskedByUser / leverage;
+    let liquidationPrice = 0; 
+    
+    if (presentUser) {
+      if (side === "BUY") {
+        liquidationPrice = averagePrice * LIQUIDATION_PERCENTAGE;
+      } else {
+        liquidationPrice = averagePrice + (averagePrice - averagePrice * LIQUIDATION_PERCENTAGE);
+      }
+    } else {
+      if (side === "BUY") {
+        liquidationPrice = averagePrice + (averagePrice - averagePrice * LIQUIDATION_PERCENTAGE);
+      } else {
+        liquidationPrice = averagePrice * LIQUIDATION_PERCENTAGE;
+      }
+    }
+
+    let currentType: postionType;
+    
+    if (presentUser) {
+      currentType = side === "BUY" ? "LONG" : "SHORT"
+    } else {
+      currentType = side === "BUY" ? "SHORT" : "LONG"
+    }
+    
+    if (!position) {
+      // create position
+      this.createPosition({
+        averagePrice,
+        liquidationPrice,
+        margin,
+        market: "AXIS",
+        qty: availableQty,
+        type: currentType,
+        userId,
+        pnl: 0
+      })
+    } else {
+      
+      if (position.type === currentType) {
+        this.deletePosition(userId);
+        this.createPosition({
+          averagePrice,
+          liquidationPrice,
+          margin,
+          market: "AXIS",
+          qty: position.qty + availableQty,
+          type: position.type,
+          userId,
+          pnl: position.pnl
+        })  
+      } else {
+        // if user already had 4 long and done a 4 short then delete the position
+        
+        if (position.qty === availableQty) {
+          this.deletePosition(userId);
+        } else if (position.qty > availableQty) {
+          this.deletePosition(userId);
+          this.createPosition({
+            averagePrice,
+            liquidationPrice,
+            margin,
+            market: "AXIS",
+            qty: position.qty - availableQty,
+            type: position.type,
+            userId,
+            pnl: position.pnl
+          })
+        } else {
+          this.deletePosition(userId);
+          this.createPosition({
+            averagePrice,
+            liquidationPrice,
+            margin,
+            market: "AXIS",
+            qty: availableQty - position.qty,
+            type: currentType,
+            userId,
+            pnl: 0
+          })
+        }
+      }
+    }
   }
 
   beforeOrder = (parsedResponse: RedisQueueData): BeforeOrderResponse => {
@@ -740,15 +818,18 @@ class EngineStore {
 
     // if price is not available and type is market, means the user want on the spot execution, so will cancel the order
     if (!availablePrice && type === "MARKET") {
+      // reset lock
+      this.resetLockBalalnceOfUser(userId, side, true)
+
       return {
-      clientId: parsedResponse.clientId,
-      ok: false,
-      data: {
-        message: "available price not found",
-        data: undefined
-      },
-      type: "ERROR"
-    }
+        clientId: parsedResponse.clientId,
+        ok: false,
+        data: {
+          message: "available price not found",
+          data: undefined
+        },
+        type: "ERROR"
+      }
     }
     
     // here the type will be LIMI, so we will add it in the orderBook

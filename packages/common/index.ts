@@ -227,10 +227,11 @@ export type UserBasedOrderBook = Record<
 export type postionType = "LONG" | "SHORT"
 
 export type Position = {
-  market: string;
+  market: BalanceKey;
   type: postionType;
   qty: number;
   margin: number;
+  pnl: number;
   liquidationPrice: number;
   averagePrice: number;
   userId: string

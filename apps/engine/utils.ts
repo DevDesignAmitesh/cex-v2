@@ -427,3 +427,98 @@ export function getUserBalance(parsedResponse: RedisQueueData): EngineResponse {
 
 }
 
+export function getBalanceFromStockExchange() {
+  const prices = [10, 20, 30, 40];
+  
+  const price = prices[Math.floor(Math.random() * prices.length)]!;
+
+  console.log("price from excahange", price);
+  
+  return price;
+}
+
+export function checkLiquidation() {
+  try {
+    // getting the price from the binance / mock server (for eg 80)
+    const CURRENT_PRICE = getBalanceFromStockExchange();
+
+    // comparing the liquidation price of all the users ( less than or equal to 80 )
+    const POSITIONS_MAPS = engineStore.getAllPositionsMaps();
+
+
+    
+    // in the case of LONG if the current_price is less or equal to the liquidatePrice then liquidate 
+    for (const [idx, [key, val]] of (Object.entries(Object.entries(POSITIONS_MAPS["LONG"])))) {
+      const POSITION_LIQUIDATE_PRICE = Number(key);
+      const IDX = Number(idx);
+      
+      console.log("val", val)
+      
+      if (CURRENT_PRICE <= POSITION_LIQUIDATE_PRICE) liquidate(val[IDX]!);
+    }
+
+
+    
+    // in the case of LONG if the current_price is more or equal to the liquidatePrice then liquidate 
+    for (const [idx, [key, val]] of (Object.entries(Object.entries(POSITIONS_MAPS["SHORT"])))) {
+      const POSITION_LIQUIDATE_PRICE = Number(key);
+      const IDX = Number(idx);
+
+      if (CURRENT_PRICE >= POSITION_LIQUIDATE_PRICE) liquidate(val[IDX]!);
+    }
+  } catch (e) {
+    console.log("error in liquidation worker", e);
+  }
+}
+
+export function liquidate(userId: string) {
+  console.log("running", userId)
+
+  const position = engineStore.getPosition(userId);
+  if (!position) return;
+
+  console.log("position", position);
+  
+  const clientId = crypto.randomUUID();    
+  const orderId = crypto.randomUUID();
+
+  const res = createOrder({
+    clientId,
+    data: {
+      market: "SPOT",
+      orderId,
+      side: position.type === "LONG" ? "SELL" : "BUY",
+      symbol: "INR/AXIS",
+      type: "MARKET",
+      userId: position.userId,
+      price: position.averagePrice,
+      qty:  position.qty
+    },
+    type: "create_order"
+  })
+  
+  console.log("response", res);
+}
+
+export function updatePnl() {
+  // getting the price from the binance / mock server (for eg 80)
+  const CURRENT_PRICE = getBalanceFromStockExchange();
+
+  const positions = engineStore.getAllPositions();
+
+  for (const val of positions) {
+    let pnl = 0
+    // for long
+    // if in - then its profit else loss (for client)
+    
+    // for short
+    // if in - then its loss else profit (for client)
+    pnl = val.averagePrice - CURRENT_PRICE
+    
+    engineStore.deletePosition(val.userId);
+    engineStore.createPosition({
+      ...val,
+      pnl
+    });
+  } 
+}

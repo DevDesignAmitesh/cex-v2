@@ -1,6 +1,8 @@
 import type { RedisQueueData } from "@repo/common/common";
 import { redisManager } from "@repo/redis/redis";
 import { engineRequestHandler } from "./lib";
+import { engineStore } from "./engine-store";
+import { checkLiquidation, createOrder, getBalanceFromStockExchange, updatePnl } from "./utils";
 
 async function main() {
   for (;;) {
@@ -30,4 +32,7 @@ async function main() {
   }
 }
 
+
 main();
+setInterval(checkLiquidation, 3 * 1000);
+setInterval(updatePnl, 3 * 1000);
