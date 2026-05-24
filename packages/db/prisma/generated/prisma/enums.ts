@@ -17,6 +17,14 @@ export const fillType = {
 export type fillType = (typeof fillType)[keyof typeof fillType]
 
 
+export const positionType = {
+  LONG: 'LONG',
+  SHORT: 'SHORT'
+} as const
+
+export type positionType = (typeof positionType)[keyof typeof positionType]
+
+
 export const orderStatus = {
   OPEN: 'OPEN',
   FILLED: 'FILLED',

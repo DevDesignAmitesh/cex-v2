@@ -11,4 +11,5 @@
 export type * from './models/User.ts'
 export type * from './models/Order.ts'
 export type * from './models/Fill.ts'
+export type * from './models/Position.ts'
 export type * from './commonInputTypes.ts'

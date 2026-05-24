@@ -12,7 +12,6 @@
     "typescript": "^5"
   },
   "exports": {
-    "./engine": "./engine-store.ts",
-    "./order": "./utils.ts",
+    "./engine": "./engine-store.ts"
   }
 }

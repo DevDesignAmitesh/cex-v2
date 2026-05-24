@@ -34,14 +34,15 @@ export const getOrdersSchema = z.object({
 });
 
 export const createOrderSchema = z.object({
-  side: z.enum(["BUY", "SELL"]),
-  type: z.enum(["LIMIT", "MARKET"]),
+  userId: z.uuid(),
+  orderId: z.uuid(),
   symbol: z.string().includes("/"),
   price: z.number().optional(),
   qty: z.number().optional(),
-  userId: z.uuid(),
-  orderId: z.uuid(),
+  side: z.enum(["BUY", "SELL"]),
+  type: z.enum(["LIMIT", "MARKET"]),
   market: z.enum(["SPOT", "PERPS"]),
+  way: z.enum(["MANUAL", "EXCHANGE"]),
 });
 
 type CreateOrder = z.infer<typeof createOrderSchema>;
@@ -61,10 +62,11 @@ export const verifyToken = (token: string, secret: string) => {
 
 export type RedisDbQueueData =
   | {
-      type: "create_order_fills";
+      type: "create_order_fills_position";
       data: {
         order: Order,
-        fills: Fill[]
+        fills: Fill[],
+        positions: Position[],
       }
     }
   | {
@@ -227,7 +229,7 @@ export type UserBasedOrderBook = Record<
 export type postionType = "LONG" | "SHORT"
 
 export type Position = {
-  market: BalanceKey;
+  market: OrderBookKey;
   type: postionType;
   qty: number;
   margin: number;
@@ -235,6 +237,7 @@ export type Position = {
   liquidationPrice: number;
   averagePrice: number;
   userId: string
+  orderId: string
   isProfit: boolean
 }
 

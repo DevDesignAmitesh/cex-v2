@@ -259,6 +259,7 @@ export type OrderWhereInput = {
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   makerFills?: Prisma.FillListRelationFilter
   takerFills?: Prisma.FillListRelationFilter
+  positions?: Prisma.PositionListRelationFilter
 }
 
 export type OrderOrderByWithRelationInput = {
@@ -274,6 +275,7 @@ export type OrderOrderByWithRelationInput = {
   user?: Prisma.UserOrderByWithRelationInput
   makerFills?: Prisma.FillOrderByRelationAggregateInput
   takerFills?: Prisma.FillOrderByRelationAggregateInput
+  positions?: Prisma.PositionOrderByRelationAggregateInput
 }
 
 export type OrderWhereUniqueInput = Prisma.AtLeast<{
@@ -292,6 +294,7 @@ export type OrderWhereUniqueInput = Prisma.AtLeast<{
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   makerFills?: Prisma.FillListRelationFilter
   takerFills?: Prisma.FillListRelationFilter
+  positions?: Prisma.PositionListRelationFilter
 }, "id">
 
 export type OrderOrderByWithAggregationInput = {
@@ -338,6 +341,7 @@ export type OrderCreateInput = {
   user: Prisma.UserCreateNestedOneWithoutOrdersInput
   makerFills?: Prisma.FillCreateNestedManyWithoutMakerOrderInput
   takerFills?: Prisma.FillCreateNestedManyWithoutTakerOrderInput
+  positions?: Prisma.PositionCreateNestedManyWithoutOrderInput
 }
 
 export type OrderUncheckedCreateInput = {
@@ -352,6 +356,7 @@ export type OrderUncheckedCreateInput = {
   status: $Enums.orderStatus
   makerFills?: Prisma.FillUncheckedCreateNestedManyWithoutMakerOrderInput
   takerFills?: Prisma.FillUncheckedCreateNestedManyWithoutTakerOrderInput
+  positions?: Prisma.PositionUncheckedCreateNestedManyWithoutOrderInput
 }
 
 export type OrderUpdateInput = {
@@ -366,6 +371,7 @@ export type OrderUpdateInput = {
   user?: Prisma.UserUpdateOneRequiredWithoutOrdersNestedInput
   makerFills?: Prisma.FillUpdateManyWithoutMakerOrderNestedInput
   takerFills?: Prisma.FillUpdateManyWithoutTakerOrderNestedInput
+  positions?: Prisma.PositionUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateInput = {
@@ -380,6 +386,7 @@ export type OrderUncheckedUpdateInput = {
   status?: Prisma.EnumorderStatusFieldUpdateOperationsInput | $Enums.orderStatus
   makerFills?: Prisma.FillUncheckedUpdateManyWithoutMakerOrderNestedInput
   takerFills?: Prisma.FillUncheckedUpdateManyWithoutTakerOrderNestedInput
+  positions?: Prisma.PositionUncheckedUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderCreateManyInput = {
@@ -574,6 +581,20 @@ export type OrderUpdateOneRequiredWithoutTakerFillsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.OrderUpdateToOneWithWhereWithoutTakerFillsInput, Prisma.OrderUpdateWithoutTakerFillsInput>, Prisma.OrderUncheckedUpdateWithoutTakerFillsInput>
 }
 
+export type OrderCreateNestedOneWithoutPositionsInput = {
+  create?: Prisma.XOR<Prisma.OrderCreateWithoutPositionsInput, Prisma.OrderUncheckedCreateWithoutPositionsInput>
+  connectOrCreate?: Prisma.OrderCreateOrConnectWithoutPositionsInput
+  connect?: Prisma.OrderWhereUniqueInput
+}
+
+export type OrderUpdateOneRequiredWithoutPositionsNestedInput = {
+  create?: Prisma.XOR<Prisma.OrderCreateWithoutPositionsInput, Prisma.OrderUncheckedCreateWithoutPositionsInput>
+  connectOrCreate?: Prisma.OrderCreateOrConnectWithoutPositionsInput
+  upsert?: Prisma.OrderUpsertWithoutPositionsInput
+  connect?: Prisma.OrderWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.OrderUpdateToOneWithWhereWithoutPositionsInput, Prisma.OrderUpdateWithoutPositionsInput>, Prisma.OrderUncheckedUpdateWithoutPositionsInput>
+}
+
 export type OrderCreateWithoutUserInput = {
   id?: string
   market: $Enums.orderMarket
@@ -585,6 +606,7 @@ export type OrderCreateWithoutUserInput = {
   status: $Enums.orderStatus
   makerFills?: Prisma.FillCreateNestedManyWithoutMakerOrderInput
   takerFills?: Prisma.FillCreateNestedManyWithoutTakerOrderInput
+  positions?: Prisma.PositionCreateNestedManyWithoutOrderInput
 }
 
 export type OrderUncheckedCreateWithoutUserInput = {
@@ -598,6 +620,7 @@ export type OrderUncheckedCreateWithoutUserInput = {
   status: $Enums.orderStatus
   makerFills?: Prisma.FillUncheckedCreateNestedManyWithoutMakerOrderInput
   takerFills?: Prisma.FillUncheckedCreateNestedManyWithoutTakerOrderInput
+  positions?: Prisma.PositionUncheckedCreateNestedManyWithoutOrderInput
 }
 
 export type OrderCreateOrConnectWithoutUserInput = {
@@ -652,6 +675,7 @@ export type OrderCreateWithoutMakerFillsInput = {
   status: $Enums.orderStatus
   user: Prisma.UserCreateNestedOneWithoutOrdersInput
   takerFills?: Prisma.FillCreateNestedManyWithoutTakerOrderInput
+  positions?: Prisma.PositionCreateNestedManyWithoutOrderInput
 }
 
 export type OrderUncheckedCreateWithoutMakerFillsInput = {
@@ -665,6 +689,7 @@ export type OrderUncheckedCreateWithoutMakerFillsInput = {
   type: $Enums.orderType
   status: $Enums.orderStatus
   takerFills?: Prisma.FillUncheckedCreateNestedManyWithoutTakerOrderInput
+  positions?: Prisma.PositionUncheckedCreateNestedManyWithoutOrderInput
 }
 
 export type OrderCreateOrConnectWithoutMakerFillsInput = {
@@ -683,6 +708,7 @@ export type OrderCreateWithoutTakerFillsInput = {
   status: $Enums.orderStatus
   user: Prisma.UserCreateNestedOneWithoutOrdersInput
   makerFills?: Prisma.FillCreateNestedManyWithoutMakerOrderInput
+  positions?: Prisma.PositionCreateNestedManyWithoutOrderInput
 }
 
 export type OrderUncheckedCreateWithoutTakerFillsInput = {
@@ -696,6 +722,7 @@ export type OrderUncheckedCreateWithoutTakerFillsInput = {
   type: $Enums.orderType
   status: $Enums.orderStatus
   makerFills?: Prisma.FillUncheckedCreateNestedManyWithoutMakerOrderInput
+  positions?: Prisma.PositionUncheckedCreateNestedManyWithoutOrderInput
 }
 
 export type OrderCreateOrConnectWithoutTakerFillsInput = {
@@ -725,6 +752,7 @@ export type OrderUpdateWithoutMakerFillsInput = {
   status?: Prisma.EnumorderStatusFieldUpdateOperationsInput | $Enums.orderStatus
   user?: Prisma.UserUpdateOneRequiredWithoutOrdersNestedInput
   takerFills?: Prisma.FillUpdateManyWithoutTakerOrderNestedInput
+  positions?: Prisma.PositionUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateWithoutMakerFillsInput = {
@@ -738,6 +766,7 @@ export type OrderUncheckedUpdateWithoutMakerFillsInput = {
   type?: Prisma.EnumorderTypeFieldUpdateOperationsInput | $Enums.orderType
   status?: Prisma.EnumorderStatusFieldUpdateOperationsInput | $Enums.orderStatus
   takerFills?: Prisma.FillUncheckedUpdateManyWithoutTakerOrderNestedInput
+  positions?: Prisma.PositionUncheckedUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderUpsertWithoutTakerFillsInput = {
@@ -762,6 +791,7 @@ export type OrderUpdateWithoutTakerFillsInput = {
   status?: Prisma.EnumorderStatusFieldUpdateOperationsInput | $Enums.orderStatus
   user?: Prisma.UserUpdateOneRequiredWithoutOrdersNestedInput
   makerFills?: Prisma.FillUpdateManyWithoutMakerOrderNestedInput
+  positions?: Prisma.PositionUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateWithoutTakerFillsInput = {
@@ -775,6 +805,79 @@ export type OrderUncheckedUpdateWithoutTakerFillsInput = {
   type?: Prisma.EnumorderTypeFieldUpdateOperationsInput | $Enums.orderType
   status?: Prisma.EnumorderStatusFieldUpdateOperationsInput | $Enums.orderStatus
   makerFills?: Prisma.FillUncheckedUpdateManyWithoutMakerOrderNestedInput
+  positions?: Prisma.PositionUncheckedUpdateManyWithoutOrderNestedInput
+}
+
+export type OrderCreateWithoutPositionsInput = {
+  id?: string
+  market: $Enums.orderMarket
+  price: number
+  qty: number
+  filledQty: number
+  side: $Enums.orderSide
+  type: $Enums.orderType
+  status: $Enums.orderStatus
+  user: Prisma.UserCreateNestedOneWithoutOrdersInput
+  makerFills?: Prisma.FillCreateNestedManyWithoutMakerOrderInput
+  takerFills?: Prisma.FillCreateNestedManyWithoutTakerOrderInput
+}
+
+export type OrderUncheckedCreateWithoutPositionsInput = {
+  id?: string
+  userId: string
+  market: $Enums.orderMarket
+  price: number
+  qty: number
+  filledQty: number
+  side: $Enums.orderSide
+  type: $Enums.orderType
+  status: $Enums.orderStatus
+  makerFills?: Prisma.FillUncheckedCreateNestedManyWithoutMakerOrderInput
+  takerFills?: Prisma.FillUncheckedCreateNestedManyWithoutTakerOrderInput
+}
+
+export type OrderCreateOrConnectWithoutPositionsInput = {
+  where: Prisma.OrderWhereUniqueInput
+  create: Prisma.XOR<Prisma.OrderCreateWithoutPositionsInput, Prisma.OrderUncheckedCreateWithoutPositionsInput>
+}
+
+export type OrderUpsertWithoutPositionsInput = {
+  update: Prisma.XOR<Prisma.OrderUpdateWithoutPositionsInput, Prisma.OrderUncheckedUpdateWithoutPositionsInput>
+  create: Prisma.XOR<Prisma.OrderCreateWithoutPositionsInput, Prisma.OrderUncheckedCreateWithoutPositionsInput>
+  where?: Prisma.OrderWhereInput
+}
+
+export type OrderUpdateToOneWithWhereWithoutPositionsInput = {
+  where?: Prisma.OrderWhereInput
+  data: Prisma.XOR<Prisma.OrderUpdateWithoutPositionsInput, Prisma.OrderUncheckedUpdateWithoutPositionsInput>
+}
+
+export type OrderUpdateWithoutPositionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  market?: Prisma.EnumorderMarketFieldUpdateOperationsInput | $Enums.orderMarket
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  qty?: Prisma.IntFieldUpdateOperationsInput | number
+  filledQty?: Prisma.IntFieldUpdateOperationsInput | number
+  side?: Prisma.EnumorderSideFieldUpdateOperationsInput | $Enums.orderSide
+  type?: Prisma.EnumorderTypeFieldUpdateOperationsInput | $Enums.orderType
+  status?: Prisma.EnumorderStatusFieldUpdateOperationsInput | $Enums.orderStatus
+  user?: Prisma.UserUpdateOneRequiredWithoutOrdersNestedInput
+  makerFills?: Prisma.FillUpdateManyWithoutMakerOrderNestedInput
+  takerFills?: Prisma.FillUpdateManyWithoutTakerOrderNestedInput
+}
+
+export type OrderUncheckedUpdateWithoutPositionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  market?: Prisma.EnumorderMarketFieldUpdateOperationsInput | $Enums.orderMarket
+  price?: Prisma.IntFieldUpdateOperationsInput | number
+  qty?: Prisma.IntFieldUpdateOperationsInput | number
+  filledQty?: Prisma.IntFieldUpdateOperationsInput | number
+  side?: Prisma.EnumorderSideFieldUpdateOperationsInput | $Enums.orderSide
+  type?: Prisma.EnumorderTypeFieldUpdateOperationsInput | $Enums.orderType
+  status?: Prisma.EnumorderStatusFieldUpdateOperationsInput | $Enums.orderStatus
+  makerFills?: Prisma.FillUncheckedUpdateManyWithoutMakerOrderNestedInput
+  takerFills?: Prisma.FillUncheckedUpdateManyWithoutTakerOrderNestedInput
 }
 
 export type OrderCreateManyUserInput = {
@@ -799,6 +902,7 @@ export type OrderUpdateWithoutUserInput = {
   status?: Prisma.EnumorderStatusFieldUpdateOperationsInput | $Enums.orderStatus
   makerFills?: Prisma.FillUpdateManyWithoutMakerOrderNestedInput
   takerFills?: Prisma.FillUpdateManyWithoutTakerOrderNestedInput
+  positions?: Prisma.PositionUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateWithoutUserInput = {
@@ -812,6 +916,7 @@ export type OrderUncheckedUpdateWithoutUserInput = {
   status?: Prisma.EnumorderStatusFieldUpdateOperationsInput | $Enums.orderStatus
   makerFills?: Prisma.FillUncheckedUpdateManyWithoutMakerOrderNestedInput
   takerFills?: Prisma.FillUncheckedUpdateManyWithoutTakerOrderNestedInput
+  positions?: Prisma.PositionUncheckedUpdateManyWithoutOrderNestedInput
 }
 
 export type OrderUncheckedUpdateManyWithoutUserInput = {
@@ -833,11 +938,13 @@ export type OrderUncheckedUpdateManyWithoutUserInput = {
 export type OrderCountOutputType = {
   makerFills: number
   takerFills: number
+  positions: number
 }
 
 export type OrderCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   makerFills?: boolean | OrderCountOutputTypeCountMakerFillsArgs
   takerFills?: boolean | OrderCountOutputTypeCountTakerFillsArgs
+  positions?: boolean | OrderCountOutputTypeCountPositionsArgs
 }
 
 /**
@@ -864,6 +971,13 @@ export type OrderCountOutputTypeCountTakerFillsArgs<ExtArgs extends runtime.Type
   where?: Prisma.FillWhereInput
 }
 
+/**
+ * OrderCountOutputType without action
+ */
+export type OrderCountOutputTypeCountPositionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.PositionWhereInput
+}
+
 
 export type OrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -878,6 +992,7 @@ export type OrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   makerFills?: boolean | Prisma.Order$makerFillsArgs<ExtArgs>
   takerFills?: boolean | Prisma.Order$takerFillsArgs<ExtArgs>
+  positions?: boolean | Prisma.Order$positionsArgs<ExtArgs>
   _count?: boolean | Prisma.OrderCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["order"]>
 
@@ -924,6 +1039,7 @@ export type OrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   makerFills?: boolean | Prisma.Order$makerFillsArgs<ExtArgs>
   takerFills?: boolean | Prisma.Order$takerFillsArgs<ExtArgs>
+  positions?: boolean | Prisma.Order$positionsArgs<ExtArgs>
   _count?: boolean | Prisma.OrderCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type OrderIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -939,6 +1055,7 @@ export type $OrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     user: Prisma.$UserPayload<ExtArgs>
     makerFills: Prisma.$FillPayload<ExtArgs>[]
     takerFills: Prisma.$FillPayload<ExtArgs>[]
+    positions: Prisma.$PositionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1347,6 +1464,7 @@ export interface Prisma__OrderClient<T, Null = never, ExtArgs extends runtime.Ty
   user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   makerFills<T extends Prisma.Order$makerFillsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Order$makerFillsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FillPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   takerFills<T extends Prisma.Order$takerFillsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Order$takerFillsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FillPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  positions<T extends Prisma.Order$positionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Order$positionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PositionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1831,6 +1949,30 @@ export type Order$takerFillsArgs<ExtArgs extends runtime.Types.Extensions.Intern
   take?: number
   skip?: number
   distinct?: Prisma.FillScalarFieldEnum | Prisma.FillScalarFieldEnum[]
+}
+
+/**
+ * Order.positions
+ */
+export type Order$positionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Position
+   */
+  select?: Prisma.PositionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Position
+   */
+  omit?: Prisma.PositionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PositionInclude<ExtArgs> | null
+  where?: Prisma.PositionWhereInput
+  orderBy?: Prisma.PositionOrderByWithRelationInput | Prisma.PositionOrderByWithRelationInput[]
+  cursor?: Prisma.PositionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.PositionScalarFieldEnum | Prisma.PositionScalarFieldEnum[]
 }
 
 /**

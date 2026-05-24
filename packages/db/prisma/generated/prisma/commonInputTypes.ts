@@ -159,6 +159,36 @@ export type EnumfillTypeWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedEnumfillTypeFilter<$PrismaModel>
 }
 
+export type BoolFilter<$PrismaModel = never> = {
+  equals?: boolean | Prisma.BooleanFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedBoolFilter<$PrismaModel> | boolean
+}
+
+export type EnumpositionTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.positionType | Prisma.EnumpositionTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.positionType[] | Prisma.ListEnumpositionTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.positionType[] | Prisma.ListEnumpositionTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumpositionTypeFilter<$PrismaModel> | $Enums.positionType
+}
+
+export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: boolean | Prisma.BooleanFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedBoolFilter<$PrismaModel>
+  _max?: Prisma.NestedBoolFilter<$PrismaModel>
+}
+
+export type EnumpositionTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.positionType | Prisma.EnumpositionTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.positionType[] | Prisma.ListEnumpositionTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.positionType[] | Prisma.ListEnumpositionTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumpositionTypeWithAggregatesFilter<$PrismaModel> | $Enums.positionType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumpositionTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumpositionTypeFilter<$PrismaModel>
+}
+
 export type NestedStringFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel>
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
@@ -311,6 +341,36 @@ export type NestedEnumfillTypeWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumfillTypeFilter<$PrismaModel>
   _max?: Prisma.NestedEnumfillTypeFilter<$PrismaModel>
+}
+
+export type NestedBoolFilter<$PrismaModel = never> = {
+  equals?: boolean | Prisma.BooleanFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedBoolFilter<$PrismaModel> | boolean
+}
+
+export type NestedEnumpositionTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.positionType | Prisma.EnumpositionTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.positionType[] | Prisma.ListEnumpositionTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.positionType[] | Prisma.ListEnumpositionTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumpositionTypeFilter<$PrismaModel> | $Enums.positionType
+}
+
+export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: boolean | Prisma.BooleanFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedBoolFilter<$PrismaModel>
+  _max?: Prisma.NestedBoolFilter<$PrismaModel>
+}
+
+export type NestedEnumpositionTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.positionType | Prisma.EnumpositionTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.positionType[] | Prisma.ListEnumpositionTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.positionType[] | Prisma.ListEnumpositionTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumpositionTypeWithAggregatesFilter<$PrismaModel> | $Enums.positionType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumpositionTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumpositionTypeFilter<$PrismaModel>
 }
 
 

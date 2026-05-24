@@ -13,6 +13,7 @@ export async function createOrder(
     userId: req.userId,
     market: req.params.market,
     orderId,
+    way: "MANUAL",
   });
 
   if (!success) {

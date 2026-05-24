@@ -23,8 +23,8 @@ async function main() {
         })
       }
   
-      if (parsedResponse.type === "create_order_fills") {
-        const { order, fills } = parsedResponse.data;
+      if (parsedResponse.type === "create_order_fills_position") {
+        const { order, fills, positions } = parsedResponse.data;
         
         prisma.$transaction(async (tx) => {
           const { 
@@ -87,6 +87,36 @@ async function main() {
                 asset,
                 side,
                 type,
+              }
+            })
+          }
+
+          for (const pos of positions) {
+            const { 
+              averagePrice,
+              isProfit,
+              liquidationPrice,
+              margin,
+              market,
+              orderId,
+              pnl,
+              qty,
+              type,
+              userId,
+            } = pos;
+            
+            await tx.position.create({
+              data: {
+                averagePrice,
+                isProfit,
+                liquidationPrice,
+                margin,
+                market,
+                orderId,
+                pnl,
+                qty,
+                type,
+                userId,
               }
             })
           }

@@ -32,3 +32,8 @@ export type Order = Prisma.OrderModel
  * 
  */
 export type Fill = Prisma.FillModel
+/**
+ * Model Position
+ * 
+ */
+export type Position = Prisma.PositionModel

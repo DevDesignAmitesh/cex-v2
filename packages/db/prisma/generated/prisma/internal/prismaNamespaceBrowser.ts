@@ -53,7 +53,8 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   User: 'User',
   Order: 'Order',
-  Fill: 'Fill'
+  Fill: 'Fill',
+  Position: 'Position'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -112,6 +113,23 @@ export const FillScalarFieldEnum = {
 } as const
 
 export type FillScalarFieldEnum = (typeof FillScalarFieldEnum)[keyof typeof FillScalarFieldEnum]
+
+
+export const PositionScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  orderId: 'orderId',
+  averagePrice: 'averagePrice',
+  isProfit: 'isProfit',
+  liquidationPrice: 'liquidationPrice',
+  margin: 'margin',
+  market: 'market',
+  pnl: 'pnl',
+  qty: 'qty',
+  type: 'type'
+} as const
+
+export type PositionScalarFieldEnum = (typeof PositionScalarFieldEnum)[keyof typeof PositionScalarFieldEnum]
 
 
 export const SortOrder = {

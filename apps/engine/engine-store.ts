@@ -51,7 +51,10 @@ class EngineStore {
     this.POSITIONS_MAPS[position.type][position.liquidationPrice]!.push(position.userId)
   }
 
-  getAllPositions = () => {
+  getAllPositions = (orderId?: string) => {
+    if (orderId) {
+      return this.POSITIONS.filter((pos) => pos.orderId === orderId);
+    }
     return this.POSITIONS;
   }
 
@@ -134,10 +137,10 @@ class EngineStore {
     this.ORDERS.push(order)
   }
 
-  pushOrderAndFillToQueue = (order: Order, fills: Fill[]) => {
+  pushOrderAndFillToQueue = (order: Order, fills: Fill[], positions: Position[]) => {
     redisManager.pushDataInOrderQueue({
-      type: "create_order_fills",
-      data: { order, fills }
+      type: "create_order_fills_position",
+      data: { order, fills, positions }
     }, "orderbook-to-db-queue")
   }
 
@@ -537,7 +540,7 @@ class EngineStore {
     this.deleteOrder(userId, order.id);
 
     this.createOrder(updatedOrder)
-    this.pushOrderAndFillToQueue(updatedOrder, []);
+    this.pushOrderAndFillToQueue(updatedOrder, [], []);
   }
 
 
@@ -564,7 +567,8 @@ class EngineStore {
     type: orderType,
     users: UserInOrderBook[],
     orderId: string,
-    market: "SPOT" | "PERPS"
+    market: "SPOT" | "PERPS",
+    way: "MANUAL" | "EXCHANGE"
   ) => {
     // const order =
     //   this.ORDERBOOK["AXIS"][side === "BUY" ? "asks" : "bids"][orderBookKey];
@@ -624,22 +628,40 @@ class EngineStore {
     
     this.USERORDERBOOK["AXIS"].lastTradedPrice = orderBookKey;
 
-
-    const fills = this.getFills(userId, orderId);
-    const toSendOrder = this.getOrder(orderId, userId)!;
     
-    this.pushOrderAndFillToQueue(toSendOrder, fills)
-    
-    if (market === "PERPS") {
-      // for current users
-      this.handlePosistionCreationAndCompensation(userId, orderBookKey, availableQty, side, type, true)
-      
+    if (market === "PERPS" || way === "EXCHANGE") {
+      // for current user
+      this.handlePosistionCreationAndCompensation(
+        userId, 
+        orderBookKey, 
+        availableQty, 
+        side, 
+        type, 
+        true, 
+        orderId
+      )
+        
       // for other involved users
       for (const val of users) {
-        this.handlePosistionCreationAndCompensation(val.id, orderBookKey, availableQty, side, type, false)
+        this.handlePosistionCreationAndCompensation(
+          val.id, 
+          orderBookKey, 
+          availableQty, 
+          side, 
+          type, 
+          false, 
+          orderId
+        )
       }
     }
 
+    const fills = this.getFills(userId, orderId);
+    const toSendOrder = this.getOrder(orderId, userId)!;
+    const toSendPositions = this.getAllPositions(orderId)!;
+    
+    this.pushOrderAndFillToQueue(toSendOrder, fills, toSendPositions)
+
+    
     // handle balances on the current user
     // got used for SPOT (only)
     this.deductTotalBalalnceOfUser(
@@ -668,7 +690,7 @@ class EngineStore {
     delete this.POSITIONS_MAPS[position.type][position.liquidationPrice]
   }
 
-  handlePosistionCreationAndCompensation = (userId: string, orderBookKey: number, availableQty: number, side: orderSide, type: orderType, presentUser: boolean) => {
+  handlePosistionCreationAndCompensation = (userId: string, orderBookKey: number, availableQty: number, side: orderSide, type: orderType, presentUser: boolean, orderId: string) => {
     const position = this.getPosition(userId);
     const usersPriceIncludingLeverage = this.calculateFinalPriceWithLeverage(userId, orderBookKey, availableQty);
     const { leverage, lockedPrice, priceAskedByUser, userActualBalance } = usersPriceIncludingLeverage;
@@ -709,6 +731,7 @@ class EngineStore {
         qty: availableQty,
         type: currentType,
         userId,
+        orderId,
         pnl: 0,
         isProfit: false
       })
@@ -724,6 +747,7 @@ class EngineStore {
           qty: position.qty + availableQty,
           type: position.type,
           userId,
+          orderId,
           pnl: position.pnl,
           isProfit: false
         })  
@@ -742,6 +766,7 @@ class EngineStore {
             qty: position.qty - availableQty,
             type: position.type,
             userId,
+            orderId,
             pnl: position.pnl,
             isProfit: false
           })
@@ -755,6 +780,7 @@ class EngineStore {
             qty: availableQty - position.qty,
             type: currentType,
             userId,
+            orderId,
             pnl: 0,
             isProfit: false
           })
@@ -874,7 +900,7 @@ class EngineStore {
       
       this.createOrder(order)
 
-      this.pushOrderAndFillToQueue(order, []);
+      this.pushOrderAndFillToQueue(order, [], []);
       
       return {
         clientId: parsedResponse.clientId,

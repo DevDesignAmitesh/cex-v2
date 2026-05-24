@@ -17,22 +17,24 @@ model User {
 
   makerFills    Fill[]    @relation("maker")
   takerFills    Fill[]    @relation("taker")
+  positions     Position[]
 }
 
 model Order {
-  id        String        @id       @default(uuid())
-  userId    String
-  user      User          @relation(references: [id], fields: [userId], onDelete: Cascade)
-  market    orderMarket
-  price     Int
-  qty       Int
-  filledQty Int
-  side      orderSide
-  type      orderType
-  status    orderStatus
+  id            String            @id       @default(uuid())
+  userId        String
+  user          User              @relation(references: [id], fields: [userId], onDelete: Cascade)
+  market        orderMarket
+  price         Int
+  qty           Int
+  filledQty     Int
+  side          orderSide
+  type          orderType
+  status        orderStatus
 
-  makerFills Fill[]       @relation("maker_order")
-  takerFills Fill[]       @relation("taker_order")
+  makerFills    Fill[]          @relation("maker_order")
+  takerFills    Fill[]          @relation("taker_order")
+  positions     Position[]
 }
 
 model Fill {
@@ -58,9 +60,33 @@ model Fill {
   takerOrder    Order         @relation("taker_order", references: [id], fields: [takerOrderId], onDelete: Cascade)
 }
 
+model Position {
+  id              String        @id      @default(uuid())
+  
+  userId          String
+  user            User          @relation(references: [id], fields: [userId])
+
+  orderId         String
+  order           Order         @relation(references: [id], fields: [orderId], onDelete: Cascade)
+
+  averagePrice                Int
+  isProfit                    Boolean
+  liquidationPrice            Int
+  margin                      Int
+  market                      orderMarket
+  pnl                         Int
+  qty                         Int
+  type                        positionType
+}
+
 enum fillType {
   MAKER
   TAKER
+}
+
+enum positionType {
+  LONG
+  SHORT
 }
 
 enum orderStatus {

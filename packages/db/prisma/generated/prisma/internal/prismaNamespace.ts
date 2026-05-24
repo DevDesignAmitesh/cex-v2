@@ -386,7 +386,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 export const ModelName = {
   User: 'User',
   Order: 'Order',
-  Fill: 'Fill'
+  Fill: 'Fill',
+  Position: 'Position'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -402,7 +403,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "order" | "fill"
+    modelProps: "user" | "order" | "fill" | "position"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -628,6 +629,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Position: {
+      payload: Prisma.$PositionPayload<ExtArgs>
+      fields: Prisma.PositionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PositionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PositionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PositionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PositionPayload>
+        }
+        findFirst: {
+          args: Prisma.PositionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PositionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PositionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PositionPayload>
+        }
+        findMany: {
+          args: Prisma.PositionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PositionPayload>[]
+        }
+        create: {
+          args: Prisma.PositionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PositionPayload>
+        }
+        createMany: {
+          args: Prisma.PositionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PositionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PositionPayload>[]
+        }
+        delete: {
+          args: Prisma.PositionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PositionPayload>
+        }
+        update: {
+          args: Prisma.PositionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PositionPayload>
+        }
+        deleteMany: {
+          args: Prisma.PositionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PositionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PositionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PositionPayload>[]
+        }
+        upsert: {
+          args: Prisma.PositionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PositionPayload>
+        }
+        aggregate: {
+          args: Prisma.PositionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePosition>
+        }
+        groupBy: {
+          args: Prisma.PositionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PositionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PositionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PositionCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -707,6 +782,23 @@ export const FillScalarFieldEnum = {
 } as const
 
 export type FillScalarFieldEnum = (typeof FillScalarFieldEnum)[keyof typeof FillScalarFieldEnum]
+
+
+export const PositionScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  orderId: 'orderId',
+  averagePrice: 'averagePrice',
+  isProfit: 'isProfit',
+  liquidationPrice: 'liquidationPrice',
+  margin: 'margin',
+  market: 'market',
+  pnl: 'pnl',
+  qty: 'qty',
+  type: 'type'
+} as const
+
+export type PositionScalarFieldEnum = (typeof PositionScalarFieldEnum)[keyof typeof PositionScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -826,6 +918,27 @@ export type EnumfillTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
  * Reference to a field of type 'fillType[]'
  */
 export type ListEnumfillTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'fillType[]'>
+    
+
+
+/**
+ * Reference to a field of type 'Boolean'
+ */
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+/**
+ * Reference to a field of type 'positionType'
+ */
+export type EnumpositionTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'positionType'>
+    
+
+
+/**
+ * Reference to a field of type 'positionType[]'
+ */
+export type ListEnumpositionTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'positionType[]'>
     
 
 
@@ -955,6 +1068,7 @@ export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
   order?: Prisma.OrderOmit
   fill?: Prisma.FillOmit
+  position?: Prisma.PositionOmit
 }
 
 /* Types for Logging */

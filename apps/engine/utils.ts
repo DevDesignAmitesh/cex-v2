@@ -63,7 +63,8 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           type,
           users,
           orderId,
-          market
+          market,
+          "MANUAL"
         );
         
         return {
@@ -89,7 +90,8 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           type,
           users,
           orderId,
-          market
+          market,
+          "MANUAL"
         );
         
         return {
@@ -119,7 +121,8 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           type,
           users,
           orderId,
-          market
+          market,
+          "MANUAL"
         );
 
         if (leftQty !== 0) {
@@ -154,7 +157,8 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           type,
           users,
           orderId,
-          market
+          market,
+          "MANUAL"
         );
 
         if (leftQty !== 0) {
@@ -227,7 +231,8 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           type,
           users,
           orderId,
-          market
+          market,
+          "MANUAL"
         );
 
         return {
@@ -253,7 +258,8 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           type,
           users,
           orderId,
-          market
+          market,
+          "MANUAL"
         );
         
         return {
@@ -446,7 +452,7 @@ export function checkLiquidation() {
     const POSITIONS_MAPS = engineStore.getAllPositionsMaps();
 
 
-    
+
     // in the case of LONG if the current_price is less or equal to the liquidatePrice then liquidate 
     for (const [idx, [key, val]] of (Object.entries(Object.entries(POSITIONS_MAPS["LONG"])))) {
       const POSITION_LIQUIDATE_PRICE = Number(key);
@@ -479,14 +485,92 @@ export function liquidate(userId: string) {
 
   console.log("position", position);
   
-  const { averagePrice, isProfit, liquidationPrice, margin, market, pnl, qty, type, userId: usrId } = position;
+  const clientId = crypto.randomUUID();    
+  const orderId = crypto.randomUUID();
   
-  // liquidate from the positions onlyy
-  const liquidablePositon = engineStore.getLiquidablePosition(averagePrice, qty, type);
-  if (!liquidablePositon) return;
+  // after pnl getting updated
+  let latestPrice = position.averagePrice; // 100
+  
+  if (position.isProfit) {
+    latestPrice += position.pnl
+  } else {
+    latestPrice -= position.pnl // pnl: 80 -- latestPrice: 20
+  }
+  
+  const res = createOrder({
+    clientId,
+    data: {
+      market: "SPOT",
+      orderId,
+      side: position.type === "LONG" ? "SELL" : "BUY",
+      symbol: "INR/AXIS",
+      type: "MARKET",
+      userId: position.userId,
+      price: latestPrice,
+      qty:  position.qty,
+      way: "EXCHANGE",
+    },
+    type: "create_order"
+  })
 
-  console.log("liquidablePosition", liquidablePositon);
-  // CONTINUE FROM here
+  if (!res.ok) {
+    // liquidate here using (ADL)
+
+    // liquidate from the positions onlyy
+    const liquidablePositon = 
+      engineStore.getLiquidablePosition(latestPrice, position.qty, position.type);
+  
+    if (!liquidablePositon) return;
+  
+    console.log("liquidablePosition", liquidablePositon);
+    
+    // calculate the loss of the current user
+    const lossOfCurrentUser = position.averagePrice - latestPrice;
+
+    // calculate the profit of the liquudable positon user
+    const profileOfLiquidableUser = lossOfCurrentUser;
+    
+    // cal left qty of liquidable user (if left then create the other side position else nothing)
+    const leftQtyofLiquidableUser = position.qty - liquidablePositon.qty;
+    
+    if (leftQtyofLiquidableUser > 0) {
+      // create other side position
+    }
+
+    // add these loss/profit to respective accounts
+
+    // for present user
+    engineStore.deductTotalBalalnceOfUser(
+      position.userId, 
+      position.type === "LONG" ? "BUY" : "SELL", 
+      lossOfCurrentUser, 
+      position.qty, 
+      true
+    )
+    engineStore.resetLockBalalnceOfUser(
+      position.userId, 
+      position.type === "LONG" ? "BUY" : "SELL",
+      true
+    )
+
+    // for the liquidable user
+    engineStore.deductTotalBalalnceOfUser(
+      liquidablePositon.userId, 
+      liquidablePositon.type === "LONG" ? "BUY" : "SELL", 
+      profileOfLiquidableUser, 
+      liquidablePositon.qty, 
+      false
+    )
+    engineStore.resetLockBalalnceOfUser(
+      liquidablePositon.userId, 
+      liquidablePositon.type === "LONG" ? "BUY" : "SELL",
+      false
+    )
+    
+    // close both the postions
+    engineStore.deletePosition(position.userId)
+    engineStore.deletePosition(liquidablePositon.userId)
+  }
 }
 
 export function updatePnl() {
@@ -501,11 +585,11 @@ export function updatePnl() {
     
     if (val.type === "LONG") {
       if (val.averagePrice >= CURRENT_PRICE) {
-        // avg: 100 - curr: 80
+        // avg: 100 - curr: 20 (loss)
         pnl = val.averagePrice - CURRENT_PRICE
         isProfit = false
       } else {
-        // curr: 120 - avg: 100
+        // curr: 120 - avg: 100 (profit)
         pnl = CURRENT_PRICE - val.averagePrice
         isProfit = true
       }
@@ -513,11 +597,11 @@ export function updatePnl() {
     
     if (val.type === "SHORT") {
       if (val.averagePrice >= CURRENT_PRICE) {
-        // avg: 100 - curr: 80
+        // avg: 100 - curr: 80 (loss)
         pnl = val.averagePrice - CURRENT_PRICE
         isProfit = true
       } else {
-        // curr: 120 - avg: 120
+        // curr: 120 - avg: 120 (profit)
         pnl = CURRENT_PRICE - val.averagePrice
         isProfit = false
       }
