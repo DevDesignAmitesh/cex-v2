@@ -445,13 +445,13 @@ export function getBalanceFromStockExchange() {
 
 export function checkLiquidation() {
   try {
-    // getting the price from the binance / mock server (for eg 80)
+
     const CURRENT_PRICE = getBalanceFromStockExchange();
 
+    updatePnl(CURRENT_PRICE)
+    
     // comparing the liquidation price of all the users ( less than or equal to 80 )
     const POSITIONS_MAPS = engineStore.getAllPositionsMaps();
-
-
 
     // in the case of LONG if the current_price is less or equal to the liquidatePrice then liquidate 
     for (const [idx, [key, val]] of (Object.entries(Object.entries(POSITIONS_MAPS["LONG"])))) {
@@ -573,9 +573,8 @@ export function liquidate(userId: string) {
   }
 }
 
-export function updatePnl() {
+export function updatePnl(CURRENT_PRICE: number) {
   // getting the price from the binance / mock server (for eg 80)
-  const CURRENT_PRICE = getBalanceFromStockExchange();
 
   const positions = engineStore.getAllPositions();
 

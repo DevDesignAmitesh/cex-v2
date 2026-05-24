@@ -35,4 +35,3 @@ async function main() {
 
 main();
 setInterval(checkLiquidation, 3 * 1000);
-setInterval(updatePnl, 3 * 1000);
