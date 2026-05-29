@@ -27,11 +27,11 @@ class EngineStore {
 
     // setInterval(() => this.getSymbolDepth("INR-AXIS", true), 5 * 1000)
     // setInterval(() => this.backupData(), 5 * 1000)
-    setInterval(() => {
-      console.log("ORDERBOOK", this.USERORDERBOOK)
-      console.log("BALANCES", this.BALANCES)
-      console.log("POSITIONS", this.POSITIONS)
-    }, 10 * 1000)
+    // setInterval(() => {
+    //   console.log("ORDERBOOK", this.USERORDERBOOK)
+    //   console.log("BALANCES", this.BALANCES)
+    //   console.log("POSITIONS", this.POSITIONS)
+    // }, 10 * 1000)
   }
 
   static getInstance = (): EngineStore => {

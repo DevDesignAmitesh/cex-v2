@@ -1,4 +1,4 @@
-import { type EngineResponse, type RedisQueueData } from "@repo/common/common";
+import { ORDER_ENGINE_STREAM_CONFIGS, type EngineResponse, type RedisQueueData } from "@repo/common/common";
 import { engineStore } from "./engine-store";
 import { redisManager } from "@repo/redis/redis";
 
@@ -497,6 +497,7 @@ export function liquidate(userId: string) {
     latestPrice -= position.pnl // pnl: 80 -- latestPrice: 20
   }
   
+  // push in the same queue as the http-backend pushing
   const res = createOrder({
     clientId,
     data: {
@@ -510,7 +511,8 @@ export function liquidate(userId: string) {
       qty:  position.qty,
       way: "EXCHANGE",
     },
-    type: "create_order"
+    type: "create_order",
+    responseStream: ORDER_ENGINE_STREAM_CONFIGS.stream
   })
 
   if (!res.ok) {
@@ -568,6 +570,7 @@ export function liquidate(userId: string) {
     )
     
     // close both the postions
+    // TODO: delete from the db also
     engineStore.deletePosition(position.userId)
     engineStore.deletePosition(liquidablePositon.userId)
   }

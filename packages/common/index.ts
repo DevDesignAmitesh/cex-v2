@@ -89,36 +89,43 @@ export type RedisQueueData =
       type: "create_order";
       data: CreateOrder;
       clientId: string;
+      responseStream: string 
     }
   | {
       type: "cancel_order";
       data: { orderId: string; userId: string };
       clientId: string;
+      responseStream: string
     }
   | {
       type: "get_order";
       data: { orderId: string; userId: string };
       clientId: string;
+      responseStream: string
     }
   | {
       type: "get_depth";
       data: { symbol: string };
       clientId: string;
+      responseStream: string
     }
   | {
       type: "get_orders";
       data: { userId: string; open?: boolean };
       clientId: string;
+      responseStream: string
     }
   | {
       type: "get_fills";
       data: { userId: string };
       clientId: string;
+      responseStream: string
     }
   | {
       type: "get_user_balance";
       data: { userId: string };
       clientId: string;
+      responseStream: string
     };
 
 export type EngineCommandType =
@@ -265,4 +272,32 @@ export type Fill = {
 
 export type REDIS_QUEUE_TYPE = "http-to-orderbook-queue" | "orderbook-to-db-queue" | "orderbook-to-ws-queue"
 
+export type MessageType = {
+	name: string;
+	messages: { id: string, message: {
+    data: string // we have to parse it as engineResponse
+    // data: EngineResponse | RedisQueueData
+  } }[]
+}
+
 export const LIQUIDATION_PERCENTAGE = 0.2 // 20%
+
+export const HTTP_BACKEND_STREAM_CONFIGS = {
+	stream: `http-backend-stream-${crypto.randomUUID()}`,
+	group_name: "http-backend-group",
+	consumer_grp: `http-backend-consumer-group-${crypto.randomUUID()}`
+}
+
+export const ORDER_ENGINE_STREAM_CONFIGS = {
+	stream: `order-engine-stream`,
+	group_name: "order-engine-group",
+	consumer_grp: `order-engine-consumer-group-${crypto.randomUUID()}`
+}
+
+export const COMMON_STREAM_CONFIGS = {
+	stream: `common-stream`,
+	group_name: "common-group",
+	consumer_grp: `common-consumer-group-${crypto.randomUUID()}`
+}
+
+export const GROUPS = [HTTP_BACKEND_STREAM_CONFIGS, ORDER_ENGINE_STREAM_CONFIGS, COMMON_STREAM_CONFIGS]
