@@ -18,8 +18,7 @@ export default function Button({ isLink, label, type, href, onClick }: ButtonPro
     type === "secondary" 
     ? "bg-neutral-800 text-neutral-100" 
     : "bg-neutral-100 text-neutral-900"
-  }
-  
+  } 
   `
   
   if (isLink) {
