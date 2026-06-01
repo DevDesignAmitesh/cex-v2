@@ -26,7 +26,7 @@ export async function getSingleOrder(req: Request, res: Response) {
     ORDER_ENGINE_STREAM_CONFIGS.stream,
     {
       // data to send to the queue
-      type: "from-http-backend",
+      type: "http-to-engine",
       data: {
         type: "get_order",
         data,

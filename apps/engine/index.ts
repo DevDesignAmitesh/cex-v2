@@ -49,8 +49,6 @@ async function main() {
       console.log("res.messages", res.messages)
       
       const parsedResponse = JSON.parse(res.messages[0]!.message.data ?? "{}") as RedisQueueData;
-      // mostly here we need to add types in this
-      // TODO: add types here and handle the shitss
       console.log("parsedResponse ", parsedResponse);
 
       const engineResponse = engineRequestHandler(parsedResponse);

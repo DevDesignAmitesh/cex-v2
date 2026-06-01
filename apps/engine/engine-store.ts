@@ -41,7 +41,7 @@ class EngineStore {
       TATA: { bids: {}, asks: {}, lastTradedPrice: 0 },
     };
 
-    // setInterval(() => this.getSymbolDepth("INR-AXIS", true), 5 * 1000)
+    setInterval(() => this.getSymbolDepth("INR-AXIS", true), 5 * 1000)
     // setInterval(() => this.backupData(), 5 * 1000)
     // setInterval(() => {
     //   console.log("ORDERBOOK", this.USERORDERBOOK)
@@ -185,6 +185,7 @@ class EngineStore {
       
     if (isQueue) {  
     // TODO: confirm this 
+    console.log("runing")
       redisManager.addToStream(COMMON_STREAM_CONFIGS.stream, {
         type: "engine-to-common",
         data: { type: "order_book", data: { orderBook: this.USERORDERBOOK } }

@@ -106,6 +106,7 @@ class RedisManager {
       const parsedResponse = JSON.parse(message);
 
       if (parsedResponse.type === "order_book") {
+        // TODO: check is .data defined??
         wsUserManager.broadcast(parsedResponse.data);
       }
     })
@@ -113,7 +114,7 @@ class RedisManager {
 
   addToStream = async (group_stream: string, 
     data: 
-      { type: "http-to-backend", data: RedisQueueData } 
+      { type: "http-to-engine", data: RedisQueueData } 
       | 
       { type : "engine-to-http", data: EngineResponse }
       |
@@ -156,7 +157,7 @@ class RedisManager {
     group_stream: string, 
     response_steam: string,
     data: 
-      { type: "http-to-backend", data: RedisQueueData } 
+      { type: "http-to-engine", data: RedisQueueData } 
       | 
       { type : "engine-to-http", data: EngineResponse }
       |

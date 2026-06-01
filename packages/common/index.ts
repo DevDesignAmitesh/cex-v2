@@ -287,6 +287,7 @@ export type MessageType = {
 export const LIQUIDATION_PERCENTAGE = 0.2 // 20%
 
 export const HTTP_BACKEND_STREAM_CONFIGS = {
+	// stream: `http-backend-stream`,
 	stream: `http-backend-stream-${crypto.randomUUID()}`,
 	group_name: "http-backend-group",
 	consumer_grp: `http-backend-consumer-group-${crypto.randomUUID()}`

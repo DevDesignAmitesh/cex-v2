@@ -1,27 +1,26 @@
 import { WebSocketServer, WebSocket } from "ws";
 import { redisManager } from "@repo/redis/redis";
-import { ORDER_ENGINE_STREAM_CONFIGS, type RedisWsQueueData } from "@repo/common/common";
+import { COMMON_STREAM_CONFIGS, type RedisDbQueueData, type RedisWsQueueData } from "@repo/common/common";
 import { wsUserManager } from "./wsUserManager";
 
 async function main() {
   for (;;) {
     const res = await redisManager.getFromStream(
-      ORDER_ENGINE_STREAM_CONFIGS.group_name,
-      ORDER_ENGINE_STREAM_CONFIGS.consumer_grp,
-      ORDER_ENGINE_STREAM_CONFIGS.stream,
+      COMMON_STREAM_CONFIGS.group_name,
+      COMMON_STREAM_CONFIGS.consumer_grp,
+      COMMON_STREAM_CONFIGS.stream,
     );
 
-    console.log("response", res?.messages);
-    // const response = await redisManager.getDataFromQueue("orderbook-to-ws-queue");
+    if (!res) continue;
   
-    // if (!response) continue;
-  
-    // const parsedResponse = JSON.parse(response?.element) as RedisWsQueueData
+    const parsedResponse = JSON.parse(res.messages[0]!.message.data ?? "{}") as RedisDbQueueData;
 
-    // if (parsedResponse.type === "order_book") {
-    //   redisManager.publishData2("AXIS", parsedResponse)
-    //   // wsUserManager.broadcast(parsedResponse.data);
-    // }
+    console.log("parsedResponse", parsedResponse)
+
+    if (parsedResponse.type === "order_book") {
+      redisManager.publishData2("AXIS", parsedResponse.data)
+      // wsUserManager.broadcast(parsedResponse.data);
+    }
   } 
 }
 
