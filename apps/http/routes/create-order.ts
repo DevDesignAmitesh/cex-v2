@@ -44,12 +44,8 @@ export async function createOrder(
     },
   );
 
-  console.log("response from the engine", response);
-  
   const finalData = JSON.parse(response.messages[0]?.message.data ?? "{}") as EngineResponse;
   
-  console.log("response from the engine", finalData);
-
   if (finalData.clientId === clientId) {
     return res.status(finalData.ok ? 201 : 400).json(finalData.ok ? finalData.data : finalData.error);
   }
