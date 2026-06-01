@@ -77,9 +77,4 @@ async function main() {
 
 
 main();
-<<<<<<< HEAD
-// setInterval(checkLiquidation, 3 * 1000);
-=======
 setInterval(checkLiquidation, 3 * 1000);
-setInterval(updatePnl, 3 * 1000);
->>>>>>> parent of 4eae45d (done without redis-streams)
