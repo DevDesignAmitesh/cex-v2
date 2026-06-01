@@ -72,7 +72,11 @@ export type RedisDbQueueData =
   | {
       type: "cancel_order";
       data: { orderId: string; userId: string };
-    };
+    }
+  | {
+    type: "order_book",
+    data: { orderBook: UserBasedOrderBook }
+  }
 
 export type RedisWsQueueData =
   // | {
@@ -276,7 +280,7 @@ export type MessageType = {
 	name: string;
 	messages: { id: string, message: {
     data: string // we have to parse it as engineResponse
-    // data: EngineResponse | RedisQueueData
+    // data: EngineResponse | RedisQueueData | RedisDbQueueData
   } }[]
 }
 

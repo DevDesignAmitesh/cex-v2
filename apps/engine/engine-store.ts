@@ -1,4 +1,20 @@
-import { LIQUIDATION_PERCENTAGE, type Balance, type BalanceKey, type BeforeOrderResponse, type EngineResponse, type Fill, type Order, type OrderBook, type OrderBookKey, type OrderBookOrder, type orderSide, type orderType, type Position, type POSITIONS_MAPS, type postionType, type RedisQueueData, type UserBasedOrderBook, type UserInOrderBook } from "@repo/common/common";
+import { 
+  COMMON_STREAM_CONFIGS,
+  LIQUIDATION_PERCENTAGE, 
+  type Balance, 
+  type BeforeOrderResponse, 
+  type Fill, 
+  type Order, 
+  type OrderBookKey, 
+  type orderSide, 
+  type orderType, 
+  type Position, 
+  type POSITIONS_MAPS, 
+  type postionType, 
+  type RedisQueueData, 
+  type UserBasedOrderBook, 
+  type UserInOrderBook
+ } from "@repo/common/common";
 import { redisManager } from "@repo/redis/redis";
 import fs from "fs";
 
@@ -125,10 +141,18 @@ class EngineStore {
     this.ORDERS.splice(orderIndex, 0)
 
     // send to queue also
-    redisManager.pushDataInOrderQueue({
-      type: "cancel_order",
-      data: { orderId, userId }
-    }, "orderbook-to-db-queue")
+    // TODO: confirm this
+    redisManager.addToStream(COMMON_STREAM_CONFIGS.stream, {
+      type: "engine-to-common",
+      data: {
+        type: "cancel_order",
+        data: { orderId, userId }
+      }
+    })
+    // redisManager.pushDataInOrderQueue({
+    //   type: "cancel_order",
+    //   data: { orderId, userId }
+    // }, "orderbook-to-db-queue")
     
     return true;
   }
@@ -138,10 +162,18 @@ class EngineStore {
   }
 
   pushOrderAndFillToQueue = (order: Order, fills: Fill[], positions: Position[]) => {
-    redisManager.pushDataInOrderQueue({
-      type: "create_order_fills_position",
-      data: { order, fills, positions }
-    }, "orderbook-to-db-queue")
+    // TODO: confirm this
+    redisManager.addToStream(COMMON_STREAM_CONFIGS.stream, {
+      type: "engine-to-common",
+      data: {
+        type: "create_order_fills_position",
+        data: { order, fills, positions }
+      }
+    })
+    // redisManager.pushDataInOrderQueue({
+    //   type: "create_order_fills_position",
+    //   data: { order, fills, positions }
+    // }, "orderbook-to-db-queue")
   }
 
 
@@ -152,11 +184,16 @@ class EngineStore {
     if(!stock) return null
       
     if (isQueue) {  
-        redisManager.pushDataInWsQueue({
-        type: "order_book",
-        // data: this.ORDERBOOK
-        data: this.USERORDERBOOK
-      }, "orderbook-to-ws-queue")
+    // TODO: confirm this 
+      redisManager.addToStream(COMMON_STREAM_CONFIGS.stream, {
+        type: "engine-to-common",
+        data: { type: "order_book", data: { orderBook: this.USERORDERBOOK } }
+      })
+    //   redisManager.pushDataInWsQueue({
+    //   type: "order_book",
+    //   // data: this.ORDERBOOK
+    //   data: this.USERORDERBOOK
+    // }, "orderbook-to-ws-queue")
     }
     
     // return this.ORDERBOOK[stock]

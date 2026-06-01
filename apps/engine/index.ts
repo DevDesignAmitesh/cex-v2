@@ -58,13 +58,13 @@ async function main() {
       responseStream = parsedResponse.responseStream;
       
       await redisManager.addToStream(parsedResponse.responseStream, {
-        type: "from-order-engine",
+        type: "engine-to-http",
         data: engineResponse
       });
     } catch (e) {
       console.log("error in the engine/index.ts file")
       await redisManager.addToStream(responseStream, {
-        type: "from-order-engine",
+        type: "engine-to-http",
         data: {
           clientId,
           ok: false,

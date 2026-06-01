@@ -113,9 +113,11 @@ class RedisManager {
 
   addToStream = async (group_stream: string, 
     data: 
-      { type: "from-http-backend", data: RedisQueueData } 
+      { type: "http-to-backend", data: RedisQueueData } 
       | 
-      { type : "from-order-engine", data: EngineResponse }
+      { type : "engine-to-http", data: EngineResponse }
+      |
+      { type : "engine-to-common", data: RedisDbQueueData }
   ) => {
     await this.client.xAdd(
       group_stream, 
@@ -154,9 +156,11 @@ class RedisManager {
     group_stream: string, 
     response_steam: string,
     data: 
-      { type: "from-http-backend", data: RedisQueueData } 
+      { type: "http-to-backend", data: RedisQueueData } 
       | 
-      { type : "from-order-engine", data: EngineResponse }
+      { type : "engine-to-http", data: EngineResponse }
+      |
+      { type : "engine-to-common", data: RedisDbQueueData }
   ) => {
 
     return new Promise<MessageType>(async (res, rej) => {            

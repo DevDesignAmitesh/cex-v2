@@ -1,4 +1,4 @@
-import { ORDER_ENGINE_STREAM_CONFIGS, type EngineResponse, type RedisQueueData } from "@repo/common/common";
+import { COMMON_STREAM_CONFIGS, ORDER_ENGINE_STREAM_CONFIGS, type EngineResponse, type RedisQueueData } from "@repo/common/common";
 import { engineStore } from "./engine-store";
 import { redisManager } from "@repo/redis/redis";
 
@@ -296,7 +296,13 @@ export function deleteOrder(parsedResponse: RedisQueueData): EngineResponse {
 
   const { orderId, userId } = parsedResponse.data;
   const res = engineStore.deleteOrder(userId, orderId);
-  redisManager.pushDataInOrderQueue(parsedResponse, "orderbook-to-db-queue")
+  // TODO: confirm this
+  // redisManager.pushDataInOrderQueue(parsedResponse, "orderbook-to-db-queue")
+  redisManager.addToStream(COMMON_STREAM_CONFIGS.stream, {
+    type: "engine-to-common",
+    data: parsedResponse
+  })
+  
   return {
     clientId: parsedResponse.clientId,
     ok: res ? true : false,
@@ -452,7 +458,6 @@ export function checkLiquidation() {
     
     // comparing the liquidation price of all the users ( less than or equal to 80 )
     const POSITIONS_MAPS = engineStore.getAllPositionsMaps();
-
     // in the case of LONG if the current_price is less or equal to the liquidatePrice then liquidate 
     for (const [idx, [key, val]] of (Object.entries(Object.entries(POSITIONS_MAPS["LONG"])))) {
       const POSITION_LIQUIDATE_PRICE = Number(key);
