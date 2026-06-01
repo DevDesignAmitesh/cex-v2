@@ -1,13 +1,5 @@
 import { createClient, type RedisClientType } from "redis";
-import { 
-  GROUPS,
-  type EngineResponse, 
-  type MessageType, 
-  type REDIS_QUEUE_TYPE, 
-  type RedisDbQueueData, 
-  type RedisQueueData, 
-  type RedisWsQueueData
- } from "@repo/common/common";
+import { type EngineResponse, type REDIS_QUEUE_TYPE, type RedisDbQueueData, type RedisQueueData, type RedisWsQueueData } from "@repo/common/common";
 import { wsUserManager } from "@repo/ws/ws";
 
 class RedisManager {
@@ -20,23 +12,10 @@ class RedisManager {
     this.publisher = createClient();
     this.subscriber = createClient();
     this.client = createClient();
+
+    this.initClients();
   }
 
-  static getInstance = async (): Promise<RedisManager> => {
-    if (!RedisManager.instance) {
-      const instance = new RedisManager();
-      await instance.init()
-      RedisManager.instance = instance;
-    }
-    return RedisManager.instance;
-  };
-  
-
-  private init = async () => {
-    await this.initClients();
-    await this.createGroups();
-  }
-  
   private initClients = async () => {
     try {
       await Promise.all([
@@ -49,19 +28,6 @@ class RedisManager {
     }
   };
 
-  private createGroups = async () => {
-    for (const { consumer_grp, group_name, stream } of GROUPS) {
-      try {
-        await this.client.xGroupCreate(stream, group_name, '0', {
-          MKSTREAM: true
-        });
-        console.log("group: ", group_name, "created");
-      } catch {
-        console.log("group: ", group_name, "already exists");
-      }
-    }
-  }
-  
   // waitForData = async (data: RedisQueueData, REDIS_QUEUE: REDIS_QUEUE_TYPE) => {
   //   console.log("queue in wait ", REDIS_QUEUE);
     
@@ -169,6 +135,10 @@ class RedisManager {
     });
   }
 
+  static getInstance = (): RedisManager => {
+    if (!RedisManager.instance) RedisManager.instance = new RedisManager();
+    return RedisManager.instance;
+  };
 }
 
-export const redisManager = await RedisManager.getInstance();
+export const redisManager = RedisManager.getInstance();
