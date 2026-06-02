@@ -1,15 +1,22 @@
-import { COMMON_STREAM_CONFIGS, ORDER_ENGINE_STREAM_CONFIGS, type EngineResponse, type RedisQueueData } from "@repo/common/common";
+import {
+  COMMON_STREAM_CONFIGS,
+  ORDER_ENGINE_STREAM_CONFIGS,
+  type EngineResponse,
+  type RedisQueueData,
+} from "@repo/common/common";
 import { engineStore } from "./engine-store";
 import { redisManager } from "@repo/redis/redis";
 
 export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
-  if (parsedResponse.type !== "create_order") return {
-    clientId: parsedResponse.clientId,
-    ok: false,
-    error: "invalid type"
-  }
+  if (parsedResponse.type !== "create_order")
+    return {
+      clientId: parsedResponse.clientId,
+      ok: false,
+      error: "invalid type",
+    };
 
-  const { side, symbol, type, userId, price, qty, orderId, market } = parsedResponse.data;
+  const { side, symbol, type, userId, price, qty, orderId, market } =
+    parsedResponse.data;
 
   if (type === "LIMIT") {
     // for limit we need both price and qty (conceptual)
@@ -23,27 +30,35 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
 
     // things like checking balances, locking amount and finding best price
     const beforeOrderResponseOne = engineStore.beforeOrder(parsedResponse);
-    
-    if (beforeOrderResponseOne.type === "ERROR" || beforeOrderResponseOne.type === "ORDER_IN_ORDERBOOK") {
-      return beforeOrderResponseOne
-    }
-    
-    const { keyPrice, qty: keyQty, orderBookKey } = beforeOrderResponseOne.data?.data! as {
-      keyPrice: number,
-      qty: number,
-      orderBookKey: number
-    }
-        
-    if (keyQty >= qty) {
-      const users = engineStore.getUserInvolvedInSwap(orderBookKey, qty, side) ?? []
 
-      console.log("users after swap", users)
-      
+    if (
+      beforeOrderResponseOne.type === "ERROR" ||
+      beforeOrderResponseOne.type === "ORDER_IN_ORDERBOOK"
+    ) {
+      return beforeOrderResponseOne;
+    }
+
+    const {
+      keyPrice,
+      qty: keyQty,
+      orderBookKey,
+    } = beforeOrderResponseOne.data?.data! as {
+      keyPrice: number;
+      qty: number;
+      orderBookKey: number;
+    };
+
+    if (keyQty >= qty) {
+      const users =
+        engineStore.getUserInvolvedInSwap(orderBookKey, qty, side) ?? [];
+
+      console.log("users after swap", users);
+
       if (side === "BUY") {
         /**
          * here we are handling that the key's qty is greater than user's ask so we will give all of that
          * userProfit = price - keyPrice (keyPrice can be less also as we are finding best price)
-         * 
+         *
          * so if price = 100
          * and keyPrice = 80
          * userProfit = 100 - 80 = 20
@@ -64,9 +79,9 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           users,
           orderId,
           market,
-          "MANUAL"
+          "MANUAL",
         );
-        
+
         return {
           clientId: parsedResponse.clientId,
           ok: true,
@@ -91,53 +106,54 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           users,
           orderId,
           market,
-          "MANUAL"
+          "MANUAL",
         );
-        
+
         return {
           clientId: parsedResponse.clientId,
           ok: true,
           data: {
             message: "Order swapped successfully",
-            data: res
+            data: res,
           },
         };
       }
     } else {
-      const users = engineStore.getUserInvolvedInSwap(orderBookKey, keyQty, side) ?? []
-      
+      const users =
+        engineStore.getUserInvolvedInSwap(orderBookKey, keyQty, side) ?? [];
+
       if (side === "BUY") {
-        const leftQty = qty - keyQty
+        const leftQty = qty - keyQty;
         const userProfit = price - keyPrice;
         const finalPrice = price - userProfit;
-        
+
         const res = engineStore.completeOrder(
           side,
           orderBookKey,
           qty,
-          keyQty, 
+          keyQty,
           userId,
           finalPrice,
           type,
           users,
           orderId,
           market,
-          "MANUAL"
+          "MANUAL",
         );
 
         if (leftQty !== 0) {
           createOrder({
             ...parsedResponse,
-            data: { ...parsedResponse.data, qty: leftQty }
-          })
+            data: { ...parsedResponse.data, qty: leftQty },
+          });
         }
-        
+
         return {
           clientId: parsedResponse.clientId,
           ok: true,
           data: {
             message: "Order swapped successfully",
-            data: res
+            data: res,
           },
         };
       }
@@ -146,7 +162,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
         const leftQty = qty - keyQty;
         const userProfit = keyPrice - price;
         const finalPrice = price + userProfit;
-        
+
         const res = engineStore.completeOrder(
           side,
           orderBookKey,
@@ -158,22 +174,22 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           users,
           orderId,
           market,
-          "MANUAL"
+          "MANUAL",
         );
 
         if (leftQty !== 0) {
           createOrder({
             ...parsedResponse,
-            data: { ...parsedResponse.data, qty: leftQty }
-          })
+            data: { ...parsedResponse.data, qty: leftQty },
+          });
         }
-                
+
         return {
           clientId: parsedResponse.clientId,
           ok: true,
           data: {
             message: "Order swapped successfully",
-            data: res
+            data: res,
           },
         };
       }
@@ -181,7 +197,6 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
   }
 
   if (type === "MARKET") {
-  
     if (price === undefined && qty === undefined) {
       return {
         clientId: parsedResponse.clientId,
@@ -192,31 +207,42 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
 
     let calculatedPrice = 0;
     let calculatedQty = 0;
-    
+
     if (price) {
-      calculatedQty = price / engineStore.getLastTradingPrice()
-      calculatedPrice = price
+      calculatedQty = price / engineStore.getLastTradingPrice();
+      calculatedPrice = price;
     } else if (qty) {
-      calculatedPrice = qty * engineStore.getLastTradingPrice()
-      calculatedQty = qty
+      calculatedPrice = qty * engineStore.getLastTradingPrice();
+      calculatedQty = qty;
     }
 
     const beforeOrderResponseOne = engineStore.beforeOrder({
       ...parsedResponse,
-      data: { ...parsedResponse.data, price: calculatedPrice, qty: calculatedQty }
+      data: {
+        ...parsedResponse.data,
+        price: calculatedPrice,
+        qty: calculatedQty,
+      },
     });
-    
-    if (!beforeOrderResponseOne.ok) return beforeOrderResponseOne
-    if (beforeOrderResponseOne.ok && !beforeOrderResponseOne.data?.data) return beforeOrderResponseOne
-    
-    const { keyPrice, qty: keyQty, orderBookKey } = beforeOrderResponseOne.data?.data! as {
-      keyPrice: number,
-      qty: number,
-      orderBookKey: number
-    }
-    
+
+    if (!beforeOrderResponseOne.ok) return beforeOrderResponseOne;
+    if (beforeOrderResponseOne.ok && !beforeOrderResponseOne.data?.data)
+      return beforeOrderResponseOne;
+
+    const {
+      keyPrice,
+      qty: keyQty,
+      orderBookKey,
+    } = beforeOrderResponseOne.data?.data! as {
+      keyPrice: number;
+      qty: number;
+      orderBookKey: number;
+    };
+
     if (keyQty >= qty!) {
-      const users = engineStore.getUserInvolvedInSwap(orderBookKey, calculatedQty, side) ?? []
+      const users =
+        engineStore.getUserInvolvedInSwap(orderBookKey, calculatedQty, side) ??
+        [];
 
       if (side === "BUY") {
         const userProfit = calculatedPrice - keyPrice;
@@ -232,7 +258,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           users,
           orderId,
           market,
-          "MANUAL"
+          "MANUAL",
         );
 
         return {
@@ -240,7 +266,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           ok: true,
           data: {
             message: "Order swapped successfully",
-            data: res
+            data: res,
           },
         };
       }
@@ -259,40 +285,40 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           users,
           orderId,
           market,
-          "MANUAL"
+          "MANUAL",
         );
-        
+
         return {
           clientId: parsedResponse.clientId,
           ok: true,
           data: {
             message: "Order swapped successfully",
-            data: res
+            data: res,
           },
         };
       }
-
     } else {
       return {
         clientId: parsedResponse.clientId,
         ok: false,
-        error: "No matching orders found"
-      }
+        error: "No matching orders found",
+      };
     }
-  } 
+  }
 
   return {
     clientId: parsedResponse.clientId,
     ok: false,
-    error: "meowww"
-  }
+    error: "meowww",
+  };
 }
 
 export function deleteOrder(parsedResponse: RedisQueueData): EngineResponse {
-  if (parsedResponse.type !== "cancel_order") return {
-    clientId: parsedResponse.clientId,
-    ok: false
-  };
+  if (parsedResponse.type !== "cancel_order")
+    return {
+      clientId: parsedResponse.clientId,
+      ok: false,
+    };
 
   const { orderId, userId } = parsedResponse.data;
   const res = engineStore.deleteOrder(userId, orderId);
@@ -300,9 +326,9 @@ export function deleteOrder(parsedResponse: RedisQueueData): EngineResponse {
   // redisManager.pushDataInOrderQueue(parsedResponse, "orderbook-to-db-queue")
   redisManager.addToStream(COMMON_STREAM_CONFIGS.stream, {
     type: "engine-to-common",
-    data: parsedResponse
-  })
-  
+    data: parsedResponse,
+  });
+
   return {
     clientId: parsedResponse.clientId,
     ok: res ? true : false,
@@ -317,11 +343,12 @@ export function deleteOrder(parsedResponse: RedisQueueData): EngineResponse {
 }
 
 export function getDepth(parsedResponse: RedisQueueData): EngineResponse {
-  if (parsedResponse.type !== "get_depth") return {
-    ok: false,
-    clientId: parsedResponse.clientId
-  }
-  
+  if (parsedResponse.type !== "get_depth")
+    return {
+      ok: false,
+      clientId: parsedResponse.clientId,
+    };
+
   const { symbol } = parsedResponse.data;
   const res = engineStore.getSymbolDepth(symbol);
 
@@ -338,12 +365,12 @@ export function getDepth(parsedResponse: RedisQueueData): EngineResponse {
   };
 }
 
-
 export function getFills(parsedResponse: RedisQueueData): EngineResponse {
-  if (parsedResponse.type !== "get_fills") return {
-    ok: false,
-    clientId: parsedResponse.clientId
-  }
+  if (parsedResponse.type !== "get_fills")
+    return {
+      ok: false,
+      clientId: parsedResponse.clientId,
+    };
 
   const { userId } = parsedResponse.data;
   const res = engineStore.getFills(userId);
@@ -358,15 +385,15 @@ export function getFills(parsedResponse: RedisQueueData): EngineResponse {
         }
       : undefined,
     error: !res ? "Fills for the given userId not found" : undefined,
-  };  
+  };
 }
 
-
 export function getOrder(parsedResponse: RedisQueueData): EngineResponse {
-  if (parsedResponse.type !== "get_order") return {
-    ok: false,
-    clientId: parsedResponse.clientId
-  }
+  if (parsedResponse.type !== "get_order")
+    return {
+      ok: false,
+      clientId: parsedResponse.clientId,
+    };
 
   const { orderId, userId } = parsedResponse.data;
   const res = engineStore.getOrder(orderId, userId);
@@ -383,16 +410,16 @@ export function getOrder(parsedResponse: RedisQueueData): EngineResponse {
     error: !res
       ? "Order with the given userId and orderId not found"
       : undefined,
-  }
-  
+  };
 }
 
 export function getOrders(parsedResponse: RedisQueueData): EngineResponse {
-  if (parsedResponse.type !== "get_orders") return {
-    ok: false,
-    clientId: parsedResponse.clientId
-  }
-  
+  if (parsedResponse.type !== "get_orders")
+    return {
+      ok: false,
+      clientId: parsedResponse.clientId,
+    };
+
   const { userId, open } = parsedResponse.data;
   const res = engineStore.getOrders(userId, open);
 
@@ -405,21 +432,17 @@ export function getOrders(parsedResponse: RedisQueueData): EngineResponse {
           data: res,
         }
       : undefined,
-    error: !res.length
-      ? "Orders for the given userId not found"
-      : undefined,
-  }
- 
+    error: !res.length ? "Orders for the given userId not found" : undefined,
+  };
 }
 
-
 export function getUserBalance(parsedResponse: RedisQueueData): EngineResponse {
-  if (parsedResponse.type !== "get_user_balance") return {
-    ok: false,
-    clientId: parsedResponse.clientId
-  }
+  if (parsedResponse.type !== "get_user_balance")
+    return {
+      ok: false,
+      clientId: parsedResponse.clientId,
+    };
 
-  
   const { userId } = parsedResponse.data;
   const res = engineStore.getUserBalance(userId);
 
@@ -432,46 +455,44 @@ export function getUserBalance(parsedResponse: RedisQueueData): EngineResponse {
           data: res,
         }
       : undefined,
-    error: !res
-      ? "User balance with the given userId not found"
-      : undefined,
-  }
-
+    error: !res ? "User balance with the given userId not found" : undefined,
+  };
 }
 
 export function getBalanceFromStockExchange() {
   const prices = [10, 20, 30, 40];
-  
+
   const price = prices[Math.floor(Math.random() * prices.length)]!;
 
   console.log("price from excahange", price);
-  
+
   return price;
 }
 
 export function checkLiquidation() {
   try {
-
     const CURRENT_PRICE = getBalanceFromStockExchange();
 
-    updatePnl(CURRENT_PRICE)
-    
+    updatePnl(CURRENT_PRICE);
+
     // comparing the liquidation price of all the users ( less than or equal to 80 )
     const POSITIONS_MAPS = engineStore.getAllPositionsMaps();
-    // in the case of LONG if the current_price is less or equal to the liquidatePrice then liquidate 
-    for (const [idx, [key, val]] of (Object.entries(Object.entries(POSITIONS_MAPS["LONG"])))) {
+    // in the case of LONG if the current_price is less or equal to the liquidatePrice then liquidate
+    for (const [idx, [key, val]] of Object.entries(
+      Object.entries(POSITIONS_MAPS["LONG"]),
+    )) {
       const POSITION_LIQUIDATE_PRICE = Number(key);
       const IDX = Number(idx);
-      
-      console.log("val", val)
-      
+
+      console.log("val", val);
+
       if (CURRENT_PRICE <= POSITION_LIQUIDATE_PRICE) liquidate(val[IDX]!);
     }
 
-
-    
-    // in the case of LONG if the current_price is more or equal to the liquidatePrice then liquidate 
-    for (const [idx, [key, val]] of (Object.entries(Object.entries(POSITIONS_MAPS["SHORT"])))) {
+    // in the case of LONG if the current_price is more or equal to the liquidatePrice then liquidate
+    for (const [idx, [key, val]] of Object.entries(
+      Object.entries(POSITIONS_MAPS["SHORT"]),
+    )) {
       const POSITION_LIQUIDATE_PRICE = Number(key);
       const IDX = Number(idx);
 
@@ -483,25 +504,25 @@ export function checkLiquidation() {
 }
 
 export function liquidate(userId: string) {
-  console.log("running", userId)
+  console.log("running", userId);
 
   const position = engineStore.getPosition(userId);
   if (!position) return;
 
   console.log("position", position);
-  
-  const clientId = crypto.randomUUID();    
+
+  const clientId = crypto.randomUUID();
   const orderId = crypto.randomUUID();
-  
+
   // after pnl getting updated
   let latestPrice = position.averagePrice; // 100
-  
+
   if (position.isProfit) {
-    latestPrice += position.pnl
+    latestPrice += position.pnl;
   } else {
-    latestPrice -= position.pnl // pnl: 80 -- latestPrice: 20
+    latestPrice -= position.pnl; // pnl: 80 -- latestPrice: 20
   }
-  
+
   // push in the same queue as the http-backend pushing
   const res = createOrder({
     clientId,
@@ -513,33 +534,36 @@ export function liquidate(userId: string) {
       type: "MARKET",
       userId: position.userId,
       price: latestPrice,
-      qty:  position.qty,
+      qty: position.qty,
       way: "EXCHANGE",
     },
     type: "create_order",
-    responseStream: ORDER_ENGINE_STREAM_CONFIGS.stream
-  })
+    responseStream: ORDER_ENGINE_STREAM_CONFIGS.stream,
+  });
 
   if (!res.ok) {
     // liquidate here using (ADL)
 
     // liquidate from the positions onlyy
-    const liquidablePositon = 
-      engineStore.getLiquidablePosition(latestPrice, position.qty, position.type);
-  
+    const liquidablePositon = engineStore.getLiquidablePosition(
+      latestPrice,
+      position.qty,
+      position.type,
+    );
+
     if (!liquidablePositon) return;
-  
+
     console.log("liquidablePosition", liquidablePositon);
-    
+
     // calculate the loss of the current user
     const lossOfCurrentUser = position.averagePrice - latestPrice;
 
     // calculate the profit of the liquudable positon user
     const profileOfLiquidableUser = lossOfCurrentUser;
-    
+
     // cal left qty of liquidable user (if left then create the other side position else nothing)
     const leftQtyofLiquidableUser = position.qty - liquidablePositon.qty;
-    
+
     if (leftQtyofLiquidableUser > 0) {
       // create other side position
     }
@@ -548,36 +572,36 @@ export function liquidate(userId: string) {
 
     // for present user
     engineStore.deductTotalBalalnceOfUser(
-      position.userId, 
-      position.type === "LONG" ? "BUY" : "SELL", 
-      lossOfCurrentUser, 
-      position.qty, 
-      true
-    )
-    engineStore.resetLockBalalnceOfUser(
-      position.userId, 
+      position.userId,
       position.type === "LONG" ? "BUY" : "SELL",
-      true
-    )
+      lossOfCurrentUser,
+      position.qty,
+      true,
+    );
+    engineStore.resetLockBalalnceOfUser(
+      position.userId,
+      position.type === "LONG" ? "BUY" : "SELL",
+      true,
+    );
 
     // for the liquidable user
     engineStore.deductTotalBalalnceOfUser(
-      liquidablePositon.userId, 
-      liquidablePositon.type === "LONG" ? "BUY" : "SELL", 
-      profileOfLiquidableUser, 
-      liquidablePositon.qty, 
-      false
-    )
-    engineStore.resetLockBalalnceOfUser(
-      liquidablePositon.userId, 
+      liquidablePositon.userId,
       liquidablePositon.type === "LONG" ? "BUY" : "SELL",
-      false
-    )
-    
+      profileOfLiquidableUser,
+      liquidablePositon.qty,
+      false,
+    );
+    engineStore.resetLockBalalnceOfUser(
+      liquidablePositon.userId,
+      liquidablePositon.type === "LONG" ? "BUY" : "SELL",
+      false,
+    );
+
     // close both the postions
     // TODO: delete from the db also
-    engineStore.deletePosition(position.userId)
-    engineStore.deletePosition(liquidablePositon.userId)
+    engineStore.deletePosition(position.userId);
+    engineStore.deletePosition(liquidablePositon.userId);
   }
 }
 
@@ -587,38 +611,38 @@ export function updatePnl(CURRENT_PRICE: number) {
   const positions = engineStore.getAllPositions();
 
   for (const val of positions) {
-    let pnl = 0 
+    let pnl = 0;
     let isProfit = false;
-    
+
     if (val.type === "LONG") {
       if (val.averagePrice >= CURRENT_PRICE) {
         // avg: 100 - curr: 20 (loss)
-        pnl = val.averagePrice - CURRENT_PRICE
-        isProfit = false
+        pnl = val.averagePrice - CURRENT_PRICE;
+        isProfit = false;
       } else {
         // curr: 120 - avg: 100 (profit)
-        pnl = CURRENT_PRICE - val.averagePrice
-        isProfit = true
+        pnl = CURRENT_PRICE - val.averagePrice;
+        isProfit = true;
       }
     }
-    
+
     if (val.type === "SHORT") {
       if (val.averagePrice >= CURRENT_PRICE) {
         // avg: 100 - curr: 80 (loss)
-        pnl = val.averagePrice - CURRENT_PRICE
-        isProfit = true
+        pnl = val.averagePrice - CURRENT_PRICE;
+        isProfit = true;
       } else {
         // curr: 120 - avg: 120 (profit)
-        pnl = CURRENT_PRICE - val.averagePrice
-        isProfit = false
+        pnl = CURRENT_PRICE - val.averagePrice;
+        isProfit = false;
       }
     }
-    
+
     engineStore.deletePosition(val.userId);
     engineStore.createPosition({
       ...val,
       pnl,
       isProfit,
     });
-  } 
+  }
 }

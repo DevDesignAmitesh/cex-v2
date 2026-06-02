@@ -45,7 +45,7 @@ export const createOrderSchema = z.object({
   way: z.enum(["MANUAL", "EXCHANGE"]),
 });
 
-type CreateOrder = z.infer<typeof createOrderSchema>;
+export type CreateOrder = z.infer<typeof createOrderSchema>;
 
 export const generateToken = (userId: string, secret: string) => {
   return sign({ userId }, secret);
