@@ -237,6 +237,18 @@ export type UserBasedOrderBook = Record<
   }
 >;
 
+export type ClientOrderBook = {
+  asks: {
+    price: number;
+    qty: number;
+  }[];
+  bids: {
+    price: number;
+    qty: number;
+  }[];
+  lastTradedPrice: number;
+}
+
 export type postionType = "LONG" | "SHORT"
 
 export type Position = {

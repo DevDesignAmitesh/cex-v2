@@ -1,4 +1,4 @@
-import type { OrderBook } from "@repo/common/common";
+import { type UserBasedOrderBook } from "@repo/common/common";
 import { WebSocket } from "ws"
 
 class WsUserManager {
@@ -25,11 +25,12 @@ class WsUserManager {
     this.users.splice(userIndex, 0)
   }
 
-  broadcast(data: OrderBook) {
-    // TODO: fix this the orignal type now changes to UserOrderBook
-    let arrayBasedOrderBook: {
-      asks: {key: string, value: number }[]
-      bids: {key: string, value: number }[]
+  broadcastOrderBook(orderbook: UserBasedOrderBook) {
+    console.log("data getting recevied in broadcast", orderbook)
+    
+    let orderbookToSend: {
+      asks: { price: number, qty: number }[]
+      bids: { price: number, qty: number }[]
       lastTradedPrice: number
     } = {
       asks: [],
@@ -37,29 +38,31 @@ class WsUserManager {
       lastTradedPrice: 0
     }
     
-    Object.entries(data.AXIS).map(([key, value]) => {
-      arrayBasedOrderBook.lastTradedPrice = (value as number)
+    Object.entries(orderbook.AXIS).map(([key, value]) => {
+      orderbookToSend.lastTradedPrice = (value as number)
     })
 
-    Object.entries(data.AXIS.asks).map(([key, value]) => {
-      arrayBasedOrderBook.asks.push({
-        key,
-        value: value.totalQuantity
+    Object.entries(orderbook.AXIS.asks).map(([key, value]) => {
+      orderbookToSend.asks.push({
+        price: Number(key),
+        qty: value.totalQuantity,
+      })
+    })
+
+    Object.entries(orderbook.AXIS.bids).map(([key, value]) => {
+      orderbookToSend.bids.push({
+        price: Number(key),
+        qty: value.totalQuantity,
       })
     })
     
     
-    Object.entries(data.AXIS.bids).map(([key, value]) => {
-      arrayBasedOrderBook.bids.push({
-        key,
-        value: value.totalQuantity
-      })
-    })
+    console.log("data to send from orderbook", orderbookToSend)
     
     this.users.forEach((usr) => {
       usr.send(JSON.stringify({
         type: "order_book",
-        data: arrayBasedOrderBook
+        data: orderbookToSend
       }))
     })
   }

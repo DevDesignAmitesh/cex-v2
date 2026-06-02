@@ -1,31 +1,48 @@
 "use client";
 
 import Button from "@/components/button";
-import { useMemo, useState } from "react";
-import {
-  OrderBookKey,
-  orderSide,
-  orderType,
-  UserBasedOrderBook,
-} from "@repo/common/common";
+import { useEffect, useState } from "react";
+import { ClientOrderBook, orderSide, orderType } from "@repo/common/common";
+import Image from "next/image";
+import { WS_URL } from "@/utils";
 
 export function TradePage({ symbol }: { symbol: string }) {
   const [side, setSide] = useState<orderSide>("BUY");
   const [type, setType] = useState<orderType>("LIMIT");
   const [orderbookType, setOrderbookType] = useState<"BOOK" | "TRADES">("BOOK");
-  const [orderbook, setOrderbook] = useState<UserBasedOrderBook>({
-    AXIS: { bids: {}, asks: {}, lastTradedPrice: 0 },
-    TATA: { bids: {}, asks: {}, lastTradedPrice: 0 },
+  const [orderBook, setOrderbook] = useState<ClientOrderBook>({
+    asks: [],
+    bids: [],
+    lastTradedPrice: 0,
   });
+  const [ws, setWs] = useState<WebSocket | null>(null);
 
-  const orderbook_symbol = useMemo(
-    () => symbol.split("-")[1]!,
-    [symbol],
-  ) as OrderBookKey;
-  const symbolized_orderbook = useMemo(
-    () => orderbook[orderbook_symbol],
-    [orderbook_symbol, orderbook],
-  );
+  useEffect(() => {
+    const ws = new WebSocket(WS_URL);
+    setWs(ws);
+
+    ws.onopen = () => console.log("connected");
+
+    ws.onopen = () => {
+      ws.send(
+        JSON.stringify({
+          type: "SUBSCRIBE",
+          payload: { symbol },
+        }),
+      );
+    };
+
+    ws.onmessage = (event) => {
+      const parsedData = JSON.parse(event.data);
+
+      console.log("incomming data");
+      console.log(parsedData);
+
+      if (parsedData.type === "order_book") {
+        setOrderbook(parsedData.data);
+      }
+    };
+  }, []);
 
   return (
     <div className="w-full bg-[#0E0F14] relative">
@@ -46,7 +63,16 @@ export function TradePage({ symbol }: { symbol: string }) {
         {/* Main 3-Column Layout */}
         <div className="flex flex-1 overflow-hidden gap-2">
           {/* ── Column 1: Chart ── */}
-          <div className="flex flex-col flex-1 min-w-0 bg-[#14151B]"></div>
+          <div className="h-fit flex flex-col justify-center items-center flex-1 min-w-0 bg-[#14151B]">
+            {/* for now 😭 */}
+            <Image
+              src={"/meme.png"}
+              height={100}
+              width={100}
+              alt="makhi-machro"
+              className="w-xs scale-70"
+            />
+          </div>
 
           {/* ── Column 2: Order Book ── */}
           <div className="h-fit flex flex-col w-72 shrink-0 bg-[#14151B] px-2 py-4">
@@ -70,7 +96,7 @@ export function TradePage({ symbol }: { symbol: string }) {
 
             <div className="mt-4" />
 
-{/* ADD SAME THINGS FOR THE TRADES THINGYY */}
+            {/* ADD SAME THINGS FOR THE TRADES THINGYY */}
             <div className="w-full">
               <div
                 className="flex justify-between px-4 py-2 items-center text-xs 
@@ -83,18 +109,24 @@ export function TradePage({ symbol }: { symbol: string }) {
               <div className="mt-4" />
 
               <div className="overflow-y-auto w-full h-115 scrollbar-thin scrollbar-thumb-black/40">
-                {Array.from({ length: 10 }).map((_, idx) => (
-                  <div
-                    key={idx}
-                    className="flex justify-between px-4 py-2 items-center text-xs 
-                    text-red-600 bg-red-900/20"
-                  >
-                    <p>79.83</p>
-                    <p>220.00</p>
-                  </div>
-                ))}
+                {/* <div className="flex flex-col">
+                  {Array.from({ length: 10 }).map((_, idx) => (
+                    <div
+                      key={idx}
+                      className="w-full flex justify-between items-center text-xs 
+                      text-red-600 px-4 py-2 relative overflow-hidden"
+                    >
+                      <div
+                        className="absolute top-0 right-0 h-full bg-red-900/20"
+                        style={{ width: idx * 10 + "%" }}
+                      />
 
-                {/* last traded price */}
+                      <p className="relative z-10">79.83</p>
+                      <p className="relative z-10">220.00</p>
+                    </div>
+                  ))}
+                </div>
+
                 <p
                   title="Last traded price"
                   className="text-green-500 py-2 pl-1"
@@ -102,16 +134,101 @@ export function TradePage({ symbol }: { symbol: string }) {
                   72,061.6
                 </p>
 
-                {Array.from({ length: 10 }).map((_, idx) => (
-                  <div
-                    key={idx}
-                    className="flex justify-between px-4 py-2 items-center text-xs 
-                    text-green-600 bg-green-900/20"
-                  >
-                    <p>79.83</p>
-                    <p>220.00</p>
-                  </div>
-                ))}
+                <div className="flex flex-col">
+                  {Array.from({ length: 10 }).map((_, idx) => (
+                    <div
+                      key={idx}
+                      className="w-full flex justify-between items-center text-xs 
+                      text-green-600 px-4 py-2 relative overflow-hidden"
+                    >
+                      <div
+                        className="absolute top-0 right-0 h-full bg-green-900/20"
+                        style={{ width: idx * 10 + "%" }}
+                      />
+
+                      <p className="relative z-10">79.83</p>
+                      <p className="relative z-10">220.00</p>
+                    </div>
+                  ))}
+                </div> */}
+
+                <div className="flex flex-col">
+                  {orderBook.asks
+                    .slice()
+                    .reverse()
+                    .map((ask, idx) => {
+                      const maxQty = Math.max(
+                        ...orderBook.asks.map((a) => a.qty),
+                      );
+
+                      const width = (ask.qty / maxQty) * 100;
+
+                      return (
+                        <div
+                          key={idx}
+                          className="relative grid grid-cols-2 px-4 py-[3px] overflow-hidden"
+                        >
+                          {/* depth bg */}
+                          <div
+                            className="absolute right-0 top-0 h-full bg-red-500/15"
+                            style={{
+                              width: `${width}%`,
+                            }}
+                          />
+
+                          <p className="relative z-10 text-red-400">
+                            {ask.price.toFixed(2)}
+                          </p>
+
+                          <p className="relative z-10 text-right text-gray-300">
+                            {ask.qty.toLocaleString()}
+                          </p>
+                        </div>
+                      );
+                    })}
+                </div>
+
+                {/* Mid Price */}
+                <div className="flex items-center gap-2 px-4 py-3 border-y border-white/5">
+                  <p className="text-2xl font-semibold text-green-400">
+                    {orderBook.lastTradedPrice.toFixed(2)}
+                  </p>
+
+                </div>
+
+                {/* Bids */}
+                <div className="flex flex-col">
+                  {orderBook.bids.map((bid, idx) => {
+                    const maxQty = Math.max(
+                      ...orderBook.bids.map((b) => b.qty),
+                    );
+
+                    const width = (bid.qty / maxQty) * 100;
+
+                    return (
+                      <div
+                        key={idx}
+                        className="relative grid grid-cols-2 px-4 py-[3px] overflow-hidden"
+                      >
+                        {/* depth bg */}
+                        <div
+                          className="absolute right-0 top-0 h-full bg-green-500/15"
+                          style={{
+                            width: `${width}%`,
+                          }}
+                        />
+
+                        <p className="relative z-10 text-green-400">
+                          {bid.price.toFixed(2)}
+                        </p>
+
+                        <p className="relative z-10 text-right text-gray-300">
+                          {bid.qty.toLocaleString()}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>

@@ -17,10 +17,7 @@ async function main() {
 
     console.log("parsedResponse", parsedResponse)
 
-    if (parsedResponse.type === "order_book") {
-      redisManager.publishData2("AXIS", parsedResponse.data)
-      // wsUserManager.broadcast(parsedResponse.data);
-    }
+    redisManager.publishData2("AXIS", parsedResponse)
   } 
 }
 
@@ -34,6 +31,8 @@ wss.on("connection", (ws: WebSocket) => {
   ws.on("message", (data) => {
     const parsedResponse = JSON.parse(data.toString());
 
+    console.log("client message", parsedResponse);
+    
     if (parsedResponse.type === "SUBSCRIBE") {
       // symbol = "AXIS" | "HDFC"
       const { symbol } = parsedResponse.payload;
