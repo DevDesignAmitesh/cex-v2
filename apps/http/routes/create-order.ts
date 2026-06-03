@@ -11,7 +11,7 @@ export async function createOrder(
   const { data, success, error } = createOrderSchema.safeParse({
     ...req.body,
     userId: req.userId,
-    market: req.params.market,
+    market: "SPOT",
     orderId,
     way: "MANUAL",
   });

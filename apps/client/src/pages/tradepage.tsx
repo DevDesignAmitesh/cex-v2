@@ -2,20 +2,81 @@
 
 import Button from "@/components/button";
 import { useEffect, useState } from "react";
-import { ClientOrderBook, orderSide, orderType } from "@repo/common/common";
+import {
+  ClientOrderBook,
+  createOrderClientSchema,
+  Order,
+  orderSide,
+  orderType,
+  zodErrorMessage,
+} from "@repo/common/common";
 import Image from "next/image";
-import { WS_URL } from "@/utils";
+import { HTTP_URL, WS_URL } from "@/utils";
+import { useAuth } from "@/context/auth";
+import axios from "axios";
 
 export function TradePage({ symbol }: { symbol: string }) {
   const [side, setSide] = useState<orderSide>("BUY");
   const [type, setType] = useState<orderType>("LIMIT");
   const [orderbookType, setOrderbookType] = useState<"BOOK" | "TRADES">("BOOK");
+  const [price, setPrice] = useState<number>(0);
+  const [qty, setQty] = useState<number>(0);
   const [orderBook, setOrderbook] = useState<ClientOrderBook>({
     asks: [],
     bids: [],
     lastTradedPrice: 0,
   });
+  const [trades, setTrades] = useState<Order[]>([]);
   const [ws, setWs] = useState<WebSocket | null>(null);
+
+  const { isLoggedIn } = useAuth();
+
+  async function bookOrder() {
+    if (!isLoggedIn) return;
+
+    const { data, success, error } = createOrderClientSchema.safeParse({
+      symbol: `${symbol.split("-")[0]}/${symbol.split("-")[1]}`,
+      price,
+      qty,
+      side,
+      type,
+      market: "SPOT",
+    });
+
+    if (!success) {
+      alert(zodErrorMessage({ error }));
+      return;
+    }
+
+    const res = await axios.post(`${HTTP_URL}/order`, data, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      validateStatus: () => true,
+    });
+
+    if (res.status <= 201) {
+      alert(res.data.message ?? "Order booked");
+    } else {
+      alert(res.data.message ?? "Something went wrong");
+    }
+  }
+
+  async function getTrades() {
+    const res = await axios.get(`${HTTP_URL}/trades`, {
+      validateStatus: () => true,
+    });
+
+    console.log("respone from getTrades", res.data);
+
+    if (res.status <= 201) {
+      setTrades(res.data.data);
+    }
+  }
+
+  useEffect(() => {
+    getTrades();
+  }, [orderBook]);
 
   useEffect(() => {
     const ws = new WebSocket(WS_URL);
@@ -56,7 +117,7 @@ export function TradePage({ symbol }: { symbol: string }) {
 
           {/* last traded price */}
           <p title="Last traded price" className="text-green-500">
-            72,061.6
+            {orderBook.lastTradedPrice}
           </p>
         </div>
 
@@ -108,128 +169,110 @@ export function TradePage({ symbol }: { symbol: string }) {
 
               <div className="mt-4" />
 
-              <div className="overflow-y-auto w-full h-115 scrollbar-thin scrollbar-thumb-black/40">
-                {/* <div className="flex flex-col">
-                  {Array.from({ length: 10 }).map((_, idx) => (
-                    <div
-                      key={idx}
-                      className="w-full flex justify-between items-center text-xs 
-                      text-red-600 px-4 py-2 relative overflow-hidden"
-                    >
-                      <div
-                        className="absolute top-0 right-0 h-full bg-red-900/20"
-                        style={{ width: idx * 10 + "%" }}
-                      />
+              {orderbookType === "BOOK" ? (
+                <div className="overflow-y-auto w-full h-115 scrollbar-thin scrollbar-thumb-black/40">
+                  <div className="flex flex-col">
+                    {orderBook.asks
+                      .slice()
+                      .reverse()
+                      .map((ask, idx) => {
+                        const maxQty = Math.max(
+                          ...orderBook.asks.map((a) => a.qty),
+                        );
 
-                      <p className="relative z-10">79.83</p>
-                      <p className="relative z-10">220.00</p>
-                    </div>
-                  ))}
-                </div>
+                        const width = (ask.qty / maxQty) * 100;
 
-                <p
-                  title="Last traded price"
-                  className="text-green-500 py-2 pl-1"
-                >
-                  72,061.6
-                </p>
+                        return (
+                          <div
+                            key={idx}
+                            className="relative grid grid-cols-2 px-4 py-0.75 overflow-hidden"
+                          >
+                            {/* depth bg */}
+                            <div
+                              className="absolute right-0 top-0 h-full bg-red-500/15"
+                              style={{
+                                width: `${width}%`,
+                              }}
+                            />
 
-                <div className="flex flex-col">
-                  {Array.from({ length: 10 }).map((_, idx) => (
-                    <div
-                      key={idx}
-                      className="w-full flex justify-between items-center text-xs 
-                      text-green-600 px-4 py-2 relative overflow-hidden"
-                    >
-                      <div
-                        className="absolute top-0 right-0 h-full bg-green-900/20"
-                        style={{ width: idx * 10 + "%" }}
-                      />
+                            <p className="relative z-10 text-red-400">
+                              {ask.price.toFixed(2)}
+                            </p>
 
-                      <p className="relative z-10">79.83</p>
-                      <p className="relative z-10">220.00</p>
-                    </div>
-                  ))}
-                </div> */}
+                            <p className="relative z-10 text-right text-gray-300">
+                              {ask.qty.toLocaleString()}
+                            </p>
+                          </div>
+                        );
+                      })}
+                  </div>
 
-                <div className="flex flex-col">
-                  {orderBook.asks
-                    .slice()
-                    .reverse()
-                    .map((ask, idx) => {
+                  {/* Mid Price */}
+                  <div className="flex items-center gap-2 px-4 py-3 border-y border-white/5">
+                    <p className="text-2xl font-semibold text-green-400">
+                      {orderBook.lastTradedPrice.toFixed(2)}
+                    </p>
+                  </div>
+
+                  {/* Bids */}
+                  <div className="flex flex-col">
+                    {orderBook.bids.map((bid, idx) => {
                       const maxQty = Math.max(
-                        ...orderBook.asks.map((a) => a.qty),
+                        ...orderBook.bids.map((b) => b.qty),
                       );
 
-                      const width = (ask.qty / maxQty) * 100;
+                      const width = (bid.qty / maxQty) * 100;
 
                       return (
                         <div
                           key={idx}
-                          className="relative grid grid-cols-2 px-4 py-[3px] overflow-hidden"
+                          className="relative grid grid-cols-2 px-4 py-0.75 overflow-hidden"
                         >
                           {/* depth bg */}
                           <div
-                            className="absolute right-0 top-0 h-full bg-red-500/15"
+                            className="absolute right-0 top-0 h-full bg-green-500/15"
                             style={{
                               width: `${width}%`,
                             }}
                           />
 
-                          <p className="relative z-10 text-red-400">
-                            {ask.price.toFixed(2)}
+                          <p className="relative z-10 text-green-400">
+                            {bid.price.toFixed(2)}
                           </p>
 
                           <p className="relative z-10 text-right text-gray-300">
-                            {ask.qty.toLocaleString()}
+                            {bid.qty.toLocaleString()}
                           </p>
                         </div>
                       );
                     })}
+                  </div>
                 </div>
-
-                {/* Mid Price */}
-                <div className="flex items-center gap-2 px-4 py-3 border-y border-white/5">
-                  <p className="text-2xl font-semibold text-green-400">
-                    {orderBook.lastTradedPrice.toFixed(2)}
-                  </p>
-
-                </div>
-
-                {/* Bids */}
-                <div className="flex flex-col">
-                  {orderBook.bids.map((bid, idx) => {
-                    const maxQty = Math.max(
-                      ...orderBook.bids.map((b) => b.qty),
-                    );
-
-                    const width = (bid.qty / maxQty) * 100;
-
-                    return (
-                      <div
-                        key={idx}
-                        className="relative grid grid-cols-2 px-4 py-[3px] overflow-hidden"
-                      >
-                        {/* depth bg */}
+              ) : (
+                <div className="overflow-y-auto w-full h-115 scrollbar-thin scrollbar-thumb-black/40">
+                  <div className="flex flex-col">
+                    {trades.map((trd, idx) => {
+                      return (
                         <div
-                          className="absolute right-0 top-0 h-full bg-green-500/15"
-                          style={{
-                            width: `${width}%`,
-                          }}
-                        />
+                          key={idx}
+                          className="relative grid grid-cols-2 px-4 py-0.75 overflow-hidden"
+                        >
+                          <p
+                            className={`relative z-10 
+                              ${trd.side === "SELL" ? "text-red-400" : "text-green-400"}`}
+                          >
+                            {trd.price}
+                          </p>
 
-                        <p className="relative z-10 text-green-400">
-                          {bid.price.toFixed(2)}
-                        </p>
-
-                        <p className="relative z-10 text-right text-gray-300">
-                          {bid.qty.toLocaleString()}
-                        </p>
-                      </div>
-                    );
-                  })}
+                          <p className="relative z-10 text-right text-gray-300">
+                            {trd.qty}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -285,6 +328,8 @@ export function TradePage({ symbol }: { symbol: string }) {
               <input
                 className="p-3 bg-[#202127] text-neutral-200 rounded-md outline-none"
                 placeholder="0"
+                value={price}
+                onChange={(e) => setPrice(Number(e.target.value))}
               />
             </div>
 
@@ -293,6 +338,8 @@ export function TradePage({ symbol }: { symbol: string }) {
               <input
                 className="p-3 bg-[#202127] text-neutral-200 rounded-md outline-none"
                 placeholder="0"
+                value={qty}
+                onChange={(e) => setQty(Number(e.target.value))}
               />
             </div>
 
@@ -301,10 +348,17 @@ export function TradePage({ symbol }: { symbol: string }) {
               <input
                 className="p-3 bg-[#202127] text-neutral-200 rounded-md outline-none"
                 placeholder="0-10"
+                disabled
               />
             </div>
 
-            <Button label="Book Order" type="primary" />
+            <Button
+              label={isLoggedIn ? "Book Order" : "Sign in"}
+              isLink={!isLoggedIn}
+              href={!isLoggedIn ? "/auth" : ""}
+              onClick={isLoggedIn ? bookOrder : undefined}
+              type="primary"
+            />
           </div>
         </div>
       </div>

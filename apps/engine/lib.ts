@@ -1,5 +1,5 @@
 import type { EngineResponse, RedisQueueData } from "@repo/common/common";
-import { createOrder, deleteOrder, getDepth, getFills, getOrder, getOrders, getUserBalance } from "./utils";
+import { createOrder, deleteOrder, getDepth, getFills, getOrder, getOrders, getTrades, getUserBalance } from "./utils";
 
 export function engineRequestHandler(
   parsedResponse: RedisQueueData,
@@ -35,6 +35,10 @@ export function engineRequestHandler(
 
   if (parsedResponse.type === "get_user_balance") {
     engineResponse = getUserBalance(parsedResponse);
+  }
+  
+  if (parsedResponse.type === "get_trades") {
+    engineResponse = getTrades(parsedResponse);
   }
 
   return engineResponse;

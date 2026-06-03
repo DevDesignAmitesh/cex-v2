@@ -45,6 +45,15 @@ export const createOrderSchema = z.object({
   way: z.enum(["MANUAL", "EXCHANGE"]),
 });
 
+export const createOrderClientSchema = z.object({
+  symbol: z.string().includes("/"),
+  price: z.number().optional(),
+  qty: z.number().optional(),
+  side: z.enum(["BUY", "SELL"]),
+  type: z.enum(["LIMIT", "MARKET"]),
+  market: z.enum(["SPOT", "PERPS"]),
+});
+
 export type CreateOrder = z.infer<typeof createOrderSchema>;
 
 export const generateToken = (userId: string, secret: string) => {
@@ -122,6 +131,12 @@ export type RedisQueueData =
   | {
       type: "get_fills";
       data: { userId: string };
+      clientId: string;
+      responseStream: string
+    }
+  | {
+      type: "get_trades";
+      data: null;
       clientId: string;
       responseStream: string
     }

@@ -1101,6 +1101,10 @@ class EngineStore {
   testfn = () => {
     return null;
   };
+
+  getTrades = () => {
+    return this.ORDERS.filter((ord) => ord.status === "FILLED" || ord.status === "PARTIAL_FILLED")    
+  }
 }
 
 export const engineStore = EngineStore.getInstance();

@@ -646,3 +646,21 @@ export function updatePnl(CURRENT_PRICE: number) {
     });
   }
 }
+
+export function getTrades(parsedResponse: RedisQueueData): EngineResponse {
+  if (parsedResponse.type !== "get_trades") return {
+    clientId: parsedResponse.clientId,
+    ok: false
+  }
+
+  const trades = engineStore.getTrades();
+
+  return {
+    ok: true,
+    clientId: parsedResponse.clientId,
+    data: {
+      message: "Trades found",
+      data: trades
+    },
+  }
+}

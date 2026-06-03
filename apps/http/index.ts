@@ -10,6 +10,7 @@ import { getSymbolDepth } from "./routes/get-symbol-depth";
 import { getOrders } from "./routes/get-orders";
 import { getFills } from "./routes/get-fills";
 import { getBalance } from "./routes/get-balance";
+import { getTrades } from "./routes/get-trades";
 
 export const app = express();
 
@@ -30,9 +31,11 @@ app.post("/signup", signup);
 
 app.post("/signin", signin);
 
-app.post("/order/:market", auth, createOrder);
+app.post("/order", auth, createOrder);
 
 app.get("/order/:orderId", auth, getSingleOrder);
+
+app.get("/trades", getTrades);
 
 app.delete("/order/:orderId", auth, deleteSingleOrder);
 
