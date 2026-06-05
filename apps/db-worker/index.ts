@@ -14,6 +14,8 @@ async function main() {
         COMMON_STREAM_CONFIGS.stream,
       );
 
+      console.log("COMMON_STREAM_CONFIGS.consumer_grp", COMMON_STREAM_CONFIGS.consumer_grp);
+      
       if (!res) continue;
       
       const parsedResponse = JSON.parse(res.messages[0]!.message.data ?? "{}") as RedisDbQueueData;

@@ -26,8 +26,9 @@ export default function Auth() {
 
     if (res.status > 201) {
       alert(res.data.message)
-      return;
+      return false
     }
+    return true
   }
 
   const signin = async () => {
@@ -44,10 +45,11 @@ export default function Auth() {
     alert(res.data.message);
   }
 
-  const handleAuth = () => {
+  const handleAuth = async () => {
     if (mode === "signup") {
-      signup()
-      signin()
+      const res = await signup()
+      if (res) signin()
+      else return;
     } else {
       signin()
     }

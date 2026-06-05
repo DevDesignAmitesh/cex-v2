@@ -7,8 +7,9 @@ export default function Footer() {
       <Logo />
       {Array.from({length: 5}).map((_, idx) => (
         <div key={idx} className="flex flex-col gap-2 text-xs text-[#969FAF] capitalize">
-          {footer1.map((item) => (
+          {footer1.map((item, idx) => (
             <p 
+              key={idx}
               className={`
                 hover:opacity-90 cursor-pointer 
                 ${item.isHeading && "text-neutral-100 text-sm"}

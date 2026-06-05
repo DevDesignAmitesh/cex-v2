@@ -12,8 +12,8 @@ export const navItems: NavItemsProps[] = [
     label: "trade"
   },
   {
-    href: "/wallet",
-    label: "wallet"
+    href: "/profile",
+    label: "profile"
   }
 ];
 

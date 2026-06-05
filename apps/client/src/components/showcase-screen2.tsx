@@ -4,10 +4,10 @@ import Image from "next/image";
 export default function ShowcaseScreen2() {
   return <div className="w-full flex flex-row-reverse justify-evenly mt-20">
     <div className="flex flex-col gap-2 mt-10">
-      {showcaseScreen1.map((item) => (
-        <div className="flex items-center gap-4">
+      {showcaseScreen1.map((item, idx) => (
+        <div key={idx} className="flex items-center gap-4">
           <div className="p-2 rounded-full bg-[#152A3A]">
-            <svg width="14" height="14" viewBox="0 0 12 12" fill="none" class="text-avatar-text-6"><path d="M2 6L5 9L10 3" stroke="#5596F6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg> 
+            <svg width="14" height="14" viewBox="0 0 12 12" fill="none" className="text-avatar-text-6"><path d="M2 6L5 9L10 3" stroke="#5596F6" strokeWidth="1.5" strokeLinecap="round" stroke-linejoin="round"></path></svg> 
           </div>
 
           <p className="text-neutral-100 text-sm">{item.content}</p>

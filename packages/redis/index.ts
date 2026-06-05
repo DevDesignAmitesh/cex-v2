@@ -10,6 +10,8 @@ import {
 } from "@repo/common/common";
 import { wsUserManager } from "@repo/ws/ws";
 
+const consumerName = process.argv[3];
+
 class RedisManager {
   private static instance: RedisManager;
   private publisher: RedisClientType;
@@ -144,11 +146,12 @@ class RedisManager {
     const res = await this.client.xReadGroup(
       group_name,
       group_consumer,
-      {
+      [{
         id: ">",
         key: group_stream,
-      },
+      }],
       {
+        COUNT: 1,
         BLOCK: 0,
       },
     );

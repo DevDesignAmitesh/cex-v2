@@ -12,12 +12,16 @@ async function main() {
     );
 
     if (!res) continue;
+
+    console.log("COMMON_STREAM_CONFIGS.consumer_grp", COMMON_STREAM_CONFIGS.consumer_grp);
   
     const parsedResponse = JSON.parse(res.messages[0]!.message.data ?? "{}") as RedisDbQueueData;
 
     console.log("parsedResponse", parsedResponse)
 
-    redisManager.publishData2("AXIS", parsedResponse)
+    if (parsedResponse.type === "order_book") {
+      redisManager.publishData2("AXIS", parsedResponse)
+    }
   } 
 }
 

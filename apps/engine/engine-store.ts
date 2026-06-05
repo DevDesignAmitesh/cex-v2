@@ -178,10 +178,10 @@ class EngineStore {
     });
   };
 
-  sendOrderbook = (
-  ) => {
+  async sendOrderbook(
+  ) {
     // TODO: confirm this
-    redisManager.addToStream(COMMON_STREAM_CONFIGS.stream, {
+    await redisManager.addToStream(COMMON_STREAM_CONFIGS.stream, {
       type: "engine-to-common",
       data: {
         type: "order_book",
