@@ -72,7 +72,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           side,
           orderBookKey,
           qty,
-          qty,
+          keyQty,
           userId,
           finalPrice,
           type,
@@ -99,7 +99,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           side,
           orderBookKey,
           qty,
-          qty,
+          keyQty,
           userId,
           finalPrice,
           type,
@@ -226,8 +226,9 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
     });
 
     if (!beforeOrderResponseOne.ok) return beforeOrderResponseOne;
-    if (beforeOrderResponseOne.ok && !beforeOrderResponseOne.data?.data)
+    if (beforeOrderResponseOne.ok && !beforeOrderResponseOne.data?.data) {
       return beforeOrderResponseOne;
+    }
 
     const {
       keyPrice,

@@ -4,16 +4,17 @@ import Header from "@/components/header";
 import { useAuth } from "@/context/auth";
 import Auth from "@/pages/authpage";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function auth() {
   const { isLoggedIn } = useAuth();
   const router = useRouter();
   
-  if (isLoggedIn) {
+  useEffect(() => {
+    if (!isLoggedIn) return;
     router.push("/trade/INR-AXIS")
-    return;
-  }
-
+  }, [isLoggedIn])
+  
   return <>
     <Header />
     <Auth />

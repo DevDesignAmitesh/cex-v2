@@ -14,6 +14,7 @@ import Image from "next/image";
 import { HTTP_URL, WS_URL } from "@/utils";
 import { useAuth } from "@/context/auth";
 import axios from "axios";
+import { toast } from "sonner";
 
 export function TradePage({ symbol }: { symbol: string }) {
   const [side, setSide] = useState<orderSide>("BUY");
@@ -28,6 +29,7 @@ export function TradePage({ symbol }: { symbol: string }) {
   });
   const [trades, setTrades] = useState<Order[]>([]);
   const [ws, setWs] = useState<WebSocket | null>(null);
+  const [lastTradedPriceSide, setLastTradedPriceSide] = useState<orderSide | null>(null);
 
   const { isLoggedIn } = useAuth();
 
@@ -44,7 +46,7 @@ export function TradePage({ symbol }: { symbol: string }) {
     });
 
     if (!success) {
-      alert(zodErrorMessage({ error }));
+      toast.error(zodErrorMessage({ error }));
       return;
     }
 
@@ -55,10 +57,12 @@ export function TradePage({ symbol }: { symbol: string }) {
       validateStatus: () => true,
     });
 
+    console.log("response from book order", res);
+    
     if (res.status <= 201) {
-      alert(res.data.message ?? "Order booked");
+      toast.success(res.data.message ?? "Order booked");
     } else {
-      alert(res.data.message ?? "Something went wrong");
+      toast.error(res.data ?? "Something went wrong");
     }
   }
 
@@ -67,16 +71,31 @@ export function TradePage({ symbol }: { symbol: string }) {
       validateStatus: () => true,
     });
 
-    console.log("respone from getTrades", res.data);
-
     if (res.status <= 201) {
       setTrades(res.data.data);
+      setLastTradedPriceSide(res.data.data.at(-1).side ?? null)
+    }
+  }
+
+  async function getDepth() {
+    const res = await axios.get(`${HTTP_URL}/depth/${symbol}`, {
+      validateStatus: () => true,
+    });
+
+    console.log("respone from getDepth", res.data);
+
+    if (res.status <= 201) {
+      setOrderbook(res.data.orderbookToSend)
     }
   }
 
   useEffect(() => {
     getTrades();
   }, [orderBook]);
+
+  useEffect(() => {
+    getDepth()
+  }, [])
 
   useEffect(() => {
     const ws = new WebSocket(WS_URL);
@@ -116,8 +135,16 @@ export function TradePage({ symbol }: { symbol: string }) {
           </p>
 
           {/* last traded price */}
-          <p title="Last traded price" className="text-green-500">
-            {orderBook.lastTradedPrice}
+          <p title="Last traded price" className={`
+            ${
+              lastTradedPriceSide === null 
+              ? "text-gray-500" 
+              : lastTradedPriceSide === "SELL" 
+              ? "text-red-500" 
+              : "text-green-500"
+            }
+            `}>
+            {orderBook?.lastTradedPrice}
           </p>
         </div>
 
@@ -172,12 +199,12 @@ export function TradePage({ symbol }: { symbol: string }) {
               {orderbookType === "BOOK" ? (
                 <div className="overflow-y-auto w-full h-115 scrollbar-thin scrollbar-thumb-black/40">
                   <div className="flex flex-col">
-                    {orderBook.asks
+                    {orderBook?.asks
                       .slice()
                       .reverse()
                       .map((ask, idx) => {
                         const maxQty = Math.max(
-                          ...orderBook.asks.map((a) => a.qty),
+                          ...orderBook?.asks.map((a) => a.qty),
                         );
 
                         const width = (ask.qty / maxQty) * 100;
@@ -209,16 +236,23 @@ export function TradePage({ symbol }: { symbol: string }) {
 
                   {/* Mid Price */}
                   <div className="flex items-center gap-2 px-4 py-3 border-y border-white/5">
-                    <p className="text-2xl font-semibold text-green-400">
-                      {orderBook.lastTradedPrice.toFixed(2)}
+                    <p className={`text-2xl font-semibold ${
+                        lastTradedPriceSide === null 
+                        ? "text-gray-500" 
+                        : lastTradedPriceSide === "SELL" 
+                        ? "text-red-500" 
+                        : "text-green-500"
+                      }`}
+                    >
+                      {orderBook?.lastTradedPrice.toFixed(2)}
                     </p>
                   </div>
 
                   {/* Bids */}
                   <div className="flex flex-col">
-                    {orderBook.bids.map((bid, idx) => {
+                    {orderBook?.bids.map((bid, idx) => {
                       const maxQty = Math.max(
-                        ...orderBook.bids.map((b) => b.qty),
+                        ...orderBook?.bids.map((b) => b.qty),
                       );
 
                       const width = (bid.qty / maxQty) * 100;
@@ -320,7 +354,7 @@ export function TradePage({ symbol }: { symbol: string }) {
             {/* available price */}
             <div className="w-full flex justify-between items-center text-xs py-2">
               <p className="text-gray-400">Available Equity</p>
-              <p>₹100.69</p>
+              <p>₹--</p>
             </div>
 
             <div className="flex flex-col gap-2">

@@ -16,7 +16,7 @@ export default function ShowcaseScreen1() {
                 <path 
                   d="M2 6L5 9L10 3" 
                   stroke="#5596F6" 
-                  stroke-width="1.5" 
+                  strokeWidth="1.5" 
                   strokeLinecap="round" 
                   strokeLinejoin="round"
                 />

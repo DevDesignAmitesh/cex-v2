@@ -8,13 +8,9 @@ async function main() {
       // const response = await redisManager.getDataFromQueue("orderbook-to-db-queue");
       // if (!response) continue;
 
-      const res = await redisManager.getFromStream(
-        COMMON_STREAM_CONFIGS.group_name,
-        COMMON_STREAM_CONFIGS.consumer_grp,
+      const res = await redisManager.getFromSingleStream(
         COMMON_STREAM_CONFIGS.stream,
       );
-
-      console.log("COMMON_STREAM_CONFIGS.consumer_grp", COMMON_STREAM_CONFIGS.consumer_grp);
       
       if (!res) continue;
       

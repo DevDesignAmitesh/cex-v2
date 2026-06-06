@@ -5,6 +5,7 @@ import { useState } from "react";
 import axios from "axios";
 import { HTTP_URL } from "@/utils";
 import Logo from "@/components/logo";
+import { toast } from "sonner";
 
 type mode = "signin" | "signup"
 
@@ -25,7 +26,7 @@ export default function Auth() {
     );
 
     if (res.status > 201) {
-      alert(res.data.message)
+      toast.error(res.data.message)
       return false
     }
     return true
@@ -42,7 +43,7 @@ export default function Auth() {
       return;
     } 
 
-    alert(res.data.message);
+    toast.error(res.data.message);
   }
 
   const handleAuth = async () => {

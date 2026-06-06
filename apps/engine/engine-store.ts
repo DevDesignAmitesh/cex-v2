@@ -663,8 +663,8 @@ class EngineStore {
         id: orderId,
         userId,
         type,
-        status: userQty === availableQty ? "FILLED" : "PARTIAL_FILLED",
-        filledQty: availableQty,
+        status: userQty <= availableQty ? "FILLED" : "PARTIAL_FILLED",
+        filledQty: userQty,
         qty: userQty,
         price: finalPrice,
         market: "AXIS",
@@ -700,7 +700,7 @@ class EngineStore {
 
     this.USERORDERBOOK.AXIS[side === "BUY" ? "asks" : "bids"][orderBookKey] = {
       ...order,
-      totalQuantity: order.totalQuantity - availableQty,
+      totalQuantity: order.totalQuantity - userQty,
     };
 
     const reFetchedOrder =
@@ -721,7 +721,7 @@ class EngineStore {
       this.handlePosistionCreationAndCompensation(
         userId,
         orderBookKey,
-        availableQty,
+        userQty,
         side,
         type,
         true,
@@ -733,7 +733,7 @@ class EngineStore {
         this.handlePosistionCreationAndCompensation(
           val.id,
           orderBookKey,
-          availableQty,
+          userQty,
           side,
           type,
           false,
@@ -755,16 +755,16 @@ class EngineStore {
       userId,
       side,
       finalPrice,
-      availableQty,
+      userQty,
       true,
     );
     this.resetLockBalalnceOfUser(userId, side, true);
 
     return {
-      status: userQty === availableQty ? "FILLED" : "PARTIAL_FILLED",
+      status: userQty <= availableQty ? "FILLED" : "PARTIAL_FILLED",
       orderId,
       fills,
-      filledQty: availableQty,
+      filledQty: userQty,
       averagePrice: finalPrice,
     };
   };

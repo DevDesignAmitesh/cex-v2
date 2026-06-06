@@ -19,10 +19,6 @@ export function AuthContextProvider ({ children }: { children: ReactNode }) {
     if (token) setIsLoggedIn(true);
     else setIsLoggedIn(false)
   }, [pathName])
-
-  useEffect(() => {
-    console.log("isLoggedIn", isLoggedIn);
-  }, [isLoggedIn])
   
   return (
     <AuthContext.Provider value={{ isLoggedIn }}>

@@ -162,6 +162,28 @@ class RedisManager {
     return res[0] as MessageType;
   };
 
+  getFromSingleStream = async (
+    group_stream: string,
+  ) => {
+    const res = await this.client.xRead(
+      {
+        id: "$",
+        key: group_stream,
+      },
+      {
+        COUNT: 1,
+        BLOCK: 0,
+      },
+    );
+
+    console.log("response from single stream", res);
+    
+    if (!res) return;
+    if (!Array.isArray(res)) return;
+
+    return res[0] as MessageType;
+  };
+
   acknowledgeMent = async (
     group_stream: string,
     group_name: string,

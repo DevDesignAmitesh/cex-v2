@@ -1,4 +1,4 @@
-import { type UserBasedOrderBook } from "@repo/common/common";
+import { type ClientOrderBook, type UserBasedOrderBook } from "@repo/common/common";
 import { WebSocket } from "ws"
 
 class WsUserManager {
@@ -28,11 +28,7 @@ class WsUserManager {
   broadcastOrderBook(orderbook: UserBasedOrderBook) {
     console.log("data getting recevied in broadcast", orderbook)
     
-    let orderbookToSend: {
-      asks: { price: number, qty: number }[]
-      bids: { price: number, qty: number }[]
-      lastTradedPrice: number
-    } = {
+    let orderbookToSend: ClientOrderBook = {
       asks: [],
       bids: [],
       lastTradedPrice: 0
