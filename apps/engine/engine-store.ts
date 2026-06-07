@@ -41,7 +41,7 @@ class EngineStore {
       TATA: { bids: {}, asks: {}, lastTradedPrice: 0 },
     };
 
-    // setInterval(() => this.backupData(), 5 * 1000)
+    setInterval(() => this.backupData(), 5 * 1000)
   }
 
   static getInstance = (): EngineStore => {
@@ -202,7 +202,6 @@ class EngineStore {
   getFills = (userId: string, orderId?: string) => {
     const arr: Fill[] = [];
 
-    console.log("FILLS", this.FILLS);
 
     if (orderId) {
       this.FILLS.forEach((fls) => {
@@ -267,6 +266,20 @@ class EngineStore {
     return this.BALANCES[userId];
   };
 
+  addUserBalance = (userId: string, amount: number) => {
+    const balance = this.getUserBalance(userId);
+    
+    this.BALANCES[userId] = {
+      ...balance,
+      INR: {
+        ...balance.INR,
+        total: balance.INR.total + amount
+      }
+    }
+
+    return true
+  };
+
   gettingAndLockingUserBalance = (
     userId: string,
     price: number,
@@ -287,8 +300,8 @@ class EngineStore {
        * means allowed else not
        */
 
-      if (requiredBalance > userBalance.INR.total - userBalance.INR.locked)
-        return false;
+      if (requiredBalance > userBalance.INR.total - userBalance.INR.locked) return false;
+      
       userBalance.INR.locked += requiredBalance;
       return true;
     } else if (side === "SELL") {
@@ -370,7 +383,6 @@ class EngineStore {
     orderBookKey: OrderBookKey,
     qtyToAdd: number,
   ) => {
-    console.log("price ", price);
 
     // if not created assigning default values
     if (!this.USERORDERBOOK[orderBookKey][type][price]) {
@@ -398,11 +410,6 @@ class EngineStore {
       totalQuantity: order.totalQuantity + qtyToAdd,
       users: sortedUsers,
     };
-
-    console.log(
-      "while adding to orderbook",
-      this.USERORDERBOOK[orderBookKey][type][price],
-    );
   };
 
   checkAvailablePriceInOrderBook = (
@@ -582,7 +589,6 @@ class EngineStore {
     for (const val of updatedUsers) {
       const makerOrder = this.getCustomOrder(val.id, order.price, order.side);
 
-      console.log("makerOrder", makerOrder);
 
       if (!makerOrder) continue;
 
@@ -626,8 +632,8 @@ class EngineStore {
    *
    * @param side => (asks | bids)
    * @param orderBookKey => price on the which the user get matched
-   * @param userQty => quantity asked by the user
-   * @param availableQty => available qty in the key
+   * @param qtyAskedByUser => quantity asked by the user
+   * @param qtyAtTheBestPrice => available qty in the key
    * @param userId => present user
    * @param finalPrice => price paid by the user
    * @param type => (MARKET | LIMIT)
@@ -638,8 +644,8 @@ class EngineStore {
   completeOrder = (
     side: orderSide,
     orderBookKey: number,
-    userQty: number,
-    availableQty: number,
+    qtyAskedByUser: number,
+    qtyAtTheBestPrice: number,
     userId: string,
     finalPrice: number,
     type: orderType,
@@ -657,15 +663,24 @@ class EngineStore {
 
     // if the same order get repeats for the user
     const existingOrder = this.getOrder(orderId, userId);
+    let filledQty; 
+
+    // 20 >= 10 | 20
+    if (qtyAskedByUser >= qtyAtTheBestPrice) {
+      filledQty = qtyAtTheBestPrice;
+      // 20 < 40
+    } else {
+      filledQty = qtyAskedByUser;
+    }
 
     if (!existingOrder) {
       const order: Order = {
         id: orderId,
         userId,
         type,
-        status: userQty <= availableQty ? "FILLED" : "PARTIAL_FILLED",
-        filledQty: userQty,
-        qty: userQty,
+        status: qtyAskedByUser === filledQty ? "FILLED" : "PARTIAL_FILLED",
+        filledQty,
+        qty: qtyAskedByUser,
         price: finalPrice,
         market: "AXIS",
         side,
@@ -677,21 +692,18 @@ class EngineStore {
     } else {
       this.updateOrder(userId, orderId, {
         updatedAt: new Date(),
-        filledQty: availableQty,
-        qty: userQty,
-        status: userQty === availableQty ? "FILLED" : "PARTIAL_FILLED",
+        filledQty,
+        qty: qtyAskedByUser,
+        status: qtyAskedByUser === filledQty ? "FILLED" : "PARTIAL_FILLED",
       });
     }
 
     const updatedUsers = this.deductQtyAndBalanceOfInvolvedUsers(
       users,
-      availableQty,
+      filledQty,
       side,
       finalPrice,
     );
-
-    console.log("users in the swap", users);
-    console.log("updated users", updatedUsers);
 
     // updating the users in the order book
     this.updateInvolvedUsersQtyInOrderBook(updatedUsers, side, orderBookKey);
@@ -700,7 +712,7 @@ class EngineStore {
 
     this.USERORDERBOOK.AXIS[side === "BUY" ? "asks" : "bids"][orderBookKey] = {
       ...order,
-      totalQuantity: order.totalQuantity - userQty,
+      totalQuantity: order.totalQuantity - filledQty,
     };
 
     const reFetchedOrder =
@@ -721,7 +733,7 @@ class EngineStore {
       this.handlePosistionCreationAndCompensation(
         userId,
         orderBookKey,
-        userQty,
+        filledQty,
         side,
         type,
         true,
@@ -733,7 +745,7 @@ class EngineStore {
         this.handlePosistionCreationAndCompensation(
           val.id,
           orderBookKey,
-          userQty,
+          filledQty,
           side,
           type,
           false,
@@ -755,16 +767,16 @@ class EngineStore {
       userId,
       side,
       finalPrice,
-      userQty,
+      filledQty,
       true,
     );
     this.resetLockBalalnceOfUser(userId, side, true);
 
     return {
-      status: userQty <= availableQty ? "FILLED" : "PARTIAL_FILLED",
+      status: qtyAskedByUser === filledQty ? "FILLED" : "PARTIAL_FILLED",
       orderId,
       fills,
-      filledQty: userQty,
+      filledQty,
       averagePrice: finalPrice,
     };
   };
@@ -1057,11 +1069,7 @@ class EngineStore {
         orderBookKey
       ]!;
 
-    console.log("orderbook key", orderBookKey);
-    console.log("totalQuantity", totalQuantity);
-    console.log("orderBook", orderBook);
 
-    console.log("users ", users);
 
     for (const val of orderBook.users) {
       if (startQty >= totalQuantity) break;

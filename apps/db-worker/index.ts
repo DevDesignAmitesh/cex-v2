@@ -15,8 +15,6 @@ async function main() {
       if (!res) continue;
       
       const parsedResponse = JSON.parse(res.messages[0]!.message.data ?? "{}") as RedisDbQueueData;
-
-      console.log("parsedResponse", parsedResponse)
       
       if (parsedResponse.type === "cancel_order") {
         const { userId, orderId } = parsedResponse.data;

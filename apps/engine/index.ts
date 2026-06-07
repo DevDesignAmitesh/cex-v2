@@ -21,12 +21,9 @@ async function main() {
 
       if (!res) continue;
 
-      console.log("res.messages", res.messages);
-
       const parsedResponse = JSON.parse(
         res.messages[0]!.message.data ?? "{}",
       ) as RedisQueueData;
-      console.log("parsedResponse ", parsedResponse);
 
       const engineResponse = engineRequestHandler(parsedResponse);
 
@@ -37,7 +34,6 @@ async function main() {
         data: engineResponse,
       });
     } catch (e) {
-      console.log("error in the engine/index.ts file");
       await redisManager.addToStream(responseStream, {
         type: "engine-to-http",
         data: {

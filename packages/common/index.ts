@@ -10,6 +10,10 @@ export const signupSchema = z.object({
   password: z.string().min(3, "password should be atleast 4 words"),
 });
 
+export const addBalanceSchema = z.object({
+  amount: z.number().min(20000),
+});
+
 export const signinSchema = z.object({
   email: z.email(),
   password: z.string().min(3, "password should be atleast 4 words"),
@@ -143,6 +147,12 @@ export type RedisQueueData =
   | {
       type: "get_user_balance";
       data: { userId: string };
+      clientId: string;
+      responseStream: string
+    }
+  | {
+      type: "add_user_balance";
+      data: { userId: string, amount: number };
       clientId: string;
       responseStream: string
     };

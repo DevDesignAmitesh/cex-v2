@@ -8,13 +8,17 @@ import { engineStore } from "./engine-store";
 import { redisManager } from "@repo/redis/redis";
 
 export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
-  if (parsedResponse.type !== "create_order")
+  if (parsedResponse.type !== "create_order") {
     return {
       clientId: parsedResponse.clientId,
       ok: false,
       error: "invalid type",
     };
+  }
 
+  console.log("PARSED_DATA_WHILE_ORDER_CREATION");
+  console.log(parsedResponse.data);
+    
   const { side, symbol, type, userId, price, qty, orderId, market } =
     parsedResponse.data;
 
@@ -48,11 +52,12 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
       orderBookKey: number;
     };
 
+    console.log("BEFORE_ORDER_RESPONSE");
+    console.log(beforeOrderResponseOne.data?.data!);
+    
     if (keyQty >= qty) {
       const users =
         engineStore.getUserInvolvedInSwap(orderBookKey, qty, side) ?? [];
-
-      console.log("users after swap", users);
 
       if (side === "BUY") {
         /**
@@ -127,6 +132,8 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
         const userProfit = price - keyPrice;
         const finalPrice = price - userProfit;
 
+        console.log("LEFT_QTY", leftQty);
+        
         const res = engineStore.completeOrder(
           side,
           orderBookKey,
@@ -141,13 +148,13 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           "MANUAL",
         );
 
-        if (leftQty !== 0) {
+        if (leftQty >= 0) {
+          console.log("CALLING_FUNCTION")
           createOrder({
             ...parsedResponse,
             data: { ...parsedResponse.data, qty: leftQty },
           });
         }
-
         return {
           clientId: parsedResponse.clientId,
           ok: true,
@@ -159,6 +166,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
       }
 
       if (side === "SELL") {
+        // 10 - 5
         const leftQty = qty - keyQty;
         const userProfit = keyPrice - price;
         const finalPrice = price + userProfit;
@@ -167,7 +175,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           side,
           orderBookKey,
           qty,
-          leftQty,
+          keyQty,
           userId,
           finalPrice,
           type,
@@ -177,13 +185,12 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
           "MANUAL",
         );
 
-        if (leftQty !== 0) {
+        if (leftQty >= 0) {
           createOrder({
             ...parsedResponse,
             data: { ...parsedResponse.data, qty: leftQty },
           });
-        }
-
+        } 
         return {
           clientId: parsedResponse.clientId,
           ok: true,
@@ -192,6 +199,7 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
             data: res,
           },
         };
+
       }
     }
   }
@@ -460,12 +468,33 @@ export function getUserBalance(parsedResponse: RedisQueueData): EngineResponse {
   };
 }
 
+export function addUserBalance(parsedResponse: RedisQueueData): EngineResponse {
+  if (parsedResponse.type !== "add_user_balance")
+    return {
+      ok: false,
+      clientId: parsedResponse.clientId,
+    };
+
+  const { userId, amount } = parsedResponse.data;
+  const res = engineStore.addUserBalance(userId, amount);
+
+  return {
+    clientId: parsedResponse.clientId,
+    ok: res ? true : false,
+    data: res
+      ? {
+          message: "User balance updated successfully",
+          data: res,
+        }
+      : undefined,
+    error: !res ? "User balance with the given userId not found" : undefined,
+  };
+}
+
 export function getBalanceFromStockExchange() {
   const prices = [10, 20, 30, 40];
 
   const price = prices[Math.floor(Math.random() * prices.length)]!;
-
-  console.log("price from excahange", price);
 
   return price;
 }
@@ -485,8 +514,6 @@ export function checkLiquidation() {
       const POSITION_LIQUIDATE_PRICE = Number(key);
       const IDX = Number(idx);
 
-      console.log("val", val);
-
       if (CURRENT_PRICE <= POSITION_LIQUIDATE_PRICE) liquidate(val[IDX]!);
     }
 
@@ -505,12 +532,8 @@ export function checkLiquidation() {
 }
 
 export function liquidate(userId: string) {
-  console.log("running", userId);
-
   const position = engineStore.getPosition(userId);
   if (!position) return;
-
-  console.log("position", position);
 
   const clientId = crypto.randomUUID();
   const orderId = crypto.randomUUID();
@@ -553,8 +576,6 @@ export function liquidate(userId: string) {
     );
 
     if (!liquidablePositon) return;
-
-    console.log("liquidablePosition", liquidablePositon);
 
     // calculate the loss of the current user
     const lossOfCurrentUser = position.averagePrice - latestPrice;

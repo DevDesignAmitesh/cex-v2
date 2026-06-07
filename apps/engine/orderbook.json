@@ -1,1 +1,1 @@
-{"AXIS":{"bids":{},"asks":{},"lastTradedPrice":0},"TATA":{"bids":{},"asks":{},"lastTradedPrice":0}}
+{"AXIS":{"bids":{"100":{"createdAt":1780827092433,"totalQuantity":10,"users":[{"id":"53984ca2-f676-4643-8ff8-12cabfc864fa","createdAt":1780827092433,"qty":10,"price":100}]}},"asks":{},"lastTradedPrice":100},"TATA":{"bids":{},"asks":{},"lastTradedPrice":0}}

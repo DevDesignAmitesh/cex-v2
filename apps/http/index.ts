@@ -11,6 +11,7 @@ import { getOrders } from "./routes/get-orders";
 import { getFills } from "./routes/get-fills";
 import { getBalance } from "./routes/get-balance";
 import { getTrades } from "./routes/get-trades";
+import { addBalance } from "./routes/add-balance";
 
 export const app = express();
 
@@ -46,3 +47,5 @@ app.get("/orders", auth, getOrders);
 app.get("/fills", auth, getFills);
 
 app.get("/balance", auth, getBalance);
+
+app.post("/balance", auth, addBalance);

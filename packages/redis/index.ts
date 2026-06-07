@@ -107,7 +107,6 @@ class RedisManager {
   };
 
   getDataFromQueue = async (REDIS_QUEUE: REDIS_QUEUE_TYPE) => {
-    console.log("queue in get ", REDIS_QUEUE);
     return await this.client.brPop(REDIS_QUEUE, 0);
   };
 
@@ -115,9 +114,6 @@ class RedisManager {
     this.subscriber.subscribe(key, (message) => {
       
       const parsedResponse = JSON.parse(message);
-      console.log("message in subscribe", parsedResponse);
-      console.log("message in subscribe", parsedResponse.data);
-      console.log("message in subscribe", parsedResponse.data.orderBook);
 
       if (parsedResponse.type === "order_book") {
         // TODO: check is .data defined??
@@ -176,8 +172,6 @@ class RedisManager {
       },
     );
 
-    console.log("response from single stream", res);
-    
     if (!res) return;
     if (!Array.isArray(res)) return;
 
