@@ -1,7 +1,11 @@
 "use client";
 
 import Button from "@/components/button";
-import { useEffect, useRef, useState } from "react";
+import OrderBook from "@/components/orderbook";
+import OrderSwaping from "@/components/orderswaping";
+import OtherDetails from "@/components/otherdetails";
+import TradingChart from "@/components/tradingchart";
+import { useCallback, useEffect, useState } from "react";
 import {
   addBalanceSchema,
   Candle,
@@ -17,11 +21,6 @@ import { HTTP_URL, WS_URL } from "@/utils";
 import { useAuth } from "@/context/auth";
 import axios from "axios";
 import { toast } from "sonner";
-import {
-  createChart,
-  ColorType,
-  CandlestickSeries,
-} from "lightweight-charts";
 
 export function TradePage({ symbol }: { symbol: string }) {
   const [side, setSide] = useState<orderSide>("BUY");
@@ -29,8 +28,8 @@ export function TradePage({ symbol }: { symbol: string }) {
   const [orderbookType, setOrderbookType] = useState<"BOOK" | "TRADES">("BOOK");
   const [balance, setBalance] = useState({
     amount: 0,
-    qty: 0
-  })
+    qty: 0,
+  });
   const [price, setPrice] = useState<number>(0);
   const [amount, setAmount] = useState<number>(0);
   const [qty, setQty] = useState<number>(0);
@@ -40,23 +39,24 @@ export function TradePage({ symbol }: { symbol: string }) {
     lastTradedPrice: 0,
   });
   const [trades, setTrades] = useState<Order[]>([]);
-  const [ws, setWs] = useState<WebSocket | null>(null);
   const [lastTradedPriceSide, setLastTradedPriceSide] =
     useState<orderSide | null>(null);
   const [amountDepositPopup, setAmountDepositPopup] = useState<boolean>(false);
-  const chartContainerRef = useRef<HTMLDivElement>(null);
-  const [chartData, setChartData] = useState<ChartData[]>([])
+  const [chartData, setChartData] = useState<ChartData[]>([]);
 
   const { isLoggedIn } = useAuth();
 
-  async function getKlines() {
-    const res = await axios.get(`${HTTP_URL}/klines?market=${symbol.split("-")[1]}&interval=1h`, {
-      validateStatus: () => true,
-    });
+  const getKlines = useCallback(async () => {
+    const res = await axios.get(
+      `${HTTP_URL}/klines?market=${symbol.split("-")[1]}&interval=1h`,
+      {
+        validateStatus: () => true,
+      },
+    );
 
     console.log("response from getKlines");
     console.log(res.data);
-    
+
     if (res.status <= 201) {
       const chartData = res.data.candles.map((candle: Candle) => ({
         time: candle.timestamp,
@@ -66,12 +66,12 @@ export function TradePage({ symbol }: { symbol: string }) {
         close: candle.close,
       }));
 
-      console.log("chartData", chartData)
+      console.log("chartData", chartData);
 
-      setChartData(chartData)
+      setChartData(chartData);
     }
-  }
-  
+  }, [symbol]);
+
   async function bookOrder() {
     if (!isLoggedIn) return;
 
@@ -105,18 +105,18 @@ export function TradePage({ symbol }: { symbol: string }) {
     }
   }
 
-  async function getTrades() {
+  const getTrades = useCallback(async () => {
     const res = await axios.get(`${HTTP_URL}/trades`, {
       validateStatus: () => true,
     });
 
     if (res.status <= 201) {
       setTrades(res.data.data);
-      setLastTradedPriceSide(res.data.data.at(-1).side ?? null);
+      setLastTradedPriceSide(res.data.data.at(-1)?.side ?? null);
     }
-  }
+  }, []);
 
-  async function getBalance() {
+  const getBalance = useCallback(async () => {
     const res = await axios.get(`${HTTP_URL}/balance`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -127,9 +127,9 @@ export function TradePage({ symbol }: { symbol: string }) {
     console.log("respone from getBalance", res.data);
     setBalance({
       amount: res.data.data.INR.total - res.data.data.INR.locked,
-      qty: res.data.data.AXIS.total - res.data.data.AXIS.locked
-    })
-  }
+      qty: res.data.data.AXIS.total - res.data.data.AXIS.locked,
+    });
+  }, []);
 
   async function addBalance() {
     const { data, success, error } = addBalanceSchema.safeParse({ amount });
@@ -149,15 +149,15 @@ export function TradePage({ symbol }: { symbol: string }) {
     console.log("respone from getBalance", res.data);
 
     if (res.data.data === true) {
-      getBalance()
+      getBalance();
       setAmountDepositPopup(false);
-      toast.success(res.data.message)
+      toast.success(res.data.message);
     } else {
-      toast.error(res.data.message)
+      toast.error(res.data.message);
     }
   }
 
-  async function getDepth() {
+  const getDepth = useCallback(async () => {
     const res = await axios.get(`${HTTP_URL}/depth/${symbol}`, {
       validateStatus: () => true,
     });
@@ -167,26 +167,26 @@ export function TradePage({ symbol }: { symbol: string }) {
     if (res.status <= 201) {
       setOrderbook(res.data.orderbookToSend);
     }
-  }
+  }, [symbol]);
 
   useEffect(() => {
-    getTrades();
-    getBalance();
-    getKlines();
-  }, [orderBook]);
+    queueMicrotask(() => {
+      void getTrades();
+      void getBalance();
+      void getKlines();
+    });
+  }, [getBalance, getKlines, getTrades, orderBook]);
 
   useEffect(() => {
-    getDepth();
-    getBalance();
-    getKlines();
-  }, []);
+    queueMicrotask(() => {
+      void getDepth();
+      void getBalance();
+      void getKlines();
+    });
+  }, [getBalance, getDepth, getKlines]);
 
-  // websocket server connection
   useEffect(() => {
     const ws = new WebSocket(WS_URL);
-    setWs(ws);
-
-    ws.onopen = () => console.log("connected");
 
     ws.onopen = () => {
       ws.send(
@@ -207,66 +207,12 @@ export function TradePage({ symbol }: { symbol: string }) {
         setOrderbook(parsedData.data);
       }
     };
-  }, []);
+  }, [symbol]);
 
-  useEffect(() => {
-    if (!chartContainerRef.current) return;
-
-    const chart = createChart(chartContainerRef.current, {
-      width: chartContainerRef.current.clientWidth,
-      height: 500,
-      layout: {
-        background: {
-          type: ColorType.Solid,
-          color: "#0f172a",
-        },
-        textColor: "#94a3b8",
-      },
-      grid: {
-        vertLines: {
-          color: "#1e293b",
-        },
-        horzLines: {
-          color: "#1e293b",
-        },
-      },
-      rightPriceScale: {
-        borderColor: "#334155",
-      },
-      timeScale: {
-        borderColor: "#334155",
-      },
-    });
-
-    const candlestickSeries = chart.addSeries(CandlestickSeries, {
-      upColor: "#22c55e",
-      downColor: "#ef4444",
-      borderVisible: false,
-      wickUpColor: "#22c55e",
-      wickDownColor: "#ef4444",
-    });
-
-    candlestickSeries.setData(chartData);
-
-    const resizeObserver = new ResizeObserver(() => {
-      chart.applyOptions({
-        width: chartContainerRef.current?.clientWidth || 0,
-      });
-    });
-
-    resizeObserver.observe(chartContainerRef.current);
-
-    return () => {
-      resizeObserver.disconnect();
-      chart.remove();
-    };
-  }, [chartData]);
-  
   return (
     <>
-      <div className="w-full bg-[#0E0F14] relative">
-        <div className="pt-4 text-neutral-100 w-full max-w-7xl mx-auto h-screen flex flex-col overflow-hidden font-mono">
-          {/* Top Header Bar */}
+      <div className="w-full min-h-screen bg-[#0E0F14] relative overflow-y-auto">
+        <div className="py-4 text-neutral-100 w-full max-w-7xl mx-auto min-h-screen flex flex-col font-mono">
           <div className="flex mb-2 items-center justify-between gap-6 p-4 bg-[#14151B] shrink-0 rounded-md">
             <div className="flex gap-6 items-center">
               <p className="font-medium">
@@ -274,20 +220,17 @@ export function TradePage({ symbol }: { symbol: string }) {
                 <span className="text-gray-400">{symbol.split("-")[1]}</span>
               </p>
 
-              {/* last traded price */}
               <p
                 title="Last traded price"
-                className={`
-                ${
+                className={
                   lastTradedPriceSide === null
                     ? "text-gray-500"
                     : lastTradedPriceSide === "SELL"
                       ? "text-red-500"
                       : "text-green-500"
                 }
-                `}
               >
-                {orderBook?.lastTradedPrice}
+                {orderBook.lastTradedPrice}
               </p>
             </div>
 
@@ -298,267 +241,35 @@ export function TradePage({ symbol }: { symbol: string }) {
             />
           </div>
 
-          {/* Main 3-Column Layout */}
-          <div className="flex flex-1 overflow-hidden gap-2">
-            {/* ── Column 1: Chart ── */}
-            <div className="h-fit flex flex-col justify-center items-center flex-1 min-w-0 bg-[#14151B]">
-              {/* for now 😭 */}
-              {/* <Image
-                src={"/meme.png"}
-                height={100}
-                width={100}
-                alt="makhi-machro"
-                className="w-xs scale-70"
-              /> */}
-
-              <div
-                ref={chartContainerRef}
-                className="w-full rounded-lg overflow-hidden"
-              />
-            </div>
-
-            {/* ── Column 2: Order Book ── */}
-            <div className="h-fit flex flex-col w-72 shrink-0 bg-[#14151B] px-2 py-4">
-              <div className="w-full flex items-center mt-1 h-8 text-sm">
-                <div
-                  onClick={() => setOrderbookType("BOOK")}
-                  className={`px-4 py-2 flex items-center font-medium text-sm justify-center rounded-md 
-                  ${orderbookType === "BOOK" ? "bg-[#1F2026] text-neutral-200" : "text-neutral-200"} cursor-pointer`}
-                >
-                  Book
-                </div>
-                <div
-                  onClick={() => setOrderbookType("TRADES")}
-                  className={`px-4 py-2 flex items-center font-medium text-sm justify-center rounded-md text-neutral-200 
-                  ${orderbookType === "TRADES" ? "bg-[#1F2026] text-neutral-200" : "text-neutral-200"}
-                  cursor-pointer`}
-                >
-                  Trades
-                </div>
-              </div>
-
-              <div className="mt-4" />
-
-              {/* ADD SAME THINGS FOR THE TRADES THINGYY */}
-              <div className="w-full">
-                <div
-                  className="flex justify-between px-4 py-2 items-center text-xs 
-                  text-neutral-300 bg-[#1F2026]"
-                >
-                  <p>Price</p>
-                  <p>Quantity</p>
-                </div>
-
-                <div className="mt-4" />
-
-                {orderbookType === "BOOK" ? (
-                  <div className="overflow-y-auto w-full h-115 scrollbar-thin scrollbar-thumb-black/40">
-                    <div className="flex flex-col">
-                      {orderBook?.asks
-                        .slice()
-                        .reverse()
-                        .map((ask, idx) => {
-                          const maxQty = Math.max(
-                            ...orderBook?.asks.map((a) => a.qty),
-                          );
-
-                          const width = (ask.qty / maxQty) * 100;
-
-                          return (
-                            <div
-                              key={idx}
-                              className="relative grid grid-cols-2 px-4 py-0.75 overflow-hidden"
-                            >
-                              {/* depth bg */}
-                              <div
-                                className="absolute right-0 top-0 h-full bg-red-500/15"
-                                style={{
-                                  width: `${width}%`,
-                                }}
-                              />
-
-                              <p className="relative z-10 text-red-400">
-                                {ask.price.toFixed(2)}
-                              </p>
-
-                              <p className="relative z-10 text-right text-gray-300">
-                                {ask.qty.toLocaleString()}
-                              </p>
-                            </div>
-                          );
-                        })}
-                    </div>
-
-                    {/* Mid Price */}
-                    <div className="flex items-center gap-2 px-4 py-3 border-y border-white/5">
-                      <p
-                        className={`text-2xl font-semibold ${
-                          lastTradedPriceSide === null
-                            ? "text-gray-500"
-                            : lastTradedPriceSide === "SELL"
-                              ? "text-red-500"
-                              : "text-green-500"
-                        }`}
-                      >
-                        {orderBook?.lastTradedPrice.toFixed(2)}
-                      </p>
-                    </div>
-
-                    {/* Bids */}
-                    <div className="flex flex-col">
-                      {orderBook?.bids
-                        .slice()
-                        .reverse()
-                        .map((bid, idx) => {
-                        const maxQty = Math.max(
-                          ...orderBook?.bids.map((b) => b.qty),
-                        );
-
-                        const width = (bid.qty / maxQty) * 100;
-
-                        return (
-                          <div
-                            key={idx}
-                            className="relative grid grid-cols-2 px-4 py-0.75 overflow-hidden"
-                          >
-                            {/* depth bg */}
-                            <div
-                              className="absolute right-0 top-0 h-full bg-green-500/15"
-                              style={{
-                                width: `${width}%`,
-                              }}
-                            />
-
-                            <p className="relative z-10 text-green-400">
-                              {bid.price.toFixed(2)}
-                            </p>
-
-                            <p className="relative z-10 text-right text-gray-300">
-                              {bid.qty.toLocaleString()}
-                            </p>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="overflow-y-auto w-full h-115 scrollbar-thin scrollbar-thumb-black/40">
-                    <div className="flex flex-col">
-                      {trades.map((trd, idx) => {
-                        return (
-                          <div
-                            key={idx}
-                            className="relative grid grid-cols-2 px-4 py-0.75 overflow-hidden"
-                          >
-                            <p
-                              className={`relative z-10 
-                                ${trd.side === "SELL" ? "text-red-400" : "text-green-400"}`}
-                            >
-                              {trd.price}
-                            </p>
-
-                            <p className="relative z-10 text-right text-gray-300">
-                              {trd.qty}
-                            </p>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* ── Column 3: Order Placement ── */}
-            <div className="h-fit flex gap-2 flex-col w-64 shrink-0 bg-[#14151B] px-2 py-4 rounded-md">
-              {/* if not active then bg-[#14151B] else gree and red thing */}
-              {/* buy or sell */}
-              <div className="w-full flex items-center gap-2 h-12 text-sm bg-[#14151B]">
-                <div
-                  onClick={() => setSide("BUY")}
-                  className={`w-full h-full flex items-center font-semibold justify-center rounded-md 
-                  ${side === "BUY" ? "bg-[#122322] text-green-500" : "bg-[#14151B] text-neutral-200"} cursor-pointer`}
-                >
-                  Buy / Long
-                </div>
-                <div
-                  onClick={() => setSide("SELL")}
-                  className={`w-full h-full flex items-center font-semibold justify-center rounded-md 
-                  ${side === "SELL" ? "bg-[#351A1F] text-red-500" : "bg-[#14151B] text-neutral-200"} cursor-pointer`}
-                >
-                  Sell / Short
-                </div>
-              </div>
-
-              {/* limit or market */}
-              {/* if active then bg-[#1F2026] text-neutral-200 else bg-[#14151B] */}
-              <div className="w-full flex items-center gap-2 mt-1 h-8 text-sm bg-[#14151B]">
-                <div
-                  onClick={() => setType("LIMIT")}
-                  className={`px-4 py-2 flex items-center font-medium text-sm justify-center rounded-md 
-                  ${type === "LIMIT" ? "bg-[#1F2026] text-neutral-200" : "bg-[#14151B] text-neutral-200"} cursor-pointer`}
-                >
-                  Limit
-                </div>
-                <div
-                  onClick={() => setType("MARKET")}
-                  className={`px-4 py-2 flex items-center font-medium text-sm justify-center rounded-md text-neutral-200 
-                  ${type === "MARKET" ? "bg-[#1F2026] text-neutral-200" : "bg-[#14151B] text-neutral-200"}
-                  cursor-pointer`}
-                >
-                  Market
-                </div>
-              </div>
-
-              {/* available price */}
-              <div className="w-full flex justify-between items-center text-xs pt-2">
-                <p className="text-gray-400">Available Equity</p>
-                <p>{balance.amount}</p>
-              </div>
-
-              {/* available price */}
-              <div className="w-full flex justify-between items-center text-xs pb-2">
-                <p className="text-gray-400">Available Qty</p>
-                <p>{balance.qty}</p>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <p className="text-xs text-gray-400">Price</p>
-                <input
-                  className="p-3 bg-[#202127] text-neutral-200 rounded-md outline-none"
-                  placeholder="0"
-                  value={price}
-                  onChange={(e) => setPrice(Number(e.target.value))}
+          <div className="flex flex-1 gap-2 min-h-[660px]">
+            <div className="flex flex-1 min-w-0 flex-col gap-2">
+              <div className="flex flex-1 min-h-[500px] gap-2">
+                <TradingChart chartData={chartData} />
+                <OrderBook
+                  orderBook={orderBook}
+                  orderbookType={orderbookType}
+                  trades={trades}
+                  lastTradedPriceSide={lastTradedPriceSide}
+                  onOrderbookTypeChange={setOrderbookType}
                 />
               </div>
 
-              <div className="flex flex-col gap-2 mb-4">
-                <p className="text-xs text-gray-400">Quantity</p>
-                <input
-                  className="p-3 bg-[#202127] text-neutral-200 rounded-md outline-none"
-                  placeholder="0"
-                  value={qty}
-                  onChange={(e) => setQty(Number(e.target.value))}
-                />
-              </div>
-
-              {/* <div className="flex flex-col gap-2">
-                <p className="text-xs text-gray-400">Leverage</p>
-                <input
-                  className="p-3 bg-[#202127] text-neutral-200 rounded-md outline-none"
-                  placeholder="0-10"
-                  disabled
-                />
-              </div> */}
-
-              <Button
-                label={isLoggedIn ? "Book Order" : "Sign in"}
-                isLink={!isLoggedIn}
-                href={!isLoggedIn ? "/auth" : ""}
-                onClick={isLoggedIn ? bookOrder : undefined}
-                type="primary"
-              />
+              <OtherDetails balance={balance} trades={trades} />
             </div>
+
+            <OrderSwaping
+              side={side}
+              type={type}
+              balance={balance}
+              price={price}
+              qty={qty}
+              isLoggedIn={isLoggedIn}
+              onSideChange={setSide}
+              onTypeChange={setType}
+              onPriceChange={setPrice}
+              onQtyChange={setQty}
+              onBookOrder={bookOrder}
+            />
           </div>
         </div>
       </div>
@@ -571,18 +282,14 @@ export function TradePage({ symbol }: { symbol: string }) {
               className="p-3 bg-[#202127] text-neutral-200 rounded-md outline-none"
               placeholder="0"
               value={amount}
-              onChange={(e) => setAmount(Number(e.target.value))}
+              onChange={(event) => setAmount(Number(event.target.value))}
             />
           </div>
 
           <div className="flex justify-center items-center gap-6">
+            <Button label="Deposit" onClick={addBalance} type="primary" />
             <Button
-              label={"Deposit"}
-              onClick={addBalance}
-              type="primary"
-            />
-            <Button
-              label={"Cancel"}
+              label="Cancel"
               onClick={() => setAmountDepositPopup(false)}
               type="secondary"
             />
@@ -592,3 +299,5 @@ export function TradePage({ symbol }: { symbol: string }) {
     </>
   );
 }
+
+export default TradePage;
