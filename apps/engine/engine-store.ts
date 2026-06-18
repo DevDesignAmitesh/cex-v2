@@ -28,10 +28,10 @@ class EngineStore {
   private POSITIONS_MAPS: POSITIONS_MAPS;
 
   constructor() {
-    this.ORDERS = [];
-    this.FILLS = [];
-    this.POSITIONS = [];
-    this.POSITIONS_MAPS = {
+    this.ORDERS = this.readBackupData().ORDERS ?? [];
+    this.FILLS = this.readBackupData().FILLS ?? [];
+    this.POSITIONS = this.readBackupData().POSITIONS ?? [];
+    this.POSITIONS_MAPS = this.readBackupData().POSITIONS_MAPS ?? {
       LONG: {},
       SHORT: {},
     };
@@ -42,6 +42,7 @@ class EngineStore {
     };
 
     setInterval(() => this.backupData(), 5 * 1000)
+    setInterval(() => console.log("this.readBackupData()", this.readBackupData()), 5 * 1000)
   }
 
   static getInstance = (): EngineStore => {
@@ -1083,6 +1084,10 @@ class EngineStore {
   backupData = () => {
     fs.writeFileSync("./orderbook.json", JSON.stringify(this.USERORDERBOOK));
     fs.writeFileSync("./balances.json", JSON.stringify(this.BALANCES));
+    fs.writeFileSync("./orders.json", JSON.stringify(this.ORDERS));
+    fs.writeFileSync("./fills.json", JSON.stringify(this.FILLS));
+    fs.writeFileSync("./positions.json", JSON.stringify(this.POSITIONS));
+    fs.writeFileSync("./positions-maps.json", JSON.stringify(this.POSITIONS_MAPS));
   };
 
   readBackupData = () => {
@@ -1093,8 +1098,20 @@ class EngineStore {
       const BALANCES = JSON.parse(
         fs.readFileSync("./balances.json").toString(),
       );
+      const ORDERS = JSON.parse(
+        fs.readFileSync("./orders.json").toString(),
+      );
+      const FILLS = JSON.parse(
+        fs.readFileSync("./fills.json").toString(),
+      );
+      const POSITIONS = JSON.parse(
+        fs.readFileSync("./positions.json").toString(),
+      );
+      const POSITIONS_MAPS = JSON.parse(
+        fs.readFileSync("./positions-maps.json").toString(),
+      );
 
-      return { USERORDERBOOK, BALANCES };
+      return { USERORDERBOOK, BALANCES, ORDERS, FILLS, POSITIONS, POSITIONS_MAPS };
     } catch {
       return {
         USERORDERBOOK: {
@@ -1102,6 +1119,13 @@ class EngineStore {
           TATA: { bids: {}, asks: {}, lastTradedPrice: 0 },
         },
         BALANCES: {},
+        ORDERS: [],
+        FILLS: [],
+        POSITIONS: [],
+        POSITIONS_MAPS: {
+          LONG: {},
+          SHORT: {},
+        }
       };
     }
   };

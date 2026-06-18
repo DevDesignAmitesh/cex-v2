@@ -9,6 +9,10 @@ const INTERVALS = {
   "1w": 7 * 24 * 60 * 60 * 1000,
 };
 
+function formatDate(timestamp: number) {
+  return new Date(timestamp).toISOString().split("T")[0]!;
+}
+
 export async function generateCandles(
   market: "AXIS" | "TATA",
   interval: keyof typeof INTERVALS,
@@ -26,37 +30,41 @@ export async function generateCandles(
 
   const candlesMap = new Map<number, Candle>();
 
-  for (const fill of fills) {
-    const timestamp = fill.createdAt.getTime();
-
-    const bucket = Math.floor(timestamp / bucketSize) * bucketSize;
-
-    if (!candlesMap.has(bucket)) {
-      candlesMap.set(bucket, {
-        timestamp: bucket,
-        open: fill.price,
-        high: fill.price,
-        low: fill.price,
-        close: fill.price,
-        volume: fill.filledQty,
-      });
-
-      continue;
+  if (fills.length >= 1) {
+    for (const fill of fills) {
+      const timestamp = fill.createdAt.getTime();
+  
+      const bucket = Math.floor(timestamp / bucketSize) * bucketSize;
+  
+      if (!candlesMap.has(bucket)) {
+        candlesMap.set(bucket, {
+          timestamp: formatDate(bucket),
+          open: fill.price,
+          high: fill.price,
+          low: fill.price,
+          close: fill.price,
+          volume: fill.filledQty,
+        });
+  
+        continue;
+      }
+  
+      const candle = candlesMap.get(bucket);
+  
+      candle!.high = Math.max(candle!.high, fill.price);
+      candle!.low = Math.min(candle!.low, fill.price);
+      candle!.close = fill.price;
+      candle!.volume += fill.filledQty;
     }
-
-    const candle = candlesMap.get(bucket);
-
-    candle!.high = Math.max(candle!.high, fill.price);
-    candle!.low = Math.min(candle!.low, fill.price);
-    candle!.close = fill.price;
-    candle!.volume += fill.filledQty;
+  
+    return Array.from(candlesMap.values());
   }
 
-  return Array.from(candlesMap.values());
+  return []
 }
 
 export async function getKlines(req: Request, res: Response) {
-  const { success, data, error } = getKlinesSchema.safeParse(req.body);
+  const { success, data, error } = getKlinesSchema.safeParse(req.query);
 
   if (!success) {
     res.json({ message: "invalid inputs", data: zodErrorMessage({ error })})
@@ -65,5 +73,5 @@ export async function getKlines(req: Request, res: Response) {
 
   const { market, interval } = data;
   
-  res.json({ candles: generateCandles(market, interval) })
+  res.json({ candles: await generateCandles(market, interval) })
 }

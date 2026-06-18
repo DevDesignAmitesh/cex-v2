@@ -327,7 +327,7 @@ export type MessageType = {
 }
 
 export type Candle = {
-  timestamp: number;
+  timestamp: string;
   open: number;
   high: number;
   low: number;

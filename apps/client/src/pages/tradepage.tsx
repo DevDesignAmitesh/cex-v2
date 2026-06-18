@@ -1,9 +1,11 @@
 "use client";
 
 import Button from "@/components/button";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   addBalanceSchema,
+  Candle,
+  ChartData,
   ClientOrderBook,
   createOrderClientSchema,
   Order,
@@ -11,12 +13,15 @@ import {
   orderType,
   zodErrorMessage,
 } from "@repo/common/common";
-import Image from "next/image";
 import { HTTP_URL, WS_URL } from "@/utils";
 import { useAuth } from "@/context/auth";
 import axios from "axios";
 import { toast } from "sonner";
-import TradingChart from "@/components/tradingchart";
+import {
+  createChart,
+  ColorType,
+  CandlestickSeries,
+} from "lightweight-charts";
 
 export function TradePage({ symbol }: { symbol: string }) {
   const [side, setSide] = useState<orderSide>("BUY");
@@ -39,9 +44,34 @@ export function TradePage({ symbol }: { symbol: string }) {
   const [lastTradedPriceSide, setLastTradedPriceSide] =
     useState<orderSide | null>(null);
   const [amountDepositPopup, setAmountDepositPopup] = useState<boolean>(false);
+  const chartContainerRef = useRef<HTMLDivElement>(null);
+  const [chartData, setChartData] = useState<ChartData[]>([])
 
   const { isLoggedIn } = useAuth();
 
+  async function getKlines() {
+    const res = await axios.get(`${HTTP_URL}/klines?market=${symbol.split("-")[1]}&interval=1h`, {
+      validateStatus: () => true,
+    });
+
+    console.log("response from getKlines");
+    console.log(res.data);
+    
+    if (res.status <= 201) {
+      const chartData = res.data.candles.map((candle: Candle) => ({
+        time: candle.timestamp,
+        open: candle.open,
+        high: candle.high,
+        low: candle.low,
+        close: candle.close,
+      }));
+
+      console.log("chartData", chartData)
+
+      setChartData(chartData)
+    }
+  }
+  
   async function bookOrder() {
     if (!isLoggedIn) return;
 
@@ -142,13 +172,16 @@ export function TradePage({ symbol }: { symbol: string }) {
   useEffect(() => {
     getTrades();
     getBalance();
+    getKlines();
   }, [orderBook]);
 
   useEffect(() => {
     getDepth();
     getBalance();
+    getKlines();
   }, []);
 
+  // websocket server connection
   useEffect(() => {
     const ws = new WebSocket(WS_URL);
     setWs(ws);
@@ -176,6 +209,59 @@ export function TradePage({ symbol }: { symbol: string }) {
     };
   }, []);
 
+  useEffect(() => {
+    if (!chartContainerRef.current) return;
+
+    const chart = createChart(chartContainerRef.current, {
+      width: chartContainerRef.current.clientWidth,
+      height: 500,
+      layout: {
+        background: {
+          type: ColorType.Solid,
+          color: "#0f172a",
+        },
+        textColor: "#94a3b8",
+      },
+      grid: {
+        vertLines: {
+          color: "#1e293b",
+        },
+        horzLines: {
+          color: "#1e293b",
+        },
+      },
+      rightPriceScale: {
+        borderColor: "#334155",
+      },
+      timeScale: {
+        borderColor: "#334155",
+      },
+    });
+
+    const candlestickSeries = chart.addSeries(CandlestickSeries, {
+      upColor: "#22c55e",
+      downColor: "#ef4444",
+      borderVisible: false,
+      wickUpColor: "#22c55e",
+      wickDownColor: "#ef4444",
+    });
+
+    candlestickSeries.setData(chartData);
+
+    const resizeObserver = new ResizeObserver(() => {
+      chart.applyOptions({
+        width: chartContainerRef.current?.clientWidth || 0,
+      });
+    });
+
+    resizeObserver.observe(chartContainerRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+      chart.remove();
+    };
+  }, [chartData]);
+  
   return (
     <>
       <div className="w-full bg-[#0E0F14] relative">
@@ -225,7 +311,10 @@ export function TradePage({ symbol }: { symbol: string }) {
                 className="w-xs scale-70"
               /> */}
 
-              <TradingChart />
+              <div
+                ref={chartContainerRef}
+                className="w-full rounded-lg overflow-hidden"
+              />
             </div>
 
             {/* ── Column 2: Order Book ── */}
