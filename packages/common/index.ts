@@ -5,6 +5,11 @@ export const zodErrorMessage = ({ error }: { error: ZodError }) => {
   return error.issues.map((er) => `${er.path.join(".")}: ${er.message}`);
 };
 
+export const getKlinesSchema = z.object({
+  market: z.enum(["AXIS", "TATA"]),
+  interval: z.enum(["1m", "1h", "1d", "1w"]),
+});
+
 export const signupSchema = z.object({
   email: z.email(),
   password: z.string().min(3, "password should be atleast 4 words"),
@@ -320,6 +325,23 @@ export type MessageType = {
     // data: EngineResponse | RedisQueueData | RedisDbQueueData
   } }[]
 }
+
+export type Candle = {
+  timestamp: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+};
+
+export type ChartData = {
+  time: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+};
 
 export const LIQUIDATION_PERCENTAGE = 0.2 // 20%
 

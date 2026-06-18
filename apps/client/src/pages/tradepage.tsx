@@ -16,6 +16,7 @@ import { HTTP_URL, WS_URL } from "@/utils";
 import { useAuth } from "@/context/auth";
 import axios from "axios";
 import { toast } from "sonner";
+import TradingChart from "@/components/tradingchart";
 
 export function TradePage({ symbol }: { symbol: string }) {
   const [side, setSide] = useState<orderSide>("BUY");
@@ -216,13 +217,15 @@ export function TradePage({ symbol }: { symbol: string }) {
             {/* ── Column 1: Chart ── */}
             <div className="h-fit flex flex-col justify-center items-center flex-1 min-w-0 bg-[#14151B]">
               {/* for now 😭 */}
-              <Image
+              {/* <Image
                 src={"/meme.png"}
                 height={100}
                 width={100}
                 alt="makhi-machro"
                 className="w-xs scale-70"
-              />
+              /> */}
+
+              <TradingChart />
             </div>
 
             {/* ── Column 2: Order Book ── */}

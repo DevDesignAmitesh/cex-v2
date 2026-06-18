@@ -54,6 +54,8 @@ export type PositionMinAggregateOutputType = {
   pnl: number | null
   qty: number | null
   type: $Enums.positionType | null
+  createdAt: Date | null
+  updatedAt: Date | null
 }
 
 export type PositionMaxAggregateOutputType = {
@@ -68,6 +70,8 @@ export type PositionMaxAggregateOutputType = {
   pnl: number | null
   qty: number | null
   type: $Enums.positionType | null
+  createdAt: Date | null
+  updatedAt: Date | null
 }
 
 export type PositionCountAggregateOutputType = {
@@ -82,6 +86,8 @@ export type PositionCountAggregateOutputType = {
   pnl: number
   qty: number
   type: number
+  createdAt: number
+  updatedAt: number
   _all: number
 }
 
@@ -114,6 +120,8 @@ export type PositionMinAggregateInputType = {
   pnl?: true
   qty?: true
   type?: true
+  createdAt?: true
+  updatedAt?: true
 }
 
 export type PositionMaxAggregateInputType = {
@@ -128,6 +136,8 @@ export type PositionMaxAggregateInputType = {
   pnl?: true
   qty?: true
   type?: true
+  createdAt?: true
+  updatedAt?: true
 }
 
 export type PositionCountAggregateInputType = {
@@ -142,6 +152,8 @@ export type PositionCountAggregateInputType = {
   pnl?: true
   qty?: true
   type?: true
+  createdAt?: true
+  updatedAt?: true
   _all?: true
 }
 
@@ -243,6 +255,8 @@ export type PositionGroupByOutputType = {
   pnl: number
   qty: number
   type: $Enums.positionType
+  createdAt: Date
+  updatedAt: Date
   _count: PositionCountAggregateOutputType | null
   _avg: PositionAvgAggregateOutputType | null
   _sum: PositionSumAggregateOutputType | null
@@ -280,6 +294,8 @@ export type PositionWhereInput = {
   pnl?: Prisma.IntFilter<"Position"> | number
   qty?: Prisma.IntFilter<"Position"> | number
   type?: Prisma.EnumpositionTypeFilter<"Position"> | $Enums.positionType
+  createdAt?: Prisma.DateTimeFilter<"Position"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"Position"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   order?: Prisma.XOR<Prisma.OrderScalarRelationFilter, Prisma.OrderWhereInput>
 }
@@ -296,6 +312,8 @@ export type PositionOrderByWithRelationInput = {
   pnl?: Prisma.SortOrder
   qty?: Prisma.SortOrder
   type?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
   order?: Prisma.OrderOrderByWithRelationInput
 }
@@ -315,6 +333,8 @@ export type PositionWhereUniqueInput = Prisma.AtLeast<{
   pnl?: Prisma.IntFilter<"Position"> | number
   qty?: Prisma.IntFilter<"Position"> | number
   type?: Prisma.EnumpositionTypeFilter<"Position"> | $Enums.positionType
+  createdAt?: Prisma.DateTimeFilter<"Position"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"Position"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   order?: Prisma.XOR<Prisma.OrderScalarRelationFilter, Prisma.OrderWhereInput>
 }, "id">
@@ -331,6 +351,8 @@ export type PositionOrderByWithAggregationInput = {
   pnl?: Prisma.SortOrder
   qty?: Prisma.SortOrder
   type?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
   _count?: Prisma.PositionCountOrderByAggregateInput
   _avg?: Prisma.PositionAvgOrderByAggregateInput
   _max?: Prisma.PositionMaxOrderByAggregateInput
@@ -353,6 +375,8 @@ export type PositionScalarWhereWithAggregatesInput = {
   pnl?: Prisma.IntWithAggregatesFilter<"Position"> | number
   qty?: Prisma.IntWithAggregatesFilter<"Position"> | number
   type?: Prisma.EnumpositionTypeWithAggregatesFilter<"Position"> | $Enums.positionType
+  createdAt?: Prisma.DateTimeWithAggregatesFilter<"Position"> | Date | string
+  updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Position"> | Date | string
 }
 
 export type PositionCreateInput = {
@@ -365,6 +389,8 @@ export type PositionCreateInput = {
   pnl: number
   qty: number
   type: $Enums.positionType
+  createdAt?: Date | string
+  updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutPositionsInput
   order: Prisma.OrderCreateNestedOneWithoutPositionsInput
 }
@@ -381,6 +407,8 @@ export type PositionUncheckedCreateInput = {
   pnl: number
   qty: number
   type: $Enums.positionType
+  createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type PositionUpdateInput = {
@@ -393,6 +421,8 @@ export type PositionUpdateInput = {
   pnl?: Prisma.IntFieldUpdateOperationsInput | number
   qty?: Prisma.IntFieldUpdateOperationsInput | number
   type?: Prisma.EnumpositionTypeFieldUpdateOperationsInput | $Enums.positionType
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutPositionsNestedInput
   order?: Prisma.OrderUpdateOneRequiredWithoutPositionsNestedInput
 }
@@ -409,6 +439,8 @@ export type PositionUncheckedUpdateInput = {
   pnl?: Prisma.IntFieldUpdateOperationsInput | number
   qty?: Prisma.IntFieldUpdateOperationsInput | number
   type?: Prisma.EnumpositionTypeFieldUpdateOperationsInput | $Enums.positionType
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type PositionCreateManyInput = {
@@ -423,6 +455,8 @@ export type PositionCreateManyInput = {
   pnl: number
   qty: number
   type: $Enums.positionType
+  createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type PositionUpdateManyMutationInput = {
@@ -435,6 +469,8 @@ export type PositionUpdateManyMutationInput = {
   pnl?: Prisma.IntFieldUpdateOperationsInput | number
   qty?: Prisma.IntFieldUpdateOperationsInput | number
   type?: Prisma.EnumpositionTypeFieldUpdateOperationsInput | $Enums.positionType
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type PositionUncheckedUpdateManyInput = {
@@ -449,6 +485,8 @@ export type PositionUncheckedUpdateManyInput = {
   pnl?: Prisma.IntFieldUpdateOperationsInput | number
   qty?: Prisma.IntFieldUpdateOperationsInput | number
   type?: Prisma.EnumpositionTypeFieldUpdateOperationsInput | $Enums.positionType
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type PositionListRelationFilter = {
@@ -473,6 +511,8 @@ export type PositionCountOrderByAggregateInput = {
   pnl?: Prisma.SortOrder
   qty?: Prisma.SortOrder
   type?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
 }
 
 export type PositionAvgOrderByAggregateInput = {
@@ -495,6 +535,8 @@ export type PositionMaxOrderByAggregateInput = {
   pnl?: Prisma.SortOrder
   qty?: Prisma.SortOrder
   type?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
 }
 
 export type PositionMinOrderByAggregateInput = {
@@ -509,6 +551,8 @@ export type PositionMinOrderByAggregateInput = {
   pnl?: Prisma.SortOrder
   qty?: Prisma.SortOrder
   type?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
 }
 
 export type PositionSumOrderByAggregateInput = {
@@ -621,6 +665,8 @@ export type PositionCreateWithoutUserInput = {
   pnl: number
   qty: number
   type: $Enums.positionType
+  createdAt?: Date | string
+  updatedAt?: Date | string
   order: Prisma.OrderCreateNestedOneWithoutPositionsInput
 }
 
@@ -635,6 +681,8 @@ export type PositionUncheckedCreateWithoutUserInput = {
   pnl: number
   qty: number
   type: $Enums.positionType
+  createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type PositionCreateOrConnectWithoutUserInput = {
@@ -678,6 +726,8 @@ export type PositionScalarWhereInput = {
   pnl?: Prisma.IntFilter<"Position"> | number
   qty?: Prisma.IntFilter<"Position"> | number
   type?: Prisma.EnumpositionTypeFilter<"Position"> | $Enums.positionType
+  createdAt?: Prisma.DateTimeFilter<"Position"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"Position"> | Date | string
 }
 
 export type PositionCreateWithoutOrderInput = {
@@ -690,6 +740,8 @@ export type PositionCreateWithoutOrderInput = {
   pnl: number
   qty: number
   type: $Enums.positionType
+  createdAt?: Date | string
+  updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutPositionsInput
 }
 
@@ -704,6 +756,8 @@ export type PositionUncheckedCreateWithoutOrderInput = {
   pnl: number
   qty: number
   type: $Enums.positionType
+  createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type PositionCreateOrConnectWithoutOrderInput = {
@@ -743,6 +797,8 @@ export type PositionCreateManyUserInput = {
   pnl: number
   qty: number
   type: $Enums.positionType
+  createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type PositionUpdateWithoutUserInput = {
@@ -755,6 +811,8 @@ export type PositionUpdateWithoutUserInput = {
   pnl?: Prisma.IntFieldUpdateOperationsInput | number
   qty?: Prisma.IntFieldUpdateOperationsInput | number
   type?: Prisma.EnumpositionTypeFieldUpdateOperationsInput | $Enums.positionType
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   order?: Prisma.OrderUpdateOneRequiredWithoutPositionsNestedInput
 }
 
@@ -769,6 +827,8 @@ export type PositionUncheckedUpdateWithoutUserInput = {
   pnl?: Prisma.IntFieldUpdateOperationsInput | number
   qty?: Prisma.IntFieldUpdateOperationsInput | number
   type?: Prisma.EnumpositionTypeFieldUpdateOperationsInput | $Enums.positionType
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type PositionUncheckedUpdateManyWithoutUserInput = {
@@ -782,6 +842,8 @@ export type PositionUncheckedUpdateManyWithoutUserInput = {
   pnl?: Prisma.IntFieldUpdateOperationsInput | number
   qty?: Prisma.IntFieldUpdateOperationsInput | number
   type?: Prisma.EnumpositionTypeFieldUpdateOperationsInput | $Enums.positionType
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type PositionCreateManyOrderInput = {
@@ -795,6 +857,8 @@ export type PositionCreateManyOrderInput = {
   pnl: number
   qty: number
   type: $Enums.positionType
+  createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type PositionUpdateWithoutOrderInput = {
@@ -807,6 +871,8 @@ export type PositionUpdateWithoutOrderInput = {
   pnl?: Prisma.IntFieldUpdateOperationsInput | number
   qty?: Prisma.IntFieldUpdateOperationsInput | number
   type?: Prisma.EnumpositionTypeFieldUpdateOperationsInput | $Enums.positionType
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutPositionsNestedInput
 }
 
@@ -821,6 +887,8 @@ export type PositionUncheckedUpdateWithoutOrderInput = {
   pnl?: Prisma.IntFieldUpdateOperationsInput | number
   qty?: Prisma.IntFieldUpdateOperationsInput | number
   type?: Prisma.EnumpositionTypeFieldUpdateOperationsInput | $Enums.positionType
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type PositionUncheckedUpdateManyWithoutOrderInput = {
@@ -834,6 +902,8 @@ export type PositionUncheckedUpdateManyWithoutOrderInput = {
   pnl?: Prisma.IntFieldUpdateOperationsInput | number
   qty?: Prisma.IntFieldUpdateOperationsInput | number
   type?: Prisma.EnumpositionTypeFieldUpdateOperationsInput | $Enums.positionType
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
@@ -850,6 +920,8 @@ export type PositionSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   pnl?: boolean
   qty?: boolean
   type?: boolean
+  createdAt?: boolean
+  updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   order?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["position"]>
@@ -866,6 +938,8 @@ export type PositionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   pnl?: boolean
   qty?: boolean
   type?: boolean
+  createdAt?: boolean
+  updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   order?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["position"]>
@@ -882,6 +956,8 @@ export type PositionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   pnl?: boolean
   qty?: boolean
   type?: boolean
+  createdAt?: boolean
+  updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   order?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["position"]>
@@ -898,9 +974,11 @@ export type PositionSelectScalar = {
   pnl?: boolean
   qty?: boolean
   type?: boolean
+  createdAt?: boolean
+  updatedAt?: boolean
 }
 
-export type PositionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "orderId" | "averagePrice" | "isProfit" | "liquidationPrice" | "margin" | "market" | "pnl" | "qty" | "type", ExtArgs["result"]["position"]>
+export type PositionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "orderId" | "averagePrice" | "isProfit" | "liquidationPrice" | "margin" | "market" | "pnl" | "qty" | "type" | "createdAt" | "updatedAt", ExtArgs["result"]["position"]>
 export type PositionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   order?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
@@ -932,6 +1010,8 @@ export type $PositionPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     pnl: number
     qty: number
     type: $Enums.positionType
+    createdAt: Date
+    updatedAt: Date
   }, ExtArgs["result"]["position"]>
   composites: {}
 }
@@ -1368,6 +1448,8 @@ export interface PositionFieldRefs {
   readonly pnl: Prisma.FieldRef<"Position", 'Int'>
   readonly qty: Prisma.FieldRef<"Position", 'Int'>
   readonly type: Prisma.FieldRef<"Position", 'positionType'>
+  readonly createdAt: Prisma.FieldRef<"Position", 'DateTime'>
+  readonly updatedAt: Prisma.FieldRef<"Position", 'DateTime'>
 }
     
 

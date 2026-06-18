@@ -50,6 +50,8 @@ export type FillMinAggregateOutputType = {
   takerId: string | null
   makerOrderId: string | null
   takerOrderId: string | null
+  createdAt: Date | null
+  updatedAt: Date | null
 }
 
 export type FillMaxAggregateOutputType = {
@@ -64,6 +66,8 @@ export type FillMaxAggregateOutputType = {
   takerId: string | null
   makerOrderId: string | null
   takerOrderId: string | null
+  createdAt: Date | null
+  updatedAt: Date | null
 }
 
 export type FillCountAggregateOutputType = {
@@ -78,6 +82,8 @@ export type FillCountAggregateOutputType = {
   takerId: number
   makerOrderId: number
   takerOrderId: number
+  createdAt: number
+  updatedAt: number
   _all: number
 }
 
@@ -106,6 +112,8 @@ export type FillMinAggregateInputType = {
   takerId?: true
   makerOrderId?: true
   takerOrderId?: true
+  createdAt?: true
+  updatedAt?: true
 }
 
 export type FillMaxAggregateInputType = {
@@ -120,6 +128,8 @@ export type FillMaxAggregateInputType = {
   takerId?: true
   makerOrderId?: true
   takerOrderId?: true
+  createdAt?: true
+  updatedAt?: true
 }
 
 export type FillCountAggregateInputType = {
@@ -134,6 +144,8 @@ export type FillCountAggregateInputType = {
   takerId?: true
   makerOrderId?: true
   takerOrderId?: true
+  createdAt?: true
+  updatedAt?: true
   _all?: true
 }
 
@@ -235,6 +247,8 @@ export type FillGroupByOutputType = {
   takerId: string
   makerOrderId: string
   takerOrderId: string
+  createdAt: Date
+  updatedAt: Date
   _count: FillCountAggregateOutputType | null
   _avg: FillAvgAggregateOutputType | null
   _sum: FillSumAggregateOutputType | null
@@ -272,6 +286,8 @@ export type FillWhereInput = {
   takerId?: Prisma.StringFilter<"Fill"> | string
   makerOrderId?: Prisma.StringFilter<"Fill"> | string
   takerOrderId?: Prisma.StringFilter<"Fill"> | string
+  createdAt?: Prisma.DateTimeFilter<"Fill"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"Fill"> | Date | string
   maker?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   taker?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   makerOrder?: Prisma.XOR<Prisma.OrderScalarRelationFilter, Prisma.OrderWhereInput>
@@ -290,6 +306,8 @@ export type FillOrderByWithRelationInput = {
   takerId?: Prisma.SortOrder
   makerOrderId?: Prisma.SortOrder
   takerOrderId?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
   maker?: Prisma.UserOrderByWithRelationInput
   taker?: Prisma.UserOrderByWithRelationInput
   makerOrder?: Prisma.OrderOrderByWithRelationInput
@@ -311,6 +329,8 @@ export type FillWhereUniqueInput = Prisma.AtLeast<{
   takerId?: Prisma.StringFilter<"Fill"> | string
   makerOrderId?: Prisma.StringFilter<"Fill"> | string
   takerOrderId?: Prisma.StringFilter<"Fill"> | string
+  createdAt?: Prisma.DateTimeFilter<"Fill"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"Fill"> | Date | string
   maker?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   taker?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   makerOrder?: Prisma.XOR<Prisma.OrderScalarRelationFilter, Prisma.OrderWhereInput>
@@ -329,6 +349,8 @@ export type FillOrderByWithAggregationInput = {
   takerId?: Prisma.SortOrder
   makerOrderId?: Prisma.SortOrder
   takerOrderId?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
   _count?: Prisma.FillCountOrderByAggregateInput
   _avg?: Prisma.FillAvgOrderByAggregateInput
   _max?: Prisma.FillMaxOrderByAggregateInput
@@ -351,6 +373,8 @@ export type FillScalarWhereWithAggregatesInput = {
   takerId?: Prisma.StringWithAggregatesFilter<"Fill"> | string
   makerOrderId?: Prisma.StringWithAggregatesFilter<"Fill"> | string
   takerOrderId?: Prisma.StringWithAggregatesFilter<"Fill"> | string
+  createdAt?: Prisma.DateTimeWithAggregatesFilter<"Fill"> | Date | string
+  updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Fill"> | Date | string
 }
 
 export type FillCreateInput = {
@@ -361,6 +385,8 @@ export type FillCreateInput = {
   type: $Enums.fillType
   price: number
   asset: $Enums.orderMarket
+  createdAt?: Date | string
+  updatedAt?: Date | string
   maker: Prisma.UserCreateNestedOneWithoutMakerFillsInput
   taker: Prisma.UserCreateNestedOneWithoutTakerFillsInput
   makerOrder: Prisma.OrderCreateNestedOneWithoutMakerFillsInput
@@ -379,6 +405,8 @@ export type FillUncheckedCreateInput = {
   takerId: string
   makerOrderId: string
   takerOrderId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type FillUpdateInput = {
@@ -389,6 +417,8 @@ export type FillUpdateInput = {
   type?: Prisma.EnumfillTypeFieldUpdateOperationsInput | $Enums.fillType
   price?: Prisma.IntFieldUpdateOperationsInput | number
   asset?: Prisma.EnumorderMarketFieldUpdateOperationsInput | $Enums.orderMarket
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   maker?: Prisma.UserUpdateOneRequiredWithoutMakerFillsNestedInput
   taker?: Prisma.UserUpdateOneRequiredWithoutTakerFillsNestedInput
   makerOrder?: Prisma.OrderUpdateOneRequiredWithoutMakerFillsNestedInput
@@ -407,6 +437,8 @@ export type FillUncheckedUpdateInput = {
   takerId?: Prisma.StringFieldUpdateOperationsInput | string
   makerOrderId?: Prisma.StringFieldUpdateOperationsInput | string
   takerOrderId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type FillCreateManyInput = {
@@ -421,6 +453,8 @@ export type FillCreateManyInput = {
   takerId: string
   makerOrderId: string
   takerOrderId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type FillUpdateManyMutationInput = {
@@ -431,6 +465,8 @@ export type FillUpdateManyMutationInput = {
   type?: Prisma.EnumfillTypeFieldUpdateOperationsInput | $Enums.fillType
   price?: Prisma.IntFieldUpdateOperationsInput | number
   asset?: Prisma.EnumorderMarketFieldUpdateOperationsInput | $Enums.orderMarket
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type FillUncheckedUpdateManyInput = {
@@ -445,6 +481,8 @@ export type FillUncheckedUpdateManyInput = {
   takerId?: Prisma.StringFieldUpdateOperationsInput | string
   makerOrderId?: Prisma.StringFieldUpdateOperationsInput | string
   takerOrderId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type FillListRelationFilter = {
@@ -469,6 +507,8 @@ export type FillCountOrderByAggregateInput = {
   takerId?: Prisma.SortOrder
   makerOrderId?: Prisma.SortOrder
   takerOrderId?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
 }
 
 export type FillAvgOrderByAggregateInput = {
@@ -489,6 +529,8 @@ export type FillMaxOrderByAggregateInput = {
   takerId?: Prisma.SortOrder
   makerOrderId?: Prisma.SortOrder
   takerOrderId?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
 }
 
 export type FillMinOrderByAggregateInput = {
@@ -503,6 +545,8 @@ export type FillMinOrderByAggregateInput = {
   takerId?: Prisma.SortOrder
   makerOrderId?: Prisma.SortOrder
   takerOrderId?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
 }
 
 export type FillSumOrderByAggregateInput = {
@@ -691,6 +735,8 @@ export type FillCreateWithoutMakerInput = {
   type: $Enums.fillType
   price: number
   asset: $Enums.orderMarket
+  createdAt?: Date | string
+  updatedAt?: Date | string
   taker: Prisma.UserCreateNestedOneWithoutTakerFillsInput
   makerOrder: Prisma.OrderCreateNestedOneWithoutMakerFillsInput
   takerOrder: Prisma.OrderCreateNestedOneWithoutTakerFillsInput
@@ -707,6 +753,8 @@ export type FillUncheckedCreateWithoutMakerInput = {
   takerId: string
   makerOrderId: string
   takerOrderId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type FillCreateOrConnectWithoutMakerInput = {
@@ -727,6 +775,8 @@ export type FillCreateWithoutTakerInput = {
   type: $Enums.fillType
   price: number
   asset: $Enums.orderMarket
+  createdAt?: Date | string
+  updatedAt?: Date | string
   maker: Prisma.UserCreateNestedOneWithoutMakerFillsInput
   makerOrder: Prisma.OrderCreateNestedOneWithoutMakerFillsInput
   takerOrder: Prisma.OrderCreateNestedOneWithoutTakerFillsInput
@@ -743,6 +793,8 @@ export type FillUncheckedCreateWithoutTakerInput = {
   makerId: string
   makerOrderId: string
   takerOrderId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type FillCreateOrConnectWithoutTakerInput = {
@@ -786,6 +838,8 @@ export type FillScalarWhereInput = {
   takerId?: Prisma.StringFilter<"Fill"> | string
   makerOrderId?: Prisma.StringFilter<"Fill"> | string
   takerOrderId?: Prisma.StringFilter<"Fill"> | string
+  createdAt?: Prisma.DateTimeFilter<"Fill"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"Fill"> | Date | string
 }
 
 export type FillUpsertWithWhereUniqueWithoutTakerInput = {
@@ -812,6 +866,8 @@ export type FillCreateWithoutMakerOrderInput = {
   type: $Enums.fillType
   price: number
   asset: $Enums.orderMarket
+  createdAt?: Date | string
+  updatedAt?: Date | string
   maker: Prisma.UserCreateNestedOneWithoutMakerFillsInput
   taker: Prisma.UserCreateNestedOneWithoutTakerFillsInput
   takerOrder: Prisma.OrderCreateNestedOneWithoutTakerFillsInput
@@ -828,6 +884,8 @@ export type FillUncheckedCreateWithoutMakerOrderInput = {
   makerId: string
   takerId: string
   takerOrderId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type FillCreateOrConnectWithoutMakerOrderInput = {
@@ -848,6 +906,8 @@ export type FillCreateWithoutTakerOrderInput = {
   type: $Enums.fillType
   price: number
   asset: $Enums.orderMarket
+  createdAt?: Date | string
+  updatedAt?: Date | string
   maker: Prisma.UserCreateNestedOneWithoutMakerFillsInput
   taker: Prisma.UserCreateNestedOneWithoutTakerFillsInput
   makerOrder: Prisma.OrderCreateNestedOneWithoutMakerFillsInput
@@ -864,6 +924,8 @@ export type FillUncheckedCreateWithoutTakerOrderInput = {
   makerId: string
   takerId: string
   makerOrderId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type FillCreateOrConnectWithoutTakerOrderInput = {
@@ -919,6 +981,8 @@ export type FillCreateManyMakerInput = {
   takerId: string
   makerOrderId: string
   takerOrderId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type FillCreateManyTakerInput = {
@@ -932,6 +996,8 @@ export type FillCreateManyTakerInput = {
   makerId: string
   makerOrderId: string
   takerOrderId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type FillUpdateWithoutMakerInput = {
@@ -942,6 +1008,8 @@ export type FillUpdateWithoutMakerInput = {
   type?: Prisma.EnumfillTypeFieldUpdateOperationsInput | $Enums.fillType
   price?: Prisma.IntFieldUpdateOperationsInput | number
   asset?: Prisma.EnumorderMarketFieldUpdateOperationsInput | $Enums.orderMarket
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   taker?: Prisma.UserUpdateOneRequiredWithoutTakerFillsNestedInput
   makerOrder?: Prisma.OrderUpdateOneRequiredWithoutMakerFillsNestedInput
   takerOrder?: Prisma.OrderUpdateOneRequiredWithoutTakerFillsNestedInput
@@ -958,6 +1026,8 @@ export type FillUncheckedUpdateWithoutMakerInput = {
   takerId?: Prisma.StringFieldUpdateOperationsInput | string
   makerOrderId?: Prisma.StringFieldUpdateOperationsInput | string
   takerOrderId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type FillUncheckedUpdateManyWithoutMakerInput = {
@@ -971,6 +1041,8 @@ export type FillUncheckedUpdateManyWithoutMakerInput = {
   takerId?: Prisma.StringFieldUpdateOperationsInput | string
   makerOrderId?: Prisma.StringFieldUpdateOperationsInput | string
   takerOrderId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type FillUpdateWithoutTakerInput = {
@@ -981,6 +1053,8 @@ export type FillUpdateWithoutTakerInput = {
   type?: Prisma.EnumfillTypeFieldUpdateOperationsInput | $Enums.fillType
   price?: Prisma.IntFieldUpdateOperationsInput | number
   asset?: Prisma.EnumorderMarketFieldUpdateOperationsInput | $Enums.orderMarket
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   maker?: Prisma.UserUpdateOneRequiredWithoutMakerFillsNestedInput
   makerOrder?: Prisma.OrderUpdateOneRequiredWithoutMakerFillsNestedInput
   takerOrder?: Prisma.OrderUpdateOneRequiredWithoutTakerFillsNestedInput
@@ -997,6 +1071,8 @@ export type FillUncheckedUpdateWithoutTakerInput = {
   makerId?: Prisma.StringFieldUpdateOperationsInput | string
   makerOrderId?: Prisma.StringFieldUpdateOperationsInput | string
   takerOrderId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type FillUncheckedUpdateManyWithoutTakerInput = {
@@ -1010,6 +1086,8 @@ export type FillUncheckedUpdateManyWithoutTakerInput = {
   makerId?: Prisma.StringFieldUpdateOperationsInput | string
   makerOrderId?: Prisma.StringFieldUpdateOperationsInput | string
   takerOrderId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type FillCreateManyMakerOrderInput = {
@@ -1023,6 +1101,8 @@ export type FillCreateManyMakerOrderInput = {
   makerId: string
   takerId: string
   takerOrderId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type FillCreateManyTakerOrderInput = {
@@ -1036,6 +1116,8 @@ export type FillCreateManyTakerOrderInput = {
   makerId: string
   takerId: string
   makerOrderId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type FillUpdateWithoutMakerOrderInput = {
@@ -1046,6 +1128,8 @@ export type FillUpdateWithoutMakerOrderInput = {
   type?: Prisma.EnumfillTypeFieldUpdateOperationsInput | $Enums.fillType
   price?: Prisma.IntFieldUpdateOperationsInput | number
   asset?: Prisma.EnumorderMarketFieldUpdateOperationsInput | $Enums.orderMarket
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   maker?: Prisma.UserUpdateOneRequiredWithoutMakerFillsNestedInput
   taker?: Prisma.UserUpdateOneRequiredWithoutTakerFillsNestedInput
   takerOrder?: Prisma.OrderUpdateOneRequiredWithoutTakerFillsNestedInput
@@ -1062,6 +1146,8 @@ export type FillUncheckedUpdateWithoutMakerOrderInput = {
   makerId?: Prisma.StringFieldUpdateOperationsInput | string
   takerId?: Prisma.StringFieldUpdateOperationsInput | string
   takerOrderId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type FillUncheckedUpdateManyWithoutMakerOrderInput = {
@@ -1075,6 +1161,8 @@ export type FillUncheckedUpdateManyWithoutMakerOrderInput = {
   makerId?: Prisma.StringFieldUpdateOperationsInput | string
   takerId?: Prisma.StringFieldUpdateOperationsInput | string
   takerOrderId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type FillUpdateWithoutTakerOrderInput = {
@@ -1085,6 +1173,8 @@ export type FillUpdateWithoutTakerOrderInput = {
   type?: Prisma.EnumfillTypeFieldUpdateOperationsInput | $Enums.fillType
   price?: Prisma.IntFieldUpdateOperationsInput | number
   asset?: Prisma.EnumorderMarketFieldUpdateOperationsInput | $Enums.orderMarket
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   maker?: Prisma.UserUpdateOneRequiredWithoutMakerFillsNestedInput
   taker?: Prisma.UserUpdateOneRequiredWithoutTakerFillsNestedInput
   makerOrder?: Prisma.OrderUpdateOneRequiredWithoutMakerFillsNestedInput
@@ -1101,6 +1191,8 @@ export type FillUncheckedUpdateWithoutTakerOrderInput = {
   makerId?: Prisma.StringFieldUpdateOperationsInput | string
   takerId?: Prisma.StringFieldUpdateOperationsInput | string
   makerOrderId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type FillUncheckedUpdateManyWithoutTakerOrderInput = {
@@ -1114,6 +1206,8 @@ export type FillUncheckedUpdateManyWithoutTakerOrderInput = {
   makerId?: Prisma.StringFieldUpdateOperationsInput | string
   takerId?: Prisma.StringFieldUpdateOperationsInput | string
   makerOrderId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
@@ -1130,6 +1224,8 @@ export type FillSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   takerId?: boolean
   makerOrderId?: boolean
   takerOrderId?: boolean
+  createdAt?: boolean
+  updatedAt?: boolean
   maker?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   taker?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   makerOrder?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
@@ -1148,6 +1244,8 @@ export type FillSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   takerId?: boolean
   makerOrderId?: boolean
   takerOrderId?: boolean
+  createdAt?: boolean
+  updatedAt?: boolean
   maker?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   taker?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   makerOrder?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
@@ -1166,6 +1264,8 @@ export type FillSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   takerId?: boolean
   makerOrderId?: boolean
   takerOrderId?: boolean
+  createdAt?: boolean
+  updatedAt?: boolean
   maker?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   taker?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   makerOrder?: boolean | Prisma.OrderDefaultArgs<ExtArgs>
@@ -1184,9 +1284,11 @@ export type FillSelectScalar = {
   takerId?: boolean
   makerOrderId?: boolean
   takerOrderId?: boolean
+  createdAt?: boolean
+  updatedAt?: boolean
 }
 
-export type FillOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "askedQty" | "filledQty" | "side" | "type" | "price" | "asset" | "makerId" | "takerId" | "makerOrderId" | "takerOrderId", ExtArgs["result"]["fill"]>
+export type FillOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "askedQty" | "filledQty" | "side" | "type" | "price" | "asset" | "makerId" | "takerId" | "makerOrderId" | "takerOrderId" | "createdAt" | "updatedAt", ExtArgs["result"]["fill"]>
 export type FillInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   maker?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   taker?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -1226,6 +1328,8 @@ export type $FillPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     takerId: string
     makerOrderId: string
     takerOrderId: string
+    createdAt: Date
+    updatedAt: Date
   }, ExtArgs["result"]["fill"]>
   composites: {}
 }
@@ -1664,6 +1768,8 @@ export interface FillFieldRefs {
   readonly takerId: Prisma.FieldRef<"Fill", 'String'>
   readonly makerOrderId: Prisma.FieldRef<"Fill", 'String'>
   readonly takerOrderId: Prisma.FieldRef<"Fill", 'String'>
+  readonly createdAt: Prisma.FieldRef<"Fill", 'DateTime'>
+  readonly updatedAt: Prisma.FieldRef<"Fill", 'DateTime'>
 }
     
 

@@ -48,6 +48,8 @@ export type OrderMinAggregateOutputType = {
   side: $Enums.orderSide | null
   type: $Enums.orderType | null
   status: $Enums.orderStatus | null
+  createdAt: Date | null
+  updatedAt: Date | null
 }
 
 export type OrderMaxAggregateOutputType = {
@@ -60,6 +62,8 @@ export type OrderMaxAggregateOutputType = {
   side: $Enums.orderSide | null
   type: $Enums.orderType | null
   status: $Enums.orderStatus | null
+  createdAt: Date | null
+  updatedAt: Date | null
 }
 
 export type OrderCountAggregateOutputType = {
@@ -72,6 +76,8 @@ export type OrderCountAggregateOutputType = {
   side: number
   type: number
   status: number
+  createdAt: number
+  updatedAt: number
   _all: number
 }
 
@@ -98,6 +104,8 @@ export type OrderMinAggregateInputType = {
   side?: true
   type?: true
   status?: true
+  createdAt?: true
+  updatedAt?: true
 }
 
 export type OrderMaxAggregateInputType = {
@@ -110,6 +118,8 @@ export type OrderMaxAggregateInputType = {
   side?: true
   type?: true
   status?: true
+  createdAt?: true
+  updatedAt?: true
 }
 
 export type OrderCountAggregateInputType = {
@@ -122,6 +132,8 @@ export type OrderCountAggregateInputType = {
   side?: true
   type?: true
   status?: true
+  createdAt?: true
+  updatedAt?: true
   _all?: true
 }
 
@@ -221,6 +233,8 @@ export type OrderGroupByOutputType = {
   side: $Enums.orderSide
   type: $Enums.orderType
   status: $Enums.orderStatus
+  createdAt: Date
+  updatedAt: Date
   _count: OrderCountAggregateOutputType | null
   _avg: OrderAvgAggregateOutputType | null
   _sum: OrderSumAggregateOutputType | null
@@ -256,6 +270,8 @@ export type OrderWhereInput = {
   side?: Prisma.EnumorderSideFilter<"Order"> | $Enums.orderSide
   type?: Prisma.EnumorderTypeFilter<"Order"> | $Enums.orderType
   status?: Prisma.EnumorderStatusFilter<"Order"> | $Enums.orderStatus
+  createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   makerFills?: Prisma.FillListRelationFilter
   takerFills?: Prisma.FillListRelationFilter
@@ -272,6 +288,8 @@ export type OrderOrderByWithRelationInput = {
   side?: Prisma.SortOrder
   type?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
   makerFills?: Prisma.FillOrderByRelationAggregateInput
   takerFills?: Prisma.FillOrderByRelationAggregateInput
@@ -291,6 +309,8 @@ export type OrderWhereUniqueInput = Prisma.AtLeast<{
   side?: Prisma.EnumorderSideFilter<"Order"> | $Enums.orderSide
   type?: Prisma.EnumorderTypeFilter<"Order"> | $Enums.orderType
   status?: Prisma.EnumorderStatusFilter<"Order"> | $Enums.orderStatus
+  createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"Order"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   makerFills?: Prisma.FillListRelationFilter
   takerFills?: Prisma.FillListRelationFilter
@@ -307,6 +327,8 @@ export type OrderOrderByWithAggregationInput = {
   side?: Prisma.SortOrder
   type?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
   _count?: Prisma.OrderCountOrderByAggregateInput
   _avg?: Prisma.OrderAvgOrderByAggregateInput
   _max?: Prisma.OrderMaxOrderByAggregateInput
@@ -327,6 +349,8 @@ export type OrderScalarWhereWithAggregatesInput = {
   side?: Prisma.EnumorderSideWithAggregatesFilter<"Order"> | $Enums.orderSide
   type?: Prisma.EnumorderTypeWithAggregatesFilter<"Order"> | $Enums.orderType
   status?: Prisma.EnumorderStatusWithAggregatesFilter<"Order"> | $Enums.orderStatus
+  createdAt?: Prisma.DateTimeWithAggregatesFilter<"Order"> | Date | string
+  updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Order"> | Date | string
 }
 
 export type OrderCreateInput = {
@@ -338,6 +362,8 @@ export type OrderCreateInput = {
   side: $Enums.orderSide
   type: $Enums.orderType
   status: $Enums.orderStatus
+  createdAt?: Date | string
+  updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutOrdersInput
   makerFills?: Prisma.FillCreateNestedManyWithoutMakerOrderInput
   takerFills?: Prisma.FillCreateNestedManyWithoutTakerOrderInput
@@ -354,6 +380,8 @@ export type OrderUncheckedCreateInput = {
   side: $Enums.orderSide
   type: $Enums.orderType
   status: $Enums.orderStatus
+  createdAt?: Date | string
+  updatedAt?: Date | string
   makerFills?: Prisma.FillUncheckedCreateNestedManyWithoutMakerOrderInput
   takerFills?: Prisma.FillUncheckedCreateNestedManyWithoutTakerOrderInput
   positions?: Prisma.PositionUncheckedCreateNestedManyWithoutOrderInput
@@ -368,6 +396,8 @@ export type OrderUpdateInput = {
   side?: Prisma.EnumorderSideFieldUpdateOperationsInput | $Enums.orderSide
   type?: Prisma.EnumorderTypeFieldUpdateOperationsInput | $Enums.orderType
   status?: Prisma.EnumorderStatusFieldUpdateOperationsInput | $Enums.orderStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutOrdersNestedInput
   makerFills?: Prisma.FillUpdateManyWithoutMakerOrderNestedInput
   takerFills?: Prisma.FillUpdateManyWithoutTakerOrderNestedInput
@@ -384,6 +414,8 @@ export type OrderUncheckedUpdateInput = {
   side?: Prisma.EnumorderSideFieldUpdateOperationsInput | $Enums.orderSide
   type?: Prisma.EnumorderTypeFieldUpdateOperationsInput | $Enums.orderType
   status?: Prisma.EnumorderStatusFieldUpdateOperationsInput | $Enums.orderStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   makerFills?: Prisma.FillUncheckedUpdateManyWithoutMakerOrderNestedInput
   takerFills?: Prisma.FillUncheckedUpdateManyWithoutTakerOrderNestedInput
   positions?: Prisma.PositionUncheckedUpdateManyWithoutOrderNestedInput
@@ -399,6 +431,8 @@ export type OrderCreateManyInput = {
   side: $Enums.orderSide
   type: $Enums.orderType
   status: $Enums.orderStatus
+  createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type OrderUpdateManyMutationInput = {
@@ -410,6 +444,8 @@ export type OrderUpdateManyMutationInput = {
   side?: Prisma.EnumorderSideFieldUpdateOperationsInput | $Enums.orderSide
   type?: Prisma.EnumorderTypeFieldUpdateOperationsInput | $Enums.orderType
   status?: Prisma.EnumorderStatusFieldUpdateOperationsInput | $Enums.orderStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type OrderUncheckedUpdateManyInput = {
@@ -422,6 +458,8 @@ export type OrderUncheckedUpdateManyInput = {
   side?: Prisma.EnumorderSideFieldUpdateOperationsInput | $Enums.orderSide
   type?: Prisma.EnumorderTypeFieldUpdateOperationsInput | $Enums.orderType
   status?: Prisma.EnumorderStatusFieldUpdateOperationsInput | $Enums.orderStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type OrderListRelationFilter = {
@@ -444,6 +482,8 @@ export type OrderCountOrderByAggregateInput = {
   side?: Prisma.SortOrder
   type?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
 }
 
 export type OrderAvgOrderByAggregateInput = {
@@ -462,6 +502,8 @@ export type OrderMaxOrderByAggregateInput = {
   side?: Prisma.SortOrder
   type?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
 }
 
 export type OrderMinOrderByAggregateInput = {
@@ -474,6 +516,8 @@ export type OrderMinOrderByAggregateInput = {
   side?: Prisma.SortOrder
   type?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
 }
 
 export type OrderSumOrderByAggregateInput = {
@@ -604,6 +648,8 @@ export type OrderCreateWithoutUserInput = {
   side: $Enums.orderSide
   type: $Enums.orderType
   status: $Enums.orderStatus
+  createdAt?: Date | string
+  updatedAt?: Date | string
   makerFills?: Prisma.FillCreateNestedManyWithoutMakerOrderInput
   takerFills?: Prisma.FillCreateNestedManyWithoutTakerOrderInput
   positions?: Prisma.PositionCreateNestedManyWithoutOrderInput
@@ -618,6 +664,8 @@ export type OrderUncheckedCreateWithoutUserInput = {
   side: $Enums.orderSide
   type: $Enums.orderType
   status: $Enums.orderStatus
+  createdAt?: Date | string
+  updatedAt?: Date | string
   makerFills?: Prisma.FillUncheckedCreateNestedManyWithoutMakerOrderInput
   takerFills?: Prisma.FillUncheckedCreateNestedManyWithoutTakerOrderInput
   positions?: Prisma.PositionUncheckedCreateNestedManyWithoutOrderInput
@@ -662,6 +710,8 @@ export type OrderScalarWhereInput = {
   side?: Prisma.EnumorderSideFilter<"Order"> | $Enums.orderSide
   type?: Prisma.EnumorderTypeFilter<"Order"> | $Enums.orderType
   status?: Prisma.EnumorderStatusFilter<"Order"> | $Enums.orderStatus
+  createdAt?: Prisma.DateTimeFilter<"Order"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"Order"> | Date | string
 }
 
 export type OrderCreateWithoutMakerFillsInput = {
@@ -673,6 +723,8 @@ export type OrderCreateWithoutMakerFillsInput = {
   side: $Enums.orderSide
   type: $Enums.orderType
   status: $Enums.orderStatus
+  createdAt?: Date | string
+  updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutOrdersInput
   takerFills?: Prisma.FillCreateNestedManyWithoutTakerOrderInput
   positions?: Prisma.PositionCreateNestedManyWithoutOrderInput
@@ -688,6 +740,8 @@ export type OrderUncheckedCreateWithoutMakerFillsInput = {
   side: $Enums.orderSide
   type: $Enums.orderType
   status: $Enums.orderStatus
+  createdAt?: Date | string
+  updatedAt?: Date | string
   takerFills?: Prisma.FillUncheckedCreateNestedManyWithoutTakerOrderInput
   positions?: Prisma.PositionUncheckedCreateNestedManyWithoutOrderInput
 }
@@ -706,6 +760,8 @@ export type OrderCreateWithoutTakerFillsInput = {
   side: $Enums.orderSide
   type: $Enums.orderType
   status: $Enums.orderStatus
+  createdAt?: Date | string
+  updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutOrdersInput
   makerFills?: Prisma.FillCreateNestedManyWithoutMakerOrderInput
   positions?: Prisma.PositionCreateNestedManyWithoutOrderInput
@@ -721,6 +777,8 @@ export type OrderUncheckedCreateWithoutTakerFillsInput = {
   side: $Enums.orderSide
   type: $Enums.orderType
   status: $Enums.orderStatus
+  createdAt?: Date | string
+  updatedAt?: Date | string
   makerFills?: Prisma.FillUncheckedCreateNestedManyWithoutMakerOrderInput
   positions?: Prisma.PositionUncheckedCreateNestedManyWithoutOrderInput
 }
@@ -750,6 +808,8 @@ export type OrderUpdateWithoutMakerFillsInput = {
   side?: Prisma.EnumorderSideFieldUpdateOperationsInput | $Enums.orderSide
   type?: Prisma.EnumorderTypeFieldUpdateOperationsInput | $Enums.orderType
   status?: Prisma.EnumorderStatusFieldUpdateOperationsInput | $Enums.orderStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutOrdersNestedInput
   takerFills?: Prisma.FillUpdateManyWithoutTakerOrderNestedInput
   positions?: Prisma.PositionUpdateManyWithoutOrderNestedInput
@@ -765,6 +825,8 @@ export type OrderUncheckedUpdateWithoutMakerFillsInput = {
   side?: Prisma.EnumorderSideFieldUpdateOperationsInput | $Enums.orderSide
   type?: Prisma.EnumorderTypeFieldUpdateOperationsInput | $Enums.orderType
   status?: Prisma.EnumorderStatusFieldUpdateOperationsInput | $Enums.orderStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   takerFills?: Prisma.FillUncheckedUpdateManyWithoutTakerOrderNestedInput
   positions?: Prisma.PositionUncheckedUpdateManyWithoutOrderNestedInput
 }
@@ -789,6 +851,8 @@ export type OrderUpdateWithoutTakerFillsInput = {
   side?: Prisma.EnumorderSideFieldUpdateOperationsInput | $Enums.orderSide
   type?: Prisma.EnumorderTypeFieldUpdateOperationsInput | $Enums.orderType
   status?: Prisma.EnumorderStatusFieldUpdateOperationsInput | $Enums.orderStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutOrdersNestedInput
   makerFills?: Prisma.FillUpdateManyWithoutMakerOrderNestedInput
   positions?: Prisma.PositionUpdateManyWithoutOrderNestedInput
@@ -804,6 +868,8 @@ export type OrderUncheckedUpdateWithoutTakerFillsInput = {
   side?: Prisma.EnumorderSideFieldUpdateOperationsInput | $Enums.orderSide
   type?: Prisma.EnumorderTypeFieldUpdateOperationsInput | $Enums.orderType
   status?: Prisma.EnumorderStatusFieldUpdateOperationsInput | $Enums.orderStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   makerFills?: Prisma.FillUncheckedUpdateManyWithoutMakerOrderNestedInput
   positions?: Prisma.PositionUncheckedUpdateManyWithoutOrderNestedInput
 }
@@ -817,6 +883,8 @@ export type OrderCreateWithoutPositionsInput = {
   side: $Enums.orderSide
   type: $Enums.orderType
   status: $Enums.orderStatus
+  createdAt?: Date | string
+  updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutOrdersInput
   makerFills?: Prisma.FillCreateNestedManyWithoutMakerOrderInput
   takerFills?: Prisma.FillCreateNestedManyWithoutTakerOrderInput
@@ -832,6 +900,8 @@ export type OrderUncheckedCreateWithoutPositionsInput = {
   side: $Enums.orderSide
   type: $Enums.orderType
   status: $Enums.orderStatus
+  createdAt?: Date | string
+  updatedAt?: Date | string
   makerFills?: Prisma.FillUncheckedCreateNestedManyWithoutMakerOrderInput
   takerFills?: Prisma.FillUncheckedCreateNestedManyWithoutTakerOrderInput
 }
@@ -861,6 +931,8 @@ export type OrderUpdateWithoutPositionsInput = {
   side?: Prisma.EnumorderSideFieldUpdateOperationsInput | $Enums.orderSide
   type?: Prisma.EnumorderTypeFieldUpdateOperationsInput | $Enums.orderType
   status?: Prisma.EnumorderStatusFieldUpdateOperationsInput | $Enums.orderStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutOrdersNestedInput
   makerFills?: Prisma.FillUpdateManyWithoutMakerOrderNestedInput
   takerFills?: Prisma.FillUpdateManyWithoutTakerOrderNestedInput
@@ -876,6 +948,8 @@ export type OrderUncheckedUpdateWithoutPositionsInput = {
   side?: Prisma.EnumorderSideFieldUpdateOperationsInput | $Enums.orderSide
   type?: Prisma.EnumorderTypeFieldUpdateOperationsInput | $Enums.orderType
   status?: Prisma.EnumorderStatusFieldUpdateOperationsInput | $Enums.orderStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   makerFills?: Prisma.FillUncheckedUpdateManyWithoutMakerOrderNestedInput
   takerFills?: Prisma.FillUncheckedUpdateManyWithoutTakerOrderNestedInput
 }
@@ -889,6 +963,8 @@ export type OrderCreateManyUserInput = {
   side: $Enums.orderSide
   type: $Enums.orderType
   status: $Enums.orderStatus
+  createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type OrderUpdateWithoutUserInput = {
@@ -900,6 +976,8 @@ export type OrderUpdateWithoutUserInput = {
   side?: Prisma.EnumorderSideFieldUpdateOperationsInput | $Enums.orderSide
   type?: Prisma.EnumorderTypeFieldUpdateOperationsInput | $Enums.orderType
   status?: Prisma.EnumorderStatusFieldUpdateOperationsInput | $Enums.orderStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   makerFills?: Prisma.FillUpdateManyWithoutMakerOrderNestedInput
   takerFills?: Prisma.FillUpdateManyWithoutTakerOrderNestedInput
   positions?: Prisma.PositionUpdateManyWithoutOrderNestedInput
@@ -914,6 +992,8 @@ export type OrderUncheckedUpdateWithoutUserInput = {
   side?: Prisma.EnumorderSideFieldUpdateOperationsInput | $Enums.orderSide
   type?: Prisma.EnumorderTypeFieldUpdateOperationsInput | $Enums.orderType
   status?: Prisma.EnumorderStatusFieldUpdateOperationsInput | $Enums.orderStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   makerFills?: Prisma.FillUncheckedUpdateManyWithoutMakerOrderNestedInput
   takerFills?: Prisma.FillUncheckedUpdateManyWithoutTakerOrderNestedInput
   positions?: Prisma.PositionUncheckedUpdateManyWithoutOrderNestedInput
@@ -928,6 +1008,8 @@ export type OrderUncheckedUpdateManyWithoutUserInput = {
   side?: Prisma.EnumorderSideFieldUpdateOperationsInput | $Enums.orderSide
   type?: Prisma.EnumorderTypeFieldUpdateOperationsInput | $Enums.orderType
   status?: Prisma.EnumorderStatusFieldUpdateOperationsInput | $Enums.orderStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
@@ -989,6 +1071,8 @@ export type OrderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   side?: boolean
   type?: boolean
   status?: boolean
+  createdAt?: boolean
+  updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   makerFills?: boolean | Prisma.Order$makerFillsArgs<ExtArgs>
   takerFills?: boolean | Prisma.Order$takerFillsArgs<ExtArgs>
@@ -1006,6 +1090,8 @@ export type OrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   side?: boolean
   type?: boolean
   status?: boolean
+  createdAt?: boolean
+  updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["order"]>
 
@@ -1019,6 +1105,8 @@ export type OrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   side?: boolean
   type?: boolean
   status?: boolean
+  createdAt?: boolean
+  updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["order"]>
 
@@ -1032,9 +1120,11 @@ export type OrderSelectScalar = {
   side?: boolean
   type?: boolean
   status?: boolean
+  createdAt?: boolean
+  updatedAt?: boolean
 }
 
-export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "market" | "price" | "qty" | "filledQty" | "side" | "type" | "status", ExtArgs["result"]["order"]>
+export type OrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "market" | "price" | "qty" | "filledQty" | "side" | "type" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["order"]>
 export type OrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   makerFills?: boolean | Prisma.Order$makerFillsArgs<ExtArgs>
@@ -1067,6 +1157,8 @@ export type $OrderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     side: $Enums.orderSide
     type: $Enums.orderType
     status: $Enums.orderStatus
+    createdAt: Date
+    updatedAt: Date
   }, ExtArgs["result"]["order"]>
   composites: {}
 }
@@ -1503,6 +1595,8 @@ export interface OrderFieldRefs {
   readonly side: Prisma.FieldRef<"Order", 'orderSide'>
   readonly type: Prisma.FieldRef<"Order", 'orderType'>
   readonly status: Prisma.FieldRef<"Order", 'orderStatus'>
+  readonly createdAt: Prisma.FieldRef<"Order", 'DateTime'>
+  readonly updatedAt: Prisma.FieldRef<"Order", 'DateTime'>
 }
     
 
