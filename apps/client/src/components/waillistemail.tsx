@@ -4,7 +4,13 @@ import { useAuth } from "@/context/auth";
 import Button from "./button";
 
 export default function WaitListEmail() {
-  const { isLoggedIn } = useAuth();
+  const context = useAuth();
+
+  if (!context) {
+    return null
+  }
+  
+  const { isLoggedIn } = context  
   
   return <div className="w-lg bg-[#14151B] rounded-md py-2 px-4 mt-6 flex items-center justify-between">
     <input 

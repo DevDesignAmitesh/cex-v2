@@ -23,6 +23,8 @@ type AuthContextProps = {
 const AuthContext = createContext<AuthContextProps | null>(null);
 
 export function AuthContextProvider({ children }: { children: ReactNode }) {
+  if (typeof window === "undefined") return;
+  
   const [token, setToken] = useState<string | null>(() => {
     if (typeof window === "undefined") return null;
     return localStorage.getItem("token");
@@ -92,8 +94,5 @@ export function AuthContextProvider({ children }: { children: ReactNode }) {
 }
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error("AuthContext not initialized");
-
-  return context;
+  return useContext(AuthContext);
 };

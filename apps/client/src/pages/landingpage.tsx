@@ -9,7 +9,13 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function Landing() {
-  const { isLoggedIn } = useAuth();
+  const context = useAuth();
+
+  if (!context) {
+    return null
+  }
+  
+  const { isLoggedIn } = context;
   const router = useRouter();
   
   useEffect(() => {

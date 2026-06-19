@@ -52,9 +52,16 @@ export function TradePage({ symbol }: { symbol: string }) {
   const [profileMenuOpen, setProfileMenuOpen] = useState<boolean>(false);
   const [accountDetailsRefreshing, setAccountDetailsRefreshing] =
     useState<boolean>(false);
-
-  const { isLoggedIn, profile, logout } = useAuth();
+    
   const router = useRouter();
+
+  const context = useAuth();
+
+  if (!context) {
+    return null
+  }
+  
+  const { isLoggedIn, profile, logout } = context;
 
   const getKlines = useCallback(async () => {
     const res = await axios.get(
