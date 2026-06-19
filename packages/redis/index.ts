@@ -10,7 +10,7 @@ import {
 } from "@repo/common/common";
 import { wsUserManager } from "@repo/ws/ws";
 
-const consumerName = process.argv[3];
+const REDIS_URL = process.env.REDIS_URL ?? undefined;
 
 class RedisManager {
   private static instance: RedisManager;
@@ -19,9 +19,15 @@ class RedisManager {
   private client: RedisClientType;
 
   constructor() {
-    this.publisher = createClient();
-    this.subscriber = createClient();
-    this.client = createClient();
+    this.publisher = createClient({
+      url: REDIS_URL
+    });
+    this.subscriber = createClient({
+      url: REDIS_URL
+    });
+    this.client = createClient({
+      url: REDIS_URL
+    });
   }
 
   static getInstance = async (): Promise<RedisManager> => {

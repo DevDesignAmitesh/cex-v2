@@ -18,4 +18,4 @@ COPY . .
 
 EXPOSE 4000
 
-CMD [ "bun", "run", "http:run" ]
+ENTRYPOINT ["/usr/src/app/http-entry.sh"]

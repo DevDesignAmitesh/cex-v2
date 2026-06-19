@@ -18,4 +18,4 @@ COPY . .
 
 EXPOSE 8080
 
-CMD [ "bun", "run", "ws:run" ]
+ENTRYPOINT ["/usr/src/app/ws-entry.sh"]

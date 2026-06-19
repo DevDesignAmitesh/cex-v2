@@ -16,4 +16,4 @@ RUN bun install
 
 COPY . .
 
-CMD [ "bun", "run", "engine:run" ]
+ENTRYPOINT ["/usr/src/app/engine-entry.sh"]

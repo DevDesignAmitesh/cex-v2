@@ -16,4 +16,4 @@ RUN bun install
 
 COPY . .
 
-CMD [ "bun", "run", "db-worker:run" ]
+ENTRYPOINT ["/usr/src/app/db-worker-entry.sh"]
