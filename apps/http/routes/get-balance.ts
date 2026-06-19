@@ -19,7 +19,8 @@ export async function getBalance(req: Request, res: Response) {
         type: "get_user_balance",
         data: { userId: req.userId },
         clientId,
-        responseStream: HTTP_BACKEND_STREAM_CONFIGS.stream
+        responseStream: HTTP_BACKEND_STREAM_CONFIGS.stream,
+        responseGroup: HTTP_BACKEND_STREAM_CONFIGS.group_name,
       }
     },
   );

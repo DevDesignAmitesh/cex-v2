@@ -1,6 +1,5 @@
 import {
   COMMON_STREAM_CONFIGS,
-  ORDER_ENGINE_STREAM_CONFIGS,
   type EngineResponse,
   type RedisQueueData,
 } from "@repo/common/common";
@@ -332,8 +331,7 @@ export function deleteOrder(parsedResponse: RedisQueueData): EngineResponse {
   const { orderId, userId } = parsedResponse.data;
   const res = engineStore.deleteOrder(userId, orderId);
   // TODO: confirm this
-  // redisManager.pushDataInOrderQueue(parsedResponse, "orderbook-to-db-queue")
-  redisManager.addToStream(COMMON_STREAM_CONFIGS.stream, {
+  const generated_id = redisManager.addToStream(COMMON_STREAM_CONFIGS.stream, {
     type: "engine-to-common",
     data: parsedResponse,
   });
@@ -547,84 +545,85 @@ export function liquidate(userId: string) {
     latestPrice -= position.pnl; // pnl: 80 -- latestPrice: 20
   }
 
+  // TODO: fix this
   // push in the same queue as the http-backend pushing
-  const res = createOrder({
-    clientId,
-    data: {
-      market: "SPOT",
-      orderId,
-      side: position.type === "LONG" ? "SELL" : "BUY",
-      symbol: "INR/AXIS",
-      type: "MARKET",
-      userId: position.userId,
-      price: latestPrice,
-      qty: position.qty,
-      way: "EXCHANGE",
-    },
-    type: "create_order",
-    responseStream: ORDER_ENGINE_STREAM_CONFIGS.stream,
-  });
+  // const res = createOrder({
+  //   clientId,
+  //   data: {
+  //     market: "SPOT",
+  //     orderId,
+  //     side: position.type === "LONG" ? "SELL" : "BUY",
+  //     symbol: "INR/AXIS",
+  //     type: "MARKET",
+  //     userId: position.userId,
+  //     price: latestPrice,
+  //     qty: position.qty,
+  //     way: "EXCHANGE",
+  //   },
+  //   type: "create_order",
+  //   responseStream: ORDER_ENGINE_STREAM_CONFIGS.stream,
+  // });
 
-  if (!res.ok) {
-    // liquidate here using (ADL)
+  // if (!res.ok) {
+  //   // liquidate here using (ADL)
 
-    // liquidate from the positions onlyy
-    const liquidablePositon = engineStore.getLiquidablePosition(
-      latestPrice,
-      position.qty,
-      position.type,
-    );
+  //   // liquidate from the positions onlyy
+  //   const liquidablePositon = engineStore.getLiquidablePosition(
+  //     latestPrice,
+  //     position.qty,
+  //     position.type,
+  //   );
 
-    if (!liquidablePositon) return;
+  //   if (!liquidablePositon) return;
 
-    // calculate the loss of the current user
-    const lossOfCurrentUser = position.averagePrice - latestPrice;
+  //   // calculate the loss of the current user
+  //   const lossOfCurrentUser = position.averagePrice - latestPrice;
 
-    // calculate the profit of the liquudable positon user
-    const profileOfLiquidableUser = lossOfCurrentUser;
+  //   // calculate the profit of the liquudable positon user
+  //   const profileOfLiquidableUser = lossOfCurrentUser;
 
-    // cal left qty of liquidable user (if left then create the other side position else nothing)
-    const leftQtyofLiquidableUser = position.qty - liquidablePositon.qty;
+  //   // cal left qty of liquidable user (if left then create the other side position else nothing)
+  //   const leftQtyofLiquidableUser = position.qty - liquidablePositon.qty;
 
-    if (leftQtyofLiquidableUser > 0) {
-      // create other side position
-    }
+  //   if (leftQtyofLiquidableUser > 0) {
+  //     // create other side position
+  //   }
 
-    // add these loss/profit to respective accounts
+  //   // add these loss/profit to respective accounts
 
-    // for present user
-    engineStore.deductTotalBalalnceOfUser(
-      position.userId,
-      position.type === "LONG" ? "BUY" : "SELL",
-      lossOfCurrentUser,
-      position.qty,
-      true,
-    );
-    engineStore.resetLockBalalnceOfUser(
-      position.userId,
-      position.type === "LONG" ? "BUY" : "SELL",
-      true,
-    );
+  //   // for present user
+  //   engineStore.deductTotalBalalnceOfUser(
+  //     position.userId,
+  //     position.type === "LONG" ? "BUY" : "SELL",
+  //     lossOfCurrentUser,
+  //     position.qty,
+  //     true,
+  //   );
+  //   engineStore.resetLockBalalnceOfUser(
+  //     position.userId,
+  //     position.type === "LONG" ? "BUY" : "SELL",
+  //     true,
+  //   );
 
-    // for the liquidable user
-    engineStore.deductTotalBalalnceOfUser(
-      liquidablePositon.userId,
-      liquidablePositon.type === "LONG" ? "BUY" : "SELL",
-      profileOfLiquidableUser,
-      liquidablePositon.qty,
-      false,
-    );
-    engineStore.resetLockBalalnceOfUser(
-      liquidablePositon.userId,
-      liquidablePositon.type === "LONG" ? "BUY" : "SELL",
-      false,
-    );
+  //   // for the liquidable user
+  //   engineStore.deductTotalBalalnceOfUser(
+  //     liquidablePositon.userId,
+  //     liquidablePositon.type === "LONG" ? "BUY" : "SELL",
+  //     profileOfLiquidableUser,
+  //     liquidablePositon.qty,
+  //     false,
+  //   );
+  //   engineStore.resetLockBalalnceOfUser(
+  //     liquidablePositon.userId,
+  //     liquidablePositon.type === "LONG" ? "BUY" : "SELL",
+  //     false,
+  //   );
 
-    // close both the postions
-    // TODO: delete from the db also
-    engineStore.deletePosition(position.userId);
-    engineStore.deletePosition(liquidablePositon.userId);
-  }
+  //   // close both the postions
+  //   // TODO: delete from the db also
+  //   engineStore.deletePosition(position.userId);
+  //   engineStore.deletePosition(liquidablePositon.userId);
+  // }
 }
 
 export function updatePnl(CURRENT_PRICE: number) {

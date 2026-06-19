@@ -88,7 +88,7 @@ export type RedisDbQueueData =
         positions: Position[],
       }
     }
-  | {
+    | {
       type: "cancel_order";
       data: { orderId: string; userId: string };
     }
@@ -112,55 +112,64 @@ export type RedisQueueData =
       type: "create_order";
       data: CreateOrder;
       clientId: string;
-      responseStream: string 
+      responseStream: string; 
+      responseGroup: string; 
     }
   | {
       type: "cancel_order";
       data: { orderId: string; userId: string };
       clientId: string;
-      responseStream: string
+      responseStream: string;
+      responseGroup: string;
     }
   | {
       type: "get_order";
       data: { orderId: string; userId: string };
       clientId: string;
-      responseStream: string
+      responseStream: string;
+      responseGroup: string;
     }
   | {
       type: "get_depth";
       data: { symbol: string };
       clientId: string;
-      responseStream: string
+      responseStream: string;
+      responseGroup: string;
     }
   | {
       type: "get_orders";
       data: { userId: string; open?: boolean };
       clientId: string;
-      responseStream: string
+      responseStream: string;
+      responseGroup: string;
     }
   | {
       type: "get_fills";
       data: { userId: string };
       clientId: string;
-      responseStream: string
+      responseStream: string;
+      responseGroup: string;
     }
   | {
       type: "get_trades";
       data: null;
       clientId: string;
-      responseStream: string
+      responseStream: string;
+      responseGroup: string;
     }
   | {
       type: "get_user_balance";
       data: { userId: string };
       clientId: string;
-      responseStream: string
+      responseStream: string;
+      responseGroup: string;
     }
   | {
       type: "add_user_balance";
       data: { userId: string, amount: number };
       clientId: string;
-      responseStream: string
+      responseStream: string;
+      responseGroup: string;
     };
 
 export type EngineCommandType =
@@ -324,8 +333,10 @@ export type Fill = {
 
 export type REDIS_QUEUE_TYPE = "http-to-orderbook-queue" | "orderbook-to-db-queue" | "orderbook-to-ws-queue"
 
+
 export type MessageType = {
 	name: string;
+	putting_stream_message_id: string;
 	messages: { id: string, message: {
     data: string // we have to parse it as engineResponse
     // data: EngineResponse | RedisQueueData | RedisDbQueueData

@@ -42,7 +42,6 @@ class EngineStore {
     };
 
     setInterval(() => this.backupData(), 5 * 1000)
-    setInterval(() => console.log("this.readBackupData()", this.readBackupData()), 5 * 1000)
   }
 
   static getInstance = (): EngineStore => {

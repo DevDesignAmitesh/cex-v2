@@ -39,7 +39,8 @@ export async function createOrder(
         type: "create_order",
         data,
         clientId,
-        responseStream: HTTP_BACKEND_STREAM_CONFIGS.stream
+        responseStream: HTTP_BACKEND_STREAM_CONFIGS.stream,
+        responseGroup: HTTP_BACKEND_STREAM_CONFIGS.group_name,
       }
     },
   );
@@ -47,6 +48,11 @@ export async function createOrder(
   const finalData = JSON.parse(response.messages[0]?.message.data ?? "{}") as EngineResponse;
   
   if (finalData.clientId === clientId) {
+    await redisManager.acknowledgeMent(
+      ORDER_ENGINE_STREAM_CONFIGS.stream,
+      ORDER_ENGINE_STREAM_CONFIGS.group_name,
+      response.putting_stream_message_id
+    );
     return res.status(finalData.ok ? 201 : 400).json(finalData.ok ? finalData.data : finalData.error);
   }
 }

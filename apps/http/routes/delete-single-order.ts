@@ -33,7 +33,8 @@ export async function deleteSingleOrder(req: Request, res: Response) {
           userId: req.userId,
         },
         clientId,
-        responseStream: HTTP_BACKEND_STREAM_CONFIGS.stream
+        responseStream: HTTP_BACKEND_STREAM_CONFIGS.stream,
+        responseGroup: HTTP_BACKEND_STREAM_CONFIGS.group_name,
       }
     },
   );

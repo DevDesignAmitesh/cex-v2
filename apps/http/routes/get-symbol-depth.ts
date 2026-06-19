@@ -36,6 +36,7 @@ export async function getSymbolDepth(req: Request, res: Response) {
         data,
         clientId,
         responseStream: HTTP_BACKEND_STREAM_CONFIGS.stream,
+        responseGroup: HTTP_BACKEND_STREAM_CONFIGS.group_name,
       },
     },
   );

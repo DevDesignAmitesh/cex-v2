@@ -19,7 +19,8 @@ export async function getFills(req: Request, res: Response) {
         type: "get_fills",
         data: { userId: req.userId },
         clientId,
-        responseStream: HTTP_BACKEND_STREAM_CONFIGS.stream
+        responseStream: HTTP_BACKEND_STREAM_CONFIGS.stream,
+        responseGroup: HTTP_BACKEND_STREAM_CONFIGS.group_name,
       }
     },
   );

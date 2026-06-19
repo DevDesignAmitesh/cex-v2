@@ -20,6 +20,7 @@ export async function getTrades(req: Request, res: Response) {
         data: null,
         clientId,
         responseStream: HTTP_BACKEND_STREAM_CONFIGS.stream,
+        responseGroup: HTTP_BACKEND_STREAM_CONFIGS.group_name,
       },
     },
   );

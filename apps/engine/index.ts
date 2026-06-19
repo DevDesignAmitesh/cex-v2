@@ -5,7 +5,6 @@ import {
 import { redisManager } from "@repo/redis/redis";
 import { engineRequestHandler } from "./lib";
 import { checkLiquidation } from "./utils";
-import { engineStore } from "./engine-store";
 
 async function main() {
   for (;;) {
@@ -29,10 +28,16 @@ async function main() {
 
       responseStream = parsedResponse.responseStream;
 
-      await redisManager.addToStream(parsedResponse.responseStream, {
+      const waiting_steam_message_id = await redisManager.addToStream(parsedResponse.responseStream, {
         type: "engine-to-http",
         data: engineResponse,
       });
+      
+      await redisManager.acknowledgeMent(
+        parsedResponse.responseStream,
+        parsedResponse.responseGroup,
+        waiting_steam_message_id
+      );
     } catch (e) {
       await redisManager.addToStream(responseStream, {
         type: "engine-to-http",

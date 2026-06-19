@@ -68,18 +68,6 @@ class RedisManager {
     }
   };
 
-  // waitForData = async (data: RedisQueueData, REDIS_QUEUE: REDIS_QUEUE_TYPE) => {
-  //   console.log("queue in wait ", REDIS_QUEUE);
-
-  //   return new Promise<EngineResponse>((res) => {
-  //     this.subscriber.subscribe(data.clientId, (message) => {
-  //       this.subscriber.unsubscribe(data.clientId);
-  //       res(JSON.parse(message));
-  //     });
-  //     this.publisher.lPush(REDIS_QUEUE, JSON.stringify(data));
-  //   });
-  // };
-
   pushDataInQueue = (data: RedisQueueData, REDIS_QUEUE: REDIS_QUEUE_TYPE) => {
     this.publisher.lPush(REDIS_QUEUE, JSON.stringify(data));
   };
@@ -129,7 +117,7 @@ class RedisManager {
       | { type: "engine-to-http"; data: EngineResponse }
       | { type: "engine-to-common"; data: RedisDbQueueData },
   ) => {
-    await this.client.xAdd(group_stream, "*", {
+    return await this.client.xAdd(group_stream, "*", {
       data: JSON.stringify(data.data),
     });
   };
@@ -188,7 +176,7 @@ class RedisManager {
       group_name,
       particular_message_id,
     );
-    console.log("acknowledgeMent ", res);
+    console.log("acknowledgeMent", res);
   };
 
   waitForData = async (
@@ -202,7 +190,7 @@ class RedisManager {
       | { type: "engine-to-common"; data: RedisDbQueueData },
   ) => {
     return new Promise<MessageType>(async (res, rej) => {
-      await this.addToStream(response_steam, data);
+      const putting_stream_message_id = await this.addToStream(response_steam, data);
 
       const response = await this.getFromStream(
         group_name,
@@ -210,7 +198,7 @@ class RedisManager {
         group_stream,
       );
 
-      if (response) res(response);
+      if (response) res({ ...response, putting_stream_message_id });
     });
   };
 }

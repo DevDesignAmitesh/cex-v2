@@ -31,7 +31,8 @@ export async function getSingleOrder(req: Request, res: Response) {
         type: "get_order",
         data,
         clientId,
-        responseStream: HTTP_BACKEND_STREAM_CONFIGS.stream
+        responseStream: HTTP_BACKEND_STREAM_CONFIGS.stream,
+        responseGroup: HTTP_BACKEND_STREAM_CONFIGS.group_name,
       }
     },
   );
