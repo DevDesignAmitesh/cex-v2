@@ -12,6 +12,7 @@
   "dependencies": {
     "@types/jsonwebtoken": "^9.0.10",
     "jsonwebtoken": "^9.0.3",
+    "lightweight-charts": "^5.2.0",
     "zod": "^4.4.3"
   },
   "exports": {

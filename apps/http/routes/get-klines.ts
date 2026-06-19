@@ -1,6 +1,8 @@
 import { getKlinesSchema, zodErrorMessage, type Candle } from "@repo/common/common";
 import { prisma } from "@repo/db/db";
 import type { Request, Response } from "express";
+import { type UTCTimestamp } from "lightweight-charts";
+
 
 const INTERVALS = {
   "1m": 60 * 1000,
@@ -8,10 +10,6 @@ const INTERVALS = {
   "1d": 24 * 60 * 60 * 1000,
   "1w": 7 * 24 * 60 * 60 * 1000,
 };
-
-function formatDate(timestamp: number) {
-  return new Date(timestamp).toISOString().split("T")[0]!;
-}
 
 export async function generateCandles(
   market: "AXIS" | "TATA",
@@ -38,7 +36,7 @@ export async function generateCandles(
   
       if (!candlesMap.has(bucket)) {
         candlesMap.set(bucket, {
-          timestamp: formatDate(bucket),
+          timestamp: bucket / 1000 as UTCTimestamp,
           open: fill.price,
           high: fill.price,
           low: fill.price,

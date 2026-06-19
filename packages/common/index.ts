@@ -1,5 +1,6 @@
 import z, { type ZodError } from "zod";
 import { sign, verify, type JwtPayload } from "jsonwebtoken";
+import { type UTCTimestamp } from "lightweight-charts";
 
 export const zodErrorMessage = ({ error }: { error: ZodError }) => {
   return error.issues.map((er) => `${er.path.join(".")}: ${er.message}`);
@@ -198,6 +199,11 @@ export type Balance = Record<
   >
 >;
 
+export type Profile = {
+  id: string;
+  name: string;
+}
+
 export type Order = {
   id: string;
   userId: string;
@@ -327,7 +333,7 @@ export type MessageType = {
 }
 
 export type Candle = {
-  timestamp: string;
+  timestamp: UTCTimestamp;
   open: number;
   high: number;
   low: number;

@@ -4,7 +4,7 @@ import Button from "@/components/button";
 import OrderBook from "@/components/orderbook";
 import OrderSwaping from "@/components/orderswaping";
 import OtherDetails from "@/components/otherdetails";
-import TradingChart from "@/components/tradingchart";
+import TradingChart, { type ChartInterval } from "@/components/tradingchart";
 import { useCallback, useEffect, useState } from "react";
 import {
   addBalanceSchema,
@@ -12,6 +12,7 @@ import {
   ChartData,
   ClientOrderBook,
   createOrderClientSchema,
+  Fill,
   Order,
   orderSide,
   orderType,
@@ -21,6 +22,7 @@ import { HTTP_URL, WS_URL } from "@/utils";
 import { useAuth } from "@/context/auth";
 import axios from "axios";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export function TradePage({ symbol }: { symbol: string }) {
   const [side, setSide] = useState<orderSide>("BUY");
@@ -43,12 +45,19 @@ export function TradePage({ symbol }: { symbol: string }) {
     useState<orderSide | null>(null);
   const [amountDepositPopup, setAmountDepositPopup] = useState<boolean>(false);
   const [chartData, setChartData] = useState<ChartData[]>([]);
+  const [chartInterval, setChartInterval] = useState<ChartInterval>("1h");
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [fills, setFills] = useState<Fill[]>([]);
+  const [profileMenuOpen, setProfileMenuOpen] = useState<boolean>(false);
+  const [accountDetailsRefreshing, setAccountDetailsRefreshing] =
+    useState<boolean>(false);
 
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, profile, logout } = useAuth();
+  const router = useRouter();
 
   const getKlines = useCallback(async () => {
     const res = await axios.get(
-      `${HTTP_URL}/klines?market=${symbol.split("-")[1]}&interval=1h`,
+      `${HTTP_URL}/klines?market=${symbol.split("-")[1]}&interval=${chartInterval}`,
       {
         validateStatus: () => true,
       },
@@ -70,7 +79,7 @@ export function TradePage({ symbol }: { symbol: string }) {
 
       setChartData(chartData);
     }
-  }, [symbol]);
+  }, [chartInterval, symbol]);
 
   async function bookOrder() {
     if (!isLoggedIn) return;
@@ -105,6 +114,48 @@ export function TradePage({ symbol }: { symbol: string }) {
     }
   }
 
+  const getOrders = useCallback(async () => {
+    if (!isLoggedIn) {
+      setOrders([]);
+      return;
+    }
+
+    const res = await axios.get(`${HTTP_URL}/orders`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      validateStatus: () => true,
+    });
+
+    console.log("response from getOrders");
+    console.log(res.data);
+
+    if (res.status <= 201) {
+      setOrders(res.data.data);
+    }
+  }, [isLoggedIn]);
+
+  const getFills = useCallback(async () => {
+    if (!isLoggedIn) {
+      setFills([]);
+      return;
+    }
+
+    const res = await axios.get(`${HTTP_URL}/fills`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      validateStatus: () => true,
+    });
+
+    console.log("data from getFills");
+    console.log(res.data);
+
+    if (res.status <= 201) {
+      setFills(res.data.data);
+    }
+  }, [isLoggedIn]);
+
   const getTrades = useCallback(async () => {
     const res = await axios.get(`${HTTP_URL}/trades`, {
       validateStatus: () => true,
@@ -117,6 +168,11 @@ export function TradePage({ symbol }: { symbol: string }) {
   }, []);
 
   const getBalance = useCallback(async () => {
+    if (!isLoggedIn) {
+      setBalance({ amount: 0, qty: 0 });
+      return;
+    }
+
     const res = await axios.get(`${HTTP_URL}/balance`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -129,9 +185,11 @@ export function TradePage({ symbol }: { symbol: string }) {
       amount: res.data.data.INR.total - res.data.data.INR.locked,
       qty: res.data.data.AXIS.total - res.data.data.AXIS.locked,
     });
-  }, []);
+  }, [isLoggedIn]);
 
   async function addBalance() {
+    if (!isLoggedIn) return;
+
     const { data, success, error } = addBalanceSchema.safeParse({ amount });
 
     if (!success) {
@@ -169,21 +227,40 @@ export function TradePage({ symbol }: { symbol: string }) {
     }
   }, [symbol]);
 
+  const refreshAccountDetails = useCallback(async () => {
+    if (!isLoggedIn) return;
+
+    setAccountDetailsRefreshing(true);
+    await Promise.all([getBalance(), getOrders(), getFills()]);
+    setAccountDetailsRefreshing(false);
+  }, [getBalance, getFills, getOrders, isLoggedIn]);
+
+  function handleLogout() {
+    logout();
+    setProfileMenuOpen(false);
+    router.push("/auth");
+  }
+
   useEffect(() => {
     queueMicrotask(() => {
       void getTrades();
-      void getBalance();
       void getKlines();
+      void getBalance();
     });
-  }, [getBalance, getKlines, getTrades, orderBook]);
+  }, [getKlines, getTrades, getBalance, orderBook]);
 
   useEffect(() => {
     queueMicrotask(() => {
       void getDepth();
-      void getBalance();
       void getKlines();
     });
-  }, [getBalance, getDepth, getKlines]);
+  }, [getDepth, getKlines]);
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      void refreshAccountDetails();
+    });
+  }, [refreshAccountDetails]);
 
   useEffect(() => {
     const ws = new WebSocket(WS_URL);
@@ -234,17 +311,54 @@ export function TradePage({ symbol }: { symbol: string }) {
               </p>
             </div>
 
-            <Button
-              label="Deposit"
-              type="secondary"
-              onClick={() => setAmountDepositPopup(true)}
-            />
+            <div className="relative flex items-center gap-2">
+              {isLoggedIn ? (
+                <>
+                  <Button
+                    label="Deposit"
+                    type="secondary"
+                    onClick={() => setAmountDepositPopup(true)}
+                  />
+                  <button
+                    onClick={() => setProfileMenuOpen((prev) => !prev)}
+                    className="rounded-md bg-[#202127] px-4 py-2 text-sm text-neutral-100 hover:bg-[#26272e]"
+                  >
+                    {profile?.name ?? "Profile"}
+                  </button>
+
+                  {profileMenuOpen && (
+                    <div className="absolute right-0 top-11 z-20 w-64 rounded-md border border-white/10 bg-[#14151B] p-3 shadow-2xl">
+                      <p className="text-xs text-gray-400">Signed in as</p>
+                      <p className="mt-1 font-medium text-neutral-100">
+                        {profile?.name ?? "Loading..."}
+                      </p>
+                      <p className="mt-1 break-all text-xs text-gray-500">
+                        {profile?.id ?? ""}
+                      </p>
+
+                      <button
+                        onClick={handleLogout}
+                        className="mt-4 w-full rounded-md bg-red-500/10 px-3 py-2 text-left text-sm font-medium text-red-400 hover:bg-red-500/20"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <Button label="Sign in" type="secondary" isLink href="/auth" />
+              )}
+            </div>
           </div>
 
           <div className="flex flex-1 gap-2 min-h-[660px]">
             <div className="flex flex-1 min-w-0 flex-col gap-2">
               <div className="flex flex-1 min-h-[500px] gap-2">
-                <TradingChart chartData={chartData} />
+                <TradingChart
+                  chartData={chartData}
+                  interval={chartInterval}
+                  onIntervalChange={setChartInterval}
+                />
                 <OrderBook
                   orderBook={orderBook}
                   orderbookType={orderbookType}
@@ -254,7 +368,14 @@ export function TradePage({ symbol }: { symbol: string }) {
                 />
               </div>
 
-              <OtherDetails balance={balance} trades={trades} />
+              <OtherDetails
+                balance={balance}
+                orders={orders}
+                fills={fills}
+                profile={profile}
+                isRefreshing={accountDetailsRefreshing}
+                onRefresh={refreshAccountDetails}
+              />
             </div>
 
             <OrderSwaping

@@ -4,11 +4,21 @@ import { useEffect, useRef } from "react";
 import { CandlestickSeries, ColorType, createChart } from "lightweight-charts";
 import type { ChartData } from "@repo/common/common";
 
+export type ChartInterval = "1m" | "1h" | "1d" | "1w";
+
 type TradingChartProps = {
   chartData: ChartData[];
+  interval: ChartInterval;
+  onIntervalChange: (interval: ChartInterval) => void;
 };
 
-export default function TradingChart({ chartData }: TradingChartProps) {
+const intervals: ChartInterval[] = ["1m", "1h", "1d", "1w"];
+
+export default function TradingChart({
+  chartData,
+  interval,
+  onIntervalChange,
+}: TradingChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -65,10 +75,26 @@ export default function TradingChart({ chartData }: TradingChartProps) {
   }, [chartData]);
 
   return (
-    <section className="flex flex-col justify-center items-center flex-1 min-w-0 bg-[#14151B] rounded-md overflow-hidden">
+    <section className="flex flex-col flex-1 min-w-0 bg-[#14151B] rounded-md overflow-hidden">
+      <div className="flex items-center justify-end gap-1 border-b border-white/5 px-3 py-2">
+        {intervals.map((item) => (
+          <button
+            key={item}
+            onClick={() => onIntervalChange(item)}
+            className={`h-8 min-w-10 rounded-md px-3 text-xs font-medium ${
+              interval === item
+                ? "bg-[#202127] text-neutral-100"
+                : "text-neutral-400 hover:bg-[#202127] hover:text-neutral-100"
+            }`}
+          >
+            {item}
+          </button>
+        ))}
+      </div>
+
       <div
         ref={chartContainerRef}
-        className="w-full h-full rounded-lg overflow-hidden"
+        className="w-full flex-1 rounded-lg overflow-hidden"
       />
     </section>
   );

@@ -13,6 +13,7 @@ import { getBalance } from "./routes/get-balance";
 import { getTrades } from "./routes/get-trades";
 import { addBalance } from "./routes/add-balance";
 import { getKlines } from "./routes/get-klines";
+import { profile } from "./routes/get-profile";
 
 export const app = express();
 
@@ -32,6 +33,8 @@ app.get("/", (_req, res) => {
 app.post("/signup", signup);
 
 app.post("/signin", signin);
+
+app.get("/profile", auth, profile)
 
 app.post("/order", auth, createOrder);
 
