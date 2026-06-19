@@ -16,6 +16,8 @@ async function main() {
       
       const parsedResponse = JSON.parse(res.messages[0]!.message.data ?? "{}") as RedisDbQueueData;
       
+      console.log(parsedResponse)
+      
       if (parsedResponse.type === "cancel_order") {
         const { userId, orderId } = parsedResponse.data;
   
@@ -26,9 +28,10 @@ async function main() {
       }
   
       if (parsedResponse.type === "create_order_fills_position") {
-        const { order, fills, positions } = parsedResponse.data;
+        const { orders, fills, positions } = parsedResponse.data;
         
-        prisma.$transaction(async (tx) => {
+        // TODO: find a way to optimize it (as its doing one by one)
+        for (const order of orders) {
           const { 
             filledQty, 
             id, 
@@ -40,8 +43,8 @@ async function main() {
             type, 
             userId 
           } = order;
-
-          await tx.order.upsert({
+  
+          await prisma.order.upsert({
             where: { id, userId },
             update: {
               filledQty,
@@ -60,70 +63,15 @@ async function main() {
               type,
             },
           })
-  
-          for (const fls of fills) {
-            const { 
-              askedQty, 
-              asset, 
-              filledQty, 
-              id, 
-              makerId, 
-              makerOrderId, 
-              price, 
-              side, 
-              takerId, 
-              takerOrderId, 
-              type 
-            } = fls;
-            
-            await tx.fill.create({
-              data: {
-                id,
-                askedQty,
-                makerId,
-                takerId,
-                makerOrderId,
-                takerOrderId,
-                price,
-                filledQty,
-                asset,
-                side,
-                type,
-              }
-            })
-          }
+        }
 
-          for (const pos of positions) {
-            const { 
-              averagePrice,
-              isProfit,
-              liquidationPrice,
-              margin,
-              market,
-              orderId,
-              pnl,
-              qty,
-              type,
-              userId,
-            } = pos;
-            
-            await tx.position.create({
-              data: {
-                averagePrice,
-                isProfit,
-                liquidationPrice,
-                margin,
-                market,
-                orderId,
-                pnl,
-                qty,
-                type,
-                userId,
-              }
-            })
-          }
-        })
-        
+        await prisma.fill.createMany({
+          data: fills
+        });
+
+        await prisma.position.createMany({
+          data: positions
+        });        
       }
     }
   } catch (e) {

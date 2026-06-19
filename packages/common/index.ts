@@ -83,7 +83,7 @@ export type RedisDbQueueData =
   | {
       type: "create_order_fills_position";
       data: {
-        order: Order,
+        orders: Order[],
         fills: Fill[],
         positions: Position[],
       }
@@ -361,6 +361,7 @@ export type ChartData = {
 };
 
 export const LIQUIDATION_PERCENTAGE = 0.2 // 20%
+export const ORDER_BATCHER_LENGTH = 5;
 
 export const HTTP_BACKEND_STREAM_CONFIGS = {
 	// stream: `http-backend-stream`,

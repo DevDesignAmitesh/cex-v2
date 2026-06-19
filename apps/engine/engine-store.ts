@@ -1,6 +1,7 @@
 import {
   COMMON_STREAM_CONFIGS,
   LIQUIDATION_PERCENTAGE,
+  ORDER_BATCHER_LENGTH,
   type Balance,
   type BeforeOrderResponse,
   type Fill,
@@ -22,6 +23,7 @@ class EngineStore {
   private static instance: EngineStore;
   private FILLS: Fill[];
   private ORDERS: Order[];
+  private ORDERS_TO_SEND_TO_DB: Order[];
   private BALANCES: Balance;
   private USERORDERBOOK: UserBasedOrderBook;
   private POSITIONS: Position[];
@@ -29,6 +31,7 @@ class EngineStore {
 
   constructor() {
     this.ORDERS = this.readBackupData().ORDERS ?? [];
+    this.ORDERS_TO_SEND_TO_DB = this.readBackupData().ORDERS_TO_SEND_TO_DB ?? [];
     this.FILLS = this.readBackupData().FILLS ?? [];
     this.POSITIONS = this.readBackupData().POSITIONS ?? [];
     this.POSITIONS_MAPS = this.readBackupData().POSITIONS_MAPS ?? {
@@ -151,11 +154,6 @@ class EngineStore {
         data: { orderId, userId },
       },
     });
-    // redisManager.pushDataInOrderQueue({
-    //   type: "cancel_order",
-    //   data: { orderId, userId }
-    // }, "orderbook-to-db-queue")
-
     return true;
   };
 
@@ -168,14 +166,19 @@ class EngineStore {
     fills: Fill[],
     positions: Position[],
   ) => {
-    // TODO: confirm this
-    redisManager.addToStream(COMMON_STREAM_CONFIGS.stream, {
-      type: "engine-to-common",
-      data: {
-        type: "create_order_fills_position",
-        data: { order, fills, positions },
-      },
-    });
+    if (this.ORDERS_TO_SEND_TO_DB.length >= ORDER_BATCHER_LENGTH) {
+      redisManager.addToStream(COMMON_STREAM_CONFIGS.stream, {
+        type: "engine-to-common",
+        data: {
+          type: "create_order_fills_position",
+          data: { orders: this.ORDERS_TO_SEND_TO_DB , fills, positions },
+        },
+      });
+
+      this.ORDERS_TO_SEND_TO_DB = []
+    } else {
+      this.ORDERS_TO_SEND_TO_DB.push(order);
+    } 
   };
 
   async sendOrderbook(
@@ -1087,6 +1090,7 @@ class EngineStore {
     fs.writeFileSync("./fills.json", JSON.stringify(this.FILLS));
     fs.writeFileSync("./positions.json", JSON.stringify(this.POSITIONS));
     fs.writeFileSync("./positions-maps.json", JSON.stringify(this.POSITIONS_MAPS));
+    fs.writeFileSync("./orders-to-send-to-db.json", JSON.stringify(this.ORDERS_TO_SEND_TO_DB));
   };
 
   readBackupData = () => {
@@ -1109,8 +1113,11 @@ class EngineStore {
       const POSITIONS_MAPS = JSON.parse(
         fs.readFileSync("./positions-maps.json").toString(),
       );
+      const ORDERS_TO_SEND_TO_DB = JSON.parse(
+        fs.readFileSync("./orders-to-send-to-db.json").toString(),
+      );
 
-      return { USERORDERBOOK, BALANCES, ORDERS, FILLS, POSITIONS, POSITIONS_MAPS };
+      return { USERORDERBOOK, BALANCES, ORDERS, FILLS, POSITIONS, POSITIONS_MAPS, ORDERS_TO_SEND_TO_DB };
     } catch {
       return {
         USERORDERBOOK: {
@@ -1119,6 +1126,7 @@ class EngineStore {
         },
         BALANCES: {},
         ORDERS: [],
+        ORDERS_TO_SEND_TO_DB: [],
         FILLS: [],
         POSITIONS: [],
         POSITIONS_MAPS: {
