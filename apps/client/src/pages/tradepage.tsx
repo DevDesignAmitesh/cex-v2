@@ -5,6 +5,7 @@ import OrderBook from "@/components/orderbook";
 import OrderSwaping from "@/components/orderswaping";
 import OtherDetails from "@/components/otherdetails";
 import TradingChart, { type ChartInterval } from "@/components/tradingchart";
+import { User } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import {
   addBalanceSchema,
@@ -321,9 +322,10 @@ export function TradePage({ symbol }: { symbol: string }) {
                   />
                   <button
                     onClick={() => setProfileMenuOpen((prev) => !prev)}
-                    className="rounded-md bg-[#202127] px-4 py-2 text-sm text-neutral-100 hover:bg-[#26272e]"
+                    className="rounded-md bg-[#202127] px-4 py-2 text-sm text-neutral-100 hover:bg-[#26272e] flex justify-center items-center gap-2"
                   >
-                    {profile?.name ?? "Profile"}
+                      <User />
+                      {profile?.name ?? "Profile"}
                   </button>
 
                   {profileMenuOpen && (
