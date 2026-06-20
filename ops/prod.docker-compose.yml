@@ -20,6 +20,14 @@ services:
       - REDIS_URL=${REDIS_URL}
     restart: on-failure
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - 6379:6379
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
   ws:
     image: amitesh252/cex-ws:latest
     ports:
@@ -45,4 +53,6 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - REDIS_URL=${REDIS_URL}
     restart: on-failure
-    
+
+volumes:
+  redis_data:

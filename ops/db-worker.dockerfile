@@ -14,6 +14,8 @@ COPY packages/redis/package.json packages/redis/package.json
 
 RUN bun install
 
+RUN chmod +x /usr/src/app/db-worker-entry.sh
+
 COPY . .
 
 ENTRYPOINT ["/usr/src/app/db-worker-entry.sh"]
