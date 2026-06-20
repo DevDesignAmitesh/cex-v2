@@ -1,5 +1,5 @@
-export const HTTP_URL="http://localhost:4000"
-export const WS_URL = "ws://localhost:8080"
+export const HTTP_URL= "https://cex-http.amitesh.work"
+export const WS_URL = "wss://cex-ws.amitesh.work"
 
 type NavItemsProps = {
   href: string;
