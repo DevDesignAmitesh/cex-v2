@@ -14,9 +14,9 @@ COPY packages/redis/package.json packages/redis/package.json
 
 RUN bun install
 
-RUN chmod +x /usr/src/app/ws-entry.sh
-
 COPY . .
+
+RUN chmod +x /usr/src/app/ws-entry.sh
 
 EXPOSE 8080
 

@@ -14,8 +14,8 @@ COPY packages/redis/package.json packages/redis/package.json
 
 RUN bun install
 
-RUN chmod +x /usr/src/app/engine-entry.sh
-
 COPY . .
+
+RUN chmod +x /usr/src/app/engine-entry.sh
 
 ENTRYPOINT ["/usr/src/app/engine-entry.sh"]
