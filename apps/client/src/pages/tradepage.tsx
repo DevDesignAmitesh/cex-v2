@@ -357,14 +357,16 @@ export function TradePage({ symbol }: { symbol: string }) {
                 />
               </div>
 
-              <OtherDetails
-                balance={balance}
-                orders={orders}
-                fills={fills}
-                profile={profile}
-                isRefreshing={accountDetailsRefreshing}
-                onRefresh={refreshAccountDetails}
-              />
+              {isLoggedIn && (
+                  <OtherDetails
+                  balance={balance}
+                  orders={orders}
+                  fills={fills}
+                  profile={profile}
+                  isRefreshing={accountDetailsRefreshing}
+                  onRefresh={refreshAccountDetails}
+                />
+              )}
             </div>
 
             <OrderSwaping
