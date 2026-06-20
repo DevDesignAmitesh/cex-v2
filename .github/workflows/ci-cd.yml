@@ -37,7 +37,7 @@ jobs:
       - name: Build and push ${{ matrix.service }}
         uses: docker/build-push-action@v7
         with:
-          context: .
+          context: ..
           file: ops/${{ matrix.service }}.Dockerfile
           push: true
           tags: |
