@@ -24,6 +24,7 @@ import { useAuth } from "@/context/auth";
 import axios from "axios";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import Logo from "@/components/logo";
 
 export function TradePage({ symbol }: { symbol: string }) {
   const [side, setSide] = useState<orderSide>("BUY");
@@ -279,24 +280,44 @@ export function TradePage({ symbol }: { symbol: string }) {
       <div className="w-full min-h-screen bg-[#0E0F14] relative overflow-y-auto px-3">
         <div className="py-3 text-neutral-100 w-full max-w-[1500px] mx-auto min-h-screen flex flex-col font-mono">
           <div className="flex mb-2 flex-col gap-4 rounded-xl border border-white/10 bg-[#14151B]/95 p-3 shadow-xl shadow-black/20 shrink-0 sm:flex-row sm:items-center sm:justify-between sm:p-4">
-            <div className="flex flex-wrap gap-4 items-center">
-              <p className="rounded-md bg-white/[0.04] px-3 py-2 font-medium">
-                {symbol.split("-")[0]} -{" "}
-                <span className="text-gray-400">{symbol.split("-")[1]}</span>
-              </p>
+            <div className="flex items-center gap-8">
+              <Logo />
 
-              <p
-                title="Last traded price"
-                className={`rounded-md px-3 py-2 text-lg font-semibold ${
-                  lastTradedPriceSide === null
-                    ? "text-gray-500"
-                    : lastTradedPriceSide === "SELL"
-                      ? "text-red-500"
-                      : "text-green-500"
-                }`}
-              >
-                {orderBook.lastTradedPrice}
-              </p>
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-gray-400">
+                  Market
+                </span>
+
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">
+                    {symbol.split("-")[0]}
+                  </span>
+                  <span className="text-gray-500">/</span>
+                  <span className="text-gray-400">
+                    {symbol.split("-")[1]}
+                  </span>
+                </div>
+              </div>
+
+              <div className="h-6 w-px bg-white/10" />
+
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-gray-400">
+                  Last Traded Price
+                </span>
+
+                <span
+                  className={`text-lg font-semibold ${
+                    lastTradedPriceSide === null
+                      ? "text-gray-500"
+                      : lastTradedPriceSide === "SELL"
+                        ? "text-red-500"
+                        : "text-green-500"
+                  }`}
+                >
+                  {orderBook.lastTradedPrice}
+                </span>
+              </div>
             </div>
 
             <div className="relative flex flex-wrap items-center gap-2">

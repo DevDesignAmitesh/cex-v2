@@ -7,67 +7,67 @@ services:
     environment:
       - POSTGRES_PASSWORD=password
       - POSTGRES_USER=postgres
-      - POSTGRES_DB=cex_v3
+      - POSTGRES_DB=cex-v3
 
   redis:
     image: redis:7-alpine
     ports:
       - 6379:6379
 
-  client:
-    build:
-      context: ..
-      dockerfile: ops/client.dockerfile
-    ports:
-      - 3000:3000
+  # client:
+  #   build:
+  #     context: ..
+  #     dockerfile: ops/client.dockerfile
+  #   ports:
+  #     - 3000:3000
 
-  http:
-    build:
-      context: ..
-      dockerfile: ops/http.dockerfile
-    ports:
-      - 4000:4000
-    depends_on:
-      - redis
-      - postgres
-    environment:
-      DATABASE_URL: postgresql://postgres:password@postgres:5432/cex_v3
-      JWT_SECRET: secret
-      REDIS_URL: redis://redis:6379
+  # http:
+  #   build:
+  #     context: ..
+  #     dockerfile: ops/http.dockerfile
+  #   ports:
+  #     - 4000:4000
+  #   depends_on:
+  #     - redis
+  #     - postgres
+  #   environment:
+  #     DATABASE_URL: postgresql://postgres:password@postgres:5432/cex_v3
+  #     JWT_SECRET: secret
+  #     REDIS_URL: redis://redis:6379
           
-  ws:
-    build:
-      context: ..
-      dockerfile: ops/ws.dockerfile
-    ports:
-      - 8080:8080
-    depends_on:
-      - redis
-      - postgres
-    environment:
-      DATABASE_URL: postgresql://postgres:password@postgres:5432/cex_v3
-      JWT_SECRET: secret
-      REDIS_URL: redis://redis:6379
+  # ws:
+  #   build:
+  #     context: ..
+  #     dockerfile: ops/ws.dockerfile
+  #   ports:
+  #     - 8080:8080
+  #   depends_on:
+  #     - redis
+  #     - postgres
+  #   environment:
+  #     DATABASE_URL: postgresql://postgres:password@postgres:5432/cex_v3
+  #     JWT_SECRET: secret
+  #     REDIS_URL: redis://redis:6379
 
-  engine:
-    build:
-      context: ..
-      dockerfile: ops/engine.dockerfile
-    depends_on:
-      - redis
-    environment:
-      DATABASE_URL: postgresql://postgres:password@postgres:5432/cex_v3
-      JWT_SECRET: secret
-      REDIS_URL: redis://redis:6379
+  # engine:
+  #   build:
+  #     context: ..
+  #     dockerfile: ops/engine.dockerfile
+  #   depends_on:
+  #     - redis
+  #   environment:
+  #     DATABASE_URL: postgresql://postgres:password@postgres:5432/cex_v3
+  #     JWT_SECRET: secret
+  #     REDIS_URL: redis://redis:6379
 
-  db_worker:
-    build:
-      context: ..
-      dockerfile: ops/db-worker.dockerfile
-    depends_on:
-      - redis
-      - postgres
-    environment:
-      DATABASE_URL: postgresql://postgres:password@postgres:5432/cex_v3
-      JWT_SECRET: secret
-      REDIS_URL: redis://redis:6379
+  # db_worker:
+  #   build:
+  #     context: ..
+  #     dockerfile: ops/db-worker.dockerfile
+  #   depends_on:
+  #     - redis
+  #     - postgres
+  #   environment:
+  #     DATABASE_URL: postgresql://postgres:password@postgres:5432/cex_v3
+  #     JWT_SECRET: secret
+  #     REDIS_URL: redis://redis:6379

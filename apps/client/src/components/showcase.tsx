@@ -1,8 +1,17 @@
+import { useAuth } from "@/context/auth";
 import Button from "./button";
 import ShowcaseScreen1 from "./showcase-screen1";
 import ShowcaseScreen2 from "./showcase-screen2";
 
 export default function ShowCase() {
+  const context = useAuth();
+
+  if (!context) {
+    return null
+  }
+  
+  const { isLoggedIn } = context;
+  
   return <div className="min-h-screen w-full bg-[#10121A] px-4 pb-10">
     <div className="w-full h-full max-w-7xl mx-auto flex flex-col justify-center items-center">
       <p className="text-sm uppercase tracking-[0.22em] text-blue-400 text-center mt-24 sm:mt-32">Wallet and exchange</p>
@@ -24,7 +33,11 @@ export default function ShowCase() {
       <h1 className="text-4xl text-center font-semibold text-neutral-50 mt-6 sm:text-5xl">Modern finance starts 
         {" "}<span className="text-[#E33E3F]">here</span>.</h1>
 
-        <Button type="primary" label="Sign up for free" isLink href="/auth" />
+        {isLoggedIn ? (
+          <Button type="primary" label="Markets" isLink href="/trade/INR-AXIS" />
+        ) : (
+          <Button type="primary" label="Sign up for free" isLink href="/auth" />
+        )}
 
       </div>
     </div>

@@ -13,7 +13,7 @@ type ButtonProps = {
 
 export default function Button({ isLink, label, type, href, onClick, className = "" }: ButtonProps) {
   const commonClassName = `
-  inline-flex items-center justify-center px-4 py-2 rounded-md text-sm font-semibold transition hover:opacity-90
+  inline-flex items-center justify-center px-4 py-2 rounded-md text-sm transition hover:opacity-90
     
   ${
     type === "secondary" 

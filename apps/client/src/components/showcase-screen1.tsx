@@ -34,12 +34,12 @@ export default function ShowcaseScreen1() {
     <div className="relative w-full max-w-sm">
       <div className="absolute inset-8 rounded-full bg-blue-500/20 blur-3xl" />
       <Image 
-      src={"/wallet-exchange-showcase.png"}
-      alt="Wallet and exchange mobile app preview"
-      width={1024}
-      height={1536}
-      className="relative w-full object-center object-cover rounded-2xl border border-white/10 shadow-2xl"
-      unoptimized
+        src={"/wallet-exchange-showcase.png"}
+        alt="Wallet and exchange mobile app preview"
+        width={1024}
+        height={1536}
+        className="relative w-full object-center object-cover rounded-2xl border border-white/10 shadow-2xl"
+        unoptimized
       />
     </div>
     
