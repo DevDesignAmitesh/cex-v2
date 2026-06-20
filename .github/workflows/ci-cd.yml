@@ -42,7 +42,6 @@ jobs:
           push: true
           tags: |
             ${{ matrix.image }}:latest
-            ${{ matrix.image }}:${{ github.sha }}
 
       - name: deploy via SSH
         uses: appleboy/ssh-action@master
