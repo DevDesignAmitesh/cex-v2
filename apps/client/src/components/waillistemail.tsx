@@ -12,7 +12,7 @@ export default function WaitListEmail() {
   
   const { isLoggedIn } = context  
   
-  return <div className="w-lg bg-[#14151B] rounded-md py-2 px-4 mt-6 flex items-center justify-between">
+  return <div className="w-full max-w-xl bg-[#14151B] rounded-md py-2 px-4 mt-6 flex items-center justify-between">
     <input 
       type="email" 
       placeholder="Email" 

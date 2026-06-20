@@ -11,10 +11,6 @@ export const navItems: NavItemsProps[] = [
     href: "/trade/INR-AXIS",
     label: "trade"
   },
-  {
-    href: "/profile",
-    label: "profile"
-  }
 ];
 
 type ShowcaseScreenProps = {

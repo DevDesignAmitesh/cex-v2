@@ -21,7 +21,7 @@ export default function AuthRoute() {
   }
   
   return <>
-    <Header />
+    {/* <Header /> */}
     <Auth />
   </>
 }
