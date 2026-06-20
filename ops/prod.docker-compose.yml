@@ -1,0 +1,48 @@
+services:
+
+  client:
+    image: amitesh252/cex-client:latest
+    ports:
+      - 3004:3000
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - REDIS_URL=${REDIS_URL}
+    restart: on-failure
+
+  http:
+    image: amitesh252/cex-http:latest
+    ports:
+      - 3005:4000
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - REDIS_URL=${REDIS_URL}
+    restart: on-failure
+
+  ws:
+    image: amitesh252/cex-ws:latest
+    ports:
+      - 3006:8080
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - REDIS_URL=${REDIS_URL}
+    restart: on-failure
+
+  engine:
+    image: amitesh252/cex-engine:latest
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - REDIS_URL=${REDIS_URL}
+    restart: on-failure
+
+  db_worker:
+    image: amitesh252/cex-db-worker:latest
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - REDIS_URL=${REDIS_URL}
+    restart: on-failure
+    
