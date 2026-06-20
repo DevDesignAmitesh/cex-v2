@@ -23,7 +23,6 @@ class EngineStore {
   private static instance: EngineStore;
   private FILLS: Fill[];
   private ORDERS: Order[];
-  private ORDERS_TO_SEND_TO_DB: Order[];
   private BALANCES: Balance;
   private USERORDERBOOK: UserBasedOrderBook;
   private POSITIONS: Position[];
@@ -31,7 +30,6 @@ class EngineStore {
 
   constructor() {
     this.ORDERS = this.readBackupData().ORDERS ?? [];
-    this.ORDERS_TO_SEND_TO_DB = this.readBackupData().ORDERS_TO_SEND_TO_DB ?? [];
     this.FILLS = this.readBackupData().FILLS ?? [];
     this.POSITIONS = this.readBackupData().POSITIONS ?? [];
     this.POSITIONS_MAPS = this.readBackupData().POSITIONS_MAPS ?? {
@@ -166,19 +164,13 @@ class EngineStore {
     fills: Fill[],
     positions: Position[],
   ) => {
-    if (this.ORDERS_TO_SEND_TO_DB.length >= ORDER_BATCHER_LENGTH) {
-      redisManager.addToStream(COMMON_STREAM_CONFIGS.stream, {
-        type: "engine-to-common",
-        data: {
-          type: "create_order_fills_position",
-          data: { orders: this.ORDERS_TO_SEND_TO_DB , fills, positions },
-        },
-      });
-
-      this.ORDERS_TO_SEND_TO_DB = []
-    } else {
-      this.ORDERS_TO_SEND_TO_DB.push(order);
-    } 
+    redisManager.addToStream(COMMON_STREAM_CONFIGS.stream, {
+      type: "engine-to-common",
+      data: {
+        type: "create_order_fills_position",
+        data: { order, fills, positions },
+      },
+    });
   };
 
   async sendOrderbook(
@@ -202,11 +194,10 @@ class EngineStore {
     return this.USERORDERBOOK[stock];
   };
 
-  getFills = (userId: string, orderId?: string) => {
+  getFills = (userId?: string, orderId?: string) => {
     const arr: Fill[] = [];
 
-
-    if (orderId) {
+    if (userId && orderId) {
       this.FILLS.forEach((fls) => {
         if (fls.takerId === userId || fls.makerId == userId) {
           if (fls.makerOrderId === orderId || fls.takerOrderId === orderId) {
@@ -214,13 +205,19 @@ class EngineStore {
           }
         }
       });
-    } else {
+    } else if (userId) {
       this.FILLS.forEach((fls) => {
         if (fls.takerId === userId || fls.makerId == userId) {
           arr.push(fls);
         }
       });
-    }
+    } else if (orderId) {
+      this.FILLS.forEach((fls) => {
+        if (fls.makerOrderId === orderId || fls.takerOrderId === orderId) {
+          arr.push(fls);
+        }
+      });
+    } 
 
     return arr;
   };
@@ -235,25 +232,7 @@ class EngineStore {
   };
 
   getOrders = (userId: string, open?: boolean) => {
-    const arr = [];
-
-    if (open && open === true) {
-      for (let ord of this.ORDERS) {
-        if (ord.status === "CANCELLED") continue;
-        if (ord.userId !== userId) continue;
-        if (ord.status !== "OPEN") continue;
-
-        arr.push(ord);
-      }
-    } else {
-      for (let ord of this.ORDERS) {
-        if (ord.status === "CANCELLED") continue;
-        if (ord.userId !== userId) continue;
-        arr.push(ord);
-      }
-    }
-
-    return arr;
+    return this.ORDERS.filter((ord) => ord.userId === userId)
   };
 
   getUserBalance = (userId: string) => {
@@ -757,7 +736,7 @@ class EngineStore {
       }
     }
 
-    const fills = this.getFills(userId, orderId);
+    const fills = this.getFills(undefined, orderId);
     const toSendOrder = this.getOrder(orderId, userId)!;
     const toSendPositions = this.getAllPositions(orderId)!;
 
@@ -1090,7 +1069,6 @@ class EngineStore {
     fs.writeFileSync("./fills.json", JSON.stringify(this.FILLS));
     fs.writeFileSync("./positions.json", JSON.stringify(this.POSITIONS));
     fs.writeFileSync("./positions-maps.json", JSON.stringify(this.POSITIONS_MAPS));
-    fs.writeFileSync("./orders-to-send-to-db.json", JSON.stringify(this.ORDERS_TO_SEND_TO_DB));
   };
 
   readBackupData = () => {
@@ -1113,11 +1091,8 @@ class EngineStore {
       const POSITIONS_MAPS = JSON.parse(
         fs.readFileSync("./positions-maps.json").toString(),
       );
-      const ORDERS_TO_SEND_TO_DB = JSON.parse(
-        fs.readFileSync("./orders-to-send-to-db.json").toString(),
-      );
 
-      return { USERORDERBOOK, BALANCES, ORDERS, FILLS, POSITIONS, POSITIONS_MAPS, ORDERS_TO_SEND_TO_DB };
+      return { USERORDERBOOK, BALANCES, ORDERS, FILLS, POSITIONS, POSITIONS_MAPS };
     } catch {
       return {
         USERORDERBOOK: {
@@ -1126,7 +1101,6 @@ class EngineStore {
         },
         BALANCES: {},
         ORDERS: [],
-        ORDERS_TO_SEND_TO_DB: [],
         FILLS: [],
         POSITIONS: [],
         POSITIONS_MAPS: {

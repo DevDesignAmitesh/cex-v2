@@ -13,11 +13,7 @@ async function main() {
 
     if (!res) continue;
 
-    console.log("COMMON_STREAM_CONFIGS.consumer_grp", COMMON_STREAM_CONFIGS.consumer_grp);
-  
     const parsedResponse = JSON.parse(res.messages[0]!.message.data ?? "{}") as RedisDbQueueData;
-
-    console.log("parsedResponse", parsedResponse)
 
     if (parsedResponse.type === "order_book") {
       redisManager.publishData2("AXIS", parsedResponse)
@@ -35,8 +31,6 @@ wss.on("connection", (ws: WebSocket) => {
   ws.on("message", (data) => {
     const parsedResponse = JSON.parse(data.toString());
 
-    console.log("client message", parsedResponse);
-    
     if (parsedResponse.type === "SUBSCRIBE") {
       // symbol = "AXIS" | "HDFC"
       const { symbol } = parsedResponse.payload;

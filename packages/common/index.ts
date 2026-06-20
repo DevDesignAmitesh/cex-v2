@@ -47,8 +47,8 @@ export const createOrderSchema = z.object({
   userId: z.uuid(),
   orderId: z.uuid(),
   symbol: z.string().includes("/"),
-  price: z.number().optional(),
-  qty: z.number().optional(),
+  price: z.number().min(10).optional(),
+  qty: z.number().min(1).optional(),
   side: z.enum(["BUY", "SELL"]),
   type: z.enum(["LIMIT", "MARKET"]),
   market: z.enum(["SPOT", "PERPS"]),
@@ -74,7 +74,6 @@ export const verifyToken = (token: string, secret: string) => {
   try {
     return verify(token, secret) as JwtPayload;
   } catch (e) {
-    console.log("verify token error ", e);
     return null;
   }
 };
@@ -83,7 +82,7 @@ export type RedisDbQueueData =
   | {
       type: "create_order_fills_position";
       data: {
-        orders: Order[],
+        order: Order,
         fills: Fill[],
         positions: Position[],
       }

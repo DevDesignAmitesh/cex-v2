@@ -25,7 +25,7 @@ export async function generateCandles(
       createdAt: "asc",
     },
   });
-
+  
   const candlesMap = new Map<number, Candle>();
 
   if (fills.length >= 1) {
@@ -71,5 +71,7 @@ export async function getKlines(req: Request, res: Response) {
 
   const { market, interval } = data;
   
-  res.json({ candles: await generateCandles(market, interval) })
+  const candles = await generateCandles(market, interval);
+  
+  res.json({ candles })
 }

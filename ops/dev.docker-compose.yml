@@ -20,9 +20,6 @@ services:
       dockerfile: ops/client.dockerfile
     ports:
       - 3000:3000
-    depends_on:
-      - http
-      - ws
 
   http:
     build:
@@ -57,8 +54,7 @@ services:
       context: ..
       dockerfile: ops/engine.dockerfile
     depends_on:
-      - http
-      - ws
+      - redis
     environment:
       DATABASE_URL: postgresql://postgres:password@postgres:5432/cex_v3
       JWT_SECRET: secret
@@ -69,8 +65,8 @@ services:
       context: ..
       dockerfile: ops/db-worker.dockerfile
     depends_on:
+      - redis
       - postgres
-      - engine
     environment:
       DATABASE_URL: postgresql://postgres:password@postgres:5432/cex_v3
       JWT_SECRET: secret

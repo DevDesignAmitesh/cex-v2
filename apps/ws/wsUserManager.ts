@@ -26,8 +26,6 @@ class WsUserManager {
   }
 
   broadcastOrderBook(orderbook: UserBasedOrderBook) {
-    console.log("data getting recevied in broadcast", orderbook)
-    
     let orderbookToSend: ClientOrderBook = {
       asks: [],
       bids: [],
@@ -52,8 +50,6 @@ class WsUserManager {
       })
     })
     
-    
-    console.log("data to send from orderbook", orderbookToSend)
     
     this.users.forEach((usr) => {
       usr.send(JSON.stringify({

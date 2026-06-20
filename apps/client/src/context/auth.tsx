@@ -56,9 +56,6 @@ export function AuthContextProvider({ children }: { children: ReactNode }) {
       validateStatus: () => true,
     });
 
-    console.log("response from getProfile");
-    console.log(res.data);
-
     if (res.status <= 201) {
       setIsLoggedIn(true);
       setProfile(res.data.profile);

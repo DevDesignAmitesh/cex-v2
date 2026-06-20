@@ -71,9 +71,6 @@ export function TradePage({ symbol }: { symbol: string }) {
       },
     );
 
-    console.log("response from getKlines");
-    console.log(res.data);
-
     if (res.status <= 201) {
       const chartData = res.data.candles.map((candle: Candle) => ({
         time: candle.timestamp,
@@ -82,8 +79,6 @@ export function TradePage({ symbol }: { symbol: string }) {
         low: candle.low,
         close: candle.close,
       }));
-
-      console.log("chartData", chartData);
 
       setChartData(chartData);
     }
@@ -113,8 +108,6 @@ export function TradePage({ symbol }: { symbol: string }) {
       validateStatus: () => true,
     });
 
-    console.log("response from book order", res);
-
     if (res.status <= 201) {
       toast.success(res.data.message ?? "Order booked");
     } else {
@@ -135,9 +128,6 @@ export function TradePage({ symbol }: { symbol: string }) {
       validateStatus: () => true,
     });
 
-    console.log("response from getOrders");
-    console.log(res.data);
-
     if (res.status <= 201) {
       setOrders(res.data.data);
     }
@@ -155,9 +145,6 @@ export function TradePage({ symbol }: { symbol: string }) {
       },
       validateStatus: () => true,
     });
-
-    console.log("data from getFills");
-    console.log(res.data);
 
     if (res.status <= 201) {
       setFills(res.data.data);
@@ -188,7 +175,6 @@ export function TradePage({ symbol }: { symbol: string }) {
       validateStatus: () => true,
     });
 
-    console.log("respone from getBalance", res.data);
     setBalance({
       amount: res.data.data.INR.total - res.data.data.INR.locked,
       qty: res.data.data.AXIS.total - res.data.data.AXIS.locked,
@@ -212,8 +198,6 @@ export function TradePage({ symbol }: { symbol: string }) {
       validateStatus: () => true,
     });
 
-    console.log("respone from getBalance", res.data);
-
     if (res.data.data === true) {
       getBalance();
       setAmountDepositPopup(false);
@@ -227,8 +211,6 @@ export function TradePage({ symbol }: { symbol: string }) {
     const res = await axios.get(`${HTTP_URL}/depth/${symbol}`, {
       validateStatus: () => true,
     });
-
-    console.log("respone from getDepth", res.data);
 
     if (res.status <= 201) {
       setOrderbook(res.data.orderbookToSend);
@@ -284,9 +266,6 @@ export function TradePage({ symbol }: { symbol: string }) {
 
     ws.onmessage = (event) => {
       const parsedData = JSON.parse(event.data);
-
-      console.log("incomming data");
-      console.log(parsedData);
 
       if (parsedData.type === "order_book") {
         setOrderbook(parsedData.data);

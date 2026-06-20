@@ -45,7 +45,6 @@ class RedisManager {
     this.client.on("error", () => console.error);
     this.subscriber.on("error", () => console.error);
     await this.client.ping()
-    console.log("ping done")
     await this.createGroups();
   };
 

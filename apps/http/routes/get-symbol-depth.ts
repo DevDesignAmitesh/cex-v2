@@ -47,8 +47,6 @@ export async function getSymbolDepth(req: Request, res: Response) {
 
   if (finalData.clientId === clientId) {
 
-    console.log("finalData in http", finalData.data)
-    
     let orderbookToSend: ClientOrderBook = {
       asks: [],
       bids: [],

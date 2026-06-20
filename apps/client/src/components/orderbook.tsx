@@ -135,7 +135,10 @@ export default function OrderBook({
         ) : (
           <div className="overflow-y-auto w-full h-115 scrollbar-thin scrollbar-thumb-black/40">
             <div className="flex flex-col">
-              {trades.map((trade, idx) => (
+              {trades
+                .slice()
+                .reverse()
+                .map((trade, idx) => (
                 <div
                   key={`${trade.id}-${idx}`}
                   className="relative grid grid-cols-2 px-4 py-0.75 overflow-hidden"

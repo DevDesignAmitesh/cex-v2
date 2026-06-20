@@ -14,9 +14,6 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
       error: "invalid type",
     };
   }
-
-  console.log("PARSED_DATA_WHILE_ORDER_CREATION");
-  console.log(parsedResponse.data);
     
   const { side, symbol, type, userId, price, qty, orderId, market } =
     parsedResponse.data;
@@ -50,9 +47,6 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
       qty: number;
       orderBookKey: number;
     };
-
-    console.log("BEFORE_ORDER_RESPONSE");
-    console.log(beforeOrderResponseOne.data?.data!);
     
     if (keyQty >= qty) {
       const users =
@@ -131,8 +125,6 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
         const userProfit = price - keyPrice;
         const finalPrice = price - userProfit;
 
-        console.log("LEFT_QTY", leftQty);
-        
         const res = engineStore.completeOrder(
           side,
           orderBookKey,
@@ -148,7 +140,6 @@ export function createOrder(parsedResponse: RedisQueueData): EngineResponse {
         );
 
         if (leftQty >= 0) {
-          console.log("CALLING_FUNCTION")
           createOrder({
             ...parsedResponse,
             data: { ...parsedResponse.data, qty: leftQty },
@@ -384,14 +375,12 @@ export function getFills(parsedResponse: RedisQueueData): EngineResponse {
 
   return {
     clientId: parsedResponse.clientId,
-    ok: res ? true : false,
-    data: res
-      ? {
-          message: "Fills found successfully",
-          data: res,
-        }
-      : undefined,
-    error: !res ? "Fills for the given userId not found" : undefined,
+    ok: true,
+    data: {
+      message: "Fills found successfully",
+      data: res,
+    },
+    error: "Fills for the given userId not found",
   };
 }
 
@@ -428,18 +417,16 @@ export function getOrders(parsedResponse: RedisQueueData): EngineResponse {
     };
 
   const { userId, open } = parsedResponse.data;
+  
   const res = engineStore.getOrders(userId, open);
 
   return {
     clientId: parsedResponse.clientId,
-    ok: res.length ? true : false,
-    data: res.length
-      ? {
-          message: "Orders found successfully",
-          data: res,
-        }
-      : undefined,
-    error: !res.length ? "Orders for the given userId not found" : undefined,
+    ok: true,
+    data:  {
+      message: "Orders found successfully",
+      data: res,
+    }
   };
 }
 
