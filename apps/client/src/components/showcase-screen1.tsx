@@ -2,11 +2,11 @@ import { showcaseScreen1 } from "@/utils";
 import Image from "next/image";
 
 export default function ShowcaseScreen1() {
-  return <div className="w-full flex justify-evenly mt-20">
-    <div className="flex flex-col gap-2 mt-10">
+  return <div className="w-full flex flex-col-reverse items-center justify-evenly gap-10 mt-20 lg:flex-row">
+    <div className="flex max-w-md flex-col gap-3 lg:mt-10">
       {showcaseScreen1.map((item, idx) => (
         <div key={idx} className="flex items-center gap-4">
-          <div className="p-2 rounded-full bg-[#152A3A]">
+          <div className="shrink-0 p-2 rounded-full bg-[#152A3A]">
             <svg 
               width="14" 
               height="14" 
@@ -26,19 +26,22 @@ export default function ShowcaseScreen1() {
           <p className="text-neutral-100 text-sm">{item.content}</p>
       </div>
       ))}
-      <p className="w-md text-left text-gray-400 text-sm mt-4">
-        Built for power users: multiple accounts, custom RPCs, sidepanel support, and more.
+      <p className="text-left text-gray-400 text-sm leading-6 mt-4">
+        Built for active users: quick account checks, funding visibility, and a direct path back to the market.
       </p>
     </div>
 
-    <Image 
-      src={"/show-case-1.png"}
-      alt="hero"
-      width={100}
-      height={100}
-      className="w-64 object-center object-cover rounded-md"
+    <div className="relative w-full max-w-sm">
+      <div className="absolute inset-8 rounded-full bg-blue-500/20 blur-3xl" />
+      <Image 
+      src={"/wallet-exchange-showcase.png"}
+      alt="Wallet and exchange mobile app preview"
+      width={1024}
+      height={1536}
+      className="relative w-full object-center object-cover rounded-2xl border border-white/10 shadow-2xl"
       unoptimized
-    />
+      />
+    </div>
     
   </div>
 }

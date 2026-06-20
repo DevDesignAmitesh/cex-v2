@@ -5,7 +5,7 @@ import OrderBook from "@/components/orderbook";
 import OrderSwaping from "@/components/orderswaping";
 import OtherDetails from "@/components/otherdetails";
 import TradingChart, { type ChartInterval } from "@/components/tradingchart";
-import { User } from "lucide-react";
+import { IndianRupee, User, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import {
   addBalanceSchema,
@@ -56,12 +56,13 @@ export function TradePage({ symbol }: { symbol: string }) {
   const router = useRouter();
 
   const context = useAuth();
-
   if (!context) {
     return null
   }
   
-  const { isLoggedIn, profile, logout } = context;
+  const isLoggedIn = context?.isLoggedIn ?? false;
+  const profile = context?.profile ?? null;
+  const logout = context?.logout ?? (() => undefined);
 
   const getKlines = useCallback(async () => {
     const res = await axios.get(
@@ -275,30 +276,30 @@ export function TradePage({ symbol }: { symbol: string }) {
 
   return (
     <>
-      <div className="w-full min-h-screen bg-[#0E0F14] relative overflow-y-auto">
-        <div className="py-4 text-neutral-100 w-full max-w-7xl mx-auto min-h-screen flex flex-col font-mono">
-          <div className="flex mb-2 items-center justify-between gap-6 p-4 bg-[#14151B] shrink-0 rounded-md">
-            <div className="flex gap-6 items-center">
-              <p className="font-medium">
+      <div className="w-full min-h-screen bg-[#0E0F14] relative overflow-y-auto px-3">
+        <div className="py-3 text-neutral-100 w-full max-w-[1500px] mx-auto min-h-screen flex flex-col font-mono">
+          <div className="flex mb-2 flex-col gap-4 rounded-xl border border-white/10 bg-[#14151B]/95 p-3 shadow-xl shadow-black/20 shrink-0 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+            <div className="flex flex-wrap gap-4 items-center">
+              <p className="rounded-md bg-white/[0.04] px-3 py-2 font-medium">
                 {symbol.split("-")[0]} -{" "}
                 <span className="text-gray-400">{symbol.split("-")[1]}</span>
               </p>
 
               <p
                 title="Last traded price"
-                className={
+                className={`rounded-md px-3 py-2 text-lg font-semibold ${
                   lastTradedPriceSide === null
                     ? "text-gray-500"
                     : lastTradedPriceSide === "SELL"
                       ? "text-red-500"
                       : "text-green-500"
-                }
+                }`}
               >
                 {orderBook.lastTradedPrice}
               </p>
             </div>
 
-            <div className="relative flex items-center gap-2">
+            <div className="relative flex flex-wrap items-center gap-2">
               {isLoggedIn ? (
                 <>
                   <Button
@@ -308,9 +309,9 @@ export function TradePage({ symbol }: { symbol: string }) {
                   />
                   <button
                     onClick={() => setProfileMenuOpen((prev) => !prev)}
-                    className="rounded-md bg-[#202127] px-4 py-2 text-sm text-neutral-100 hover:bg-[#26272e] flex justify-center items-center gap-2"
+                    className="rounded-md border border-white/10 bg-[#202127] px-4 py-2 text-sm text-neutral-100 hover:bg-[#26272e] flex justify-center items-center gap-2"
                   >
-                      <User />
+                      <User size={18} />
                       {profile?.name ?? "Profile"}
                   </button>
 
@@ -339,9 +340,9 @@ export function TradePage({ symbol }: { symbol: string }) {
             </div>
           </div>
 
-          <div className="flex flex-1 gap-2 min-h-[660px]">
+          <div className="flex flex-1 flex-col gap-2 xl:flex-row">
             <div className="flex flex-1 min-w-0 flex-col gap-2">
-              <div className="flex flex-1 min-h-[500px] gap-2">
+              <div className="flex flex-1 flex-col gap-2 lg:min-h-[500px] lg:flex-row">
                 <TradingChart
                   chartData={chartData}
                   interval={chartInterval}
@@ -384,24 +385,49 @@ export function TradePage({ symbol }: { symbol: string }) {
       </div>
 
       {amountDepositPopup && isLoggedIn && (
-        <div className="bg-black/80 z-10 inset-0 fixed flex flex-col gap-10 justify-center items-center">
-          <div className="flex flex-col gap-2">
-            <p className="text-xs text-gray-400">Amount</p>
-            <input
-              className="p-3 bg-[#202127] text-neutral-200 rounded-md outline-none"
-              placeholder="0"
-              value={amount}
-              onChange={(event) => setAmount(Number(event.target.value))}
-            />
-          </div>
+        <div className="bg-black/80 z-20 inset-0 fixed flex justify-center items-center px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#14151B] p-5 text-neutral-100 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.18em] text-blue-300">
+                  Add balance
+                </p>
+                <h2 className="mt-2 text-2xl font-semibold">Deposit INR</h2>
+                <p className="mt-2 text-sm leading-6 text-gray-400">
+                  Funds are credited to your available equity for demo trading.
+                </p>
+              </div>
+              <button
+                onClick={() => setAmountDepositPopup(false)}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-white/10 text-neutral-300 hover:bg-white/15"
+                title="Close deposit popup"
+              >
+                <X size={18} />
+              </button>
+            </div>
 
-          <div className="flex justify-center items-center gap-6">
-            <Button label="Deposit" onClick={addBalance} type="primary" />
-            <Button
-              label="Cancel"
-              onClick={() => setAmountDepositPopup(false)}
-              type="secondary"
-            />
+            <div className="mt-8 flex flex-col gap-2">
+              <p className="text-xs text-gray-400">Amount</p>
+              <div className="flex items-center rounded-xl border border-white/10 bg-[#202127] px-3 focus-within:border-blue-400/60">
+                <IndianRupee size={18} className="text-gray-400" />
+                <input
+                  className="min-w-0 flex-1 bg-transparent p-3 text-neutral-200 outline-none"
+                  placeholder="0"
+                  value={amount}
+                  onChange={(event) => setAmount(Number(event.target.value))}
+                />
+              </div>
+            </div>
+
+            <div className="mt-8 grid grid-cols-2 gap-3">
+              <Button label="Deposit" onClick={addBalance} type="primary" className="w-full" />
+              <Button
+                label="Cancel"
+                onClick={() => setAmountDepositPopup(false)}
+                type="secondary"
+                className="w-full"
+              />
+            </div>
           </div>
         </div>
       )}

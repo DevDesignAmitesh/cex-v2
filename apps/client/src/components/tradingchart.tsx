@@ -75,7 +75,7 @@ export default function TradingChart({
   }, [chartData]);
 
   return (
-    <section className="flex flex-col flex-1 min-w-0 bg-[#14151B] rounded-md overflow-hidden">
+    <section className="flex min-h-[420px] flex-1 flex-col overflow-hidden rounded-xl border border-white/10 bg-[#14151B] lg:min-h-[560px]">
       <div className="flex items-center justify-end gap-1 border-b border-white/5 px-3 py-2">
         {intervals.map((item) => (
           <button

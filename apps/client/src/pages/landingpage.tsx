@@ -10,18 +10,17 @@ import { useEffect } from "react";
 
 export default function Landing() {
   const context = useAuth();
-
-  if (!context) {
-    return null
-  }
-  
-  const { isLoggedIn } = context;
   const router = useRouter();
+  const isLoggedIn = context?.isLoggedIn ?? false;
   
   useEffect(() => {
     if (!isLoggedIn) return;
     router.push("/trade/INR-AXIS")
-  }, [isLoggedIn])
+  }, [isLoggedIn, router])
+
+  if (!context) {
+    return null
+  }
   
   return <div className="relative w-full h-auto">
     <div className="w-full bg-[#0E0F14] h-auto">

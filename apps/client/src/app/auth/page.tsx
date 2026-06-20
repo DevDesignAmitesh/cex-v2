@@ -6,21 +6,19 @@ import Auth from "@/pages/authpage";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-export default function auth() {
+export default function AuthRoute() {
   const context = useAuth();
-
-  if (!context) {
-    return null
-  }
-  
-  const { isLoggedIn } = context
-  
   const router = useRouter();
+  const isLoggedIn = context?.isLoggedIn ?? false;
   
   useEffect(() => {
     if (!isLoggedIn) return;
     router.push("/trade/INR-AXIS")
-  }, [isLoggedIn])
+  }, [isLoggedIn, router])
+
+  if (!context) {
+    return null
+  }
   
   return <>
     <Header />

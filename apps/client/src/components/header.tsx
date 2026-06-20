@@ -3,10 +3,12 @@ import NavCtas from "./navctas";
 import NavItems from "./navitems";
 
 export default function Header() {
-  return <header className="w-full fixed z-1 top-0 py-4 bg-[#0E0F14]">
-    <div className="w-full max-w-7xl mx-auto flex justify-between items-center bg-[#0E0F14]">
+  return <header className="w-full fixed z-10 top-0 border-b border-white/5 bg-[#0E0F14]/85 px-4 py-4 backdrop-blur-xl">
+    <div className="w-full max-w-7xl mx-auto flex justify-between items-center">
       <Logo />
-      <NavItems />
+      <div className="hidden md:block">
+        <NavItems />
+      </div>
       <NavCtas /> 
     </div>
   </header>

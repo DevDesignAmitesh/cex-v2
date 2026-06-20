@@ -23,8 +23,6 @@ type AuthContextProps = {
 const AuthContext = createContext<AuthContextProps | null>(null);
 
 export function AuthContextProvider({ children }: { children: ReactNode }) {
-  if (typeof window === "undefined") return;
-  
   const [token, setToken] = useState<string | null>(() => {
     if (typeof window === "undefined") return null;
     return localStorage.getItem("token");
@@ -34,6 +32,7 @@ export function AuthContextProvider({ children }: { children: ReactNode }) {
   const pathName = usePathname();
 
   const logout = useCallback(() => {
+    if (typeof window === "undefined") return;
     localStorage.removeItem("token");
     setToken(null);
     setIsLoggedIn(false);
@@ -41,6 +40,7 @@ export function AuthContextProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshProfile = useCallback(async () => {
+    if (typeof window === "undefined") return;
     const activeToken = token ?? localStorage.getItem("token");
 
     if (!activeToken) {
@@ -67,6 +67,7 @@ export function AuthContextProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     queueMicrotask(() => {
+      if (typeof window === "undefined") return;
       const storedToken = localStorage.getItem("token");
       setToken(storedToken);
       setIsLoggedIn(Boolean(storedToken));

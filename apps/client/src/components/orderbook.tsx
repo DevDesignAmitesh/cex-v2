@@ -28,7 +28,7 @@ export default function OrderBook({
   const maxBidQty = Math.max(0, ...orderBook.bids.map((bid) => bid.qty));
 
   return (
-    <section className="flex flex-col w-72 shrink-0 bg-[#14151B] px-2 py-4 rounded-md">
+    <section className="flex w-full flex-col rounded-xl border border-white/10 bg-[#14151B] px-2 py-4 lg:w-72 lg:shrink-0">
       <div className="w-full flex items-center mt-1 h-8 text-sm">
         <button
           onClick={() => onOrderbookTypeChange("BOOK")}
@@ -63,7 +63,7 @@ export default function OrderBook({
         <div className="mt-4" />
 
         {orderbookType === "BOOK" ? (
-          <div className="overflow-y-auto w-full h-115 scrollbar-thin scrollbar-thumb-black/40">
+          <div className="h-96 w-full overflow-y-auto scrollbar-thin scrollbar-thumb-black/40 lg:h-115">
             <div className="flex flex-col">
               {orderBook.asks
                 .slice()
@@ -133,7 +133,7 @@ export default function OrderBook({
             </div>
           </div>
         ) : (
-          <div className="overflow-y-auto w-full h-115 scrollbar-thin scrollbar-thumb-black/40">
+          <div className="h-96 w-full overflow-y-auto scrollbar-thin scrollbar-thumb-black/40 lg:h-115">
             <div className="flex flex-col">
               {trades
                 .slice()
